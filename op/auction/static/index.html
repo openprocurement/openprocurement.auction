@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-ng-app="app" ng-controller="AuctionController">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Starter Template for Bootstrap</title>
+    <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"> -->
+    <link rel="stylesheet" href="vendor/bootstrap/dist/css/bootstrap.min.css">
+    <!-- Custom styles for this template -->
+    <link href="static/css/starter-template.css" rel="stylesheet">
+
+</head>
+
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-bottom" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <ul class="nav navbar-nav">
+                    <li ><a href="#">Info</a>
+                    </li>
+                    <li class="active"><a href="#">Bidding</a>
+                    </li>
+                    <li><a href="#">Settings</a>
+                    </li>
+                </ul>
+            </div>
+            <!--/.nav-collapse -->
+        </div>
+    </div>
+
+    <div class="container">
+      <div style="overflow-y:auto;">
+        <table class="table table-striped table-condensed">
+            <thead>
+                <tr>
+                    <th class="col-xs-1">Round</th>
+                    <th>Time</th>
+                    <th>Bidder</th>
+                    <th>Bid</th>
+                </tr>
+            </thead>
+            <tbody >
+               <tr ng-repeat="stage in auction_doc.stages"
+                   ng-class="{true: 'success', false: ''}[auction_doc.current_stage == $index]">
+                    <td></td>
+                    <td>{{ stage.start|date : 'shortTime' }}</td>
+                    <td>{{ stage.label.en }}</td>
+                    <td ng-if="stage.id = 'bids'">{{ stage.amount }}</td>
+                    <td ng-if="stage.id != 'bids'"></td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <strong>512 UAH</strong> - your last bid
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <form id="BidsForm" class="form-inline" role="form">
+                            <div class="form-group">
+                                <label class="sr-only" for="exampleInputPassword2">Bid</label>
+                                <input type="number" class="form-control" id="bidinput" placeholder="">
+                            </div>
+                            <button type="submit" class="btn btn-default">Submit</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        35 UAH - Decrement
+                        <span class="pull-right">85 sec</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /.container -->
+</body>
+<!-- <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.min.js"></script> -->
+<script src="vendor/angular/angular.min.js"></script>
+<!-- <script src="//cdn.jsdelivr.net/pouchdb/3.0.6/pouchdb.min.js"></script> -->
+<script src="vendor/pouchdb/dist/pouchdb.min.js"></script>
+<script src="vendor/angular-translate/angular-translate.min.js"></script>
+<script src="vendor/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+<script src="static/js/app.js"></script>
+
+</html>

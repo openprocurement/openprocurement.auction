@@ -1,0 +1,24 @@
+{
+  "name": "pouch_db_start",
+  "version": "0.0.0",
+  "authors": [
+    "Taras Kozlovskyi <ktarasz@quintagroup.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "vendor",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "1.2.26",
+    "angular-translate": "2.4.2",
+    "pouchdb": "~3.0.6",
+    "bootstrap": "~3.2.0",
+    "angular-bootstrap": "0.11.2"
+  }
+}
