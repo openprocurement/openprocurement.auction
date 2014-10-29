@@ -48,7 +48,7 @@
                <tr ng-repeat="stage in auction_doc.stages"
                    ng-class="{true: 'success', false: ''}[auction_doc.current_stage == $index]">
                     <td></td>
-                    <td>{{ stage.start|date : 'shortTime' }}</td>
+                    <td>{{ stage.start|date : 'mediumTime' }}</td>
                     <td>{{ stage.label.en }}</td>
                     <td ng-if="stage.id = 'bids'">{{ stage.amount }}</td>
                     <td ng-if="stage.id != 'bids'"></td>
