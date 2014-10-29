@@ -6,12 +6,14 @@ import couchdb
 import json
 
 from datetime import timedelta
+from pytz import timezone
 from multiprocessing import Event
 from apscheduler.schedulers.background import BackgroundScheduler
 from .server import run_server
 from string import Template
 
 SCHEDULER = BackgroundScheduler()
+SCHEDULER.timezone = timezone('Europe/Kiev')
 
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s[%(asctime)s]: %(message)s')
@@ -44,12 +46,12 @@ PREMELIMITARY_BIDS_SECONDS = 300
 
 class Auction(object):
     """docstring for Auction"""
-    def __init__(self, tender_id, port=8000,
-                 database_url='http://localhost:8001/auction'):
+    def __init__(self, auction_doc_id, port=8888,
+                 database_url='http://localhost:9000/auction'):
         super(Auction, self).__init__()
         self.port = port
-        self.tender_id = tender_id
-        self.tender_url = 'http://api-sandbox.openprocurement.org/tenders/{0}/auction'.format(tender_id)
+        self.auction_doc_id = auction_doc_id
+        self.tender_url = 'http://api-sandbox.openprocurement.org/tenders/{0}/auction'.format(auction_doc_id)
         self._auction_data = {}
         self._end_auction_event = Event()
         self.database_url = database_url
@@ -80,7 +82,7 @@ class Auction(object):
                     "currency": "UAH"
                 },
                 "period": {
-                    "startDate": "2014-10-28T22:56:00+02:00"
+                    "startDate": "2014-10-29T13:24:00+02:00"
                 }
             }
         }
@@ -88,10 +90,10 @@ class Auction(object):
     def schedule_auction(self):
         self.get_auction_info()
         # Schedule Auction Workflow
-        doc = self.db.get("ua1")
+        doc = self.db.get(self.auction_doc_id)
         if doc:
             self.db.delete(doc)
-        auction_document = {"_id": "ua1", "stages": [], "current_stage": -1}
+        auction_document = {"_id": self.auction_doc_id, "stages": [], "current_stage": -1}
         # Schedule PREMELIMITARY_BIDS
         premelimitary_bids = json.loads(PREMELIMITARY_BIDS_TEMPLATE.substitute(
             start_time=self.startDate.isoformat()
@@ -144,13 +146,15 @@ class Auction(object):
 
     def start_auction(self):
         logging.info('---------------- Start auction ----------------')
-        doc = self.db.get("ua1")
+        doc = self.db.get(self.auction_doc_id)
         doc["current_stage"] = 0
         self.db.save(doc)
-        self.server = run_server("0.0.0.0", self.port)
+        self.server = run_server("0.0.0.0", self.port,
+                                 db_url=self.database_url,
+                                 auction_doc_id=self.auction_doc_id)
 
     def next_stage(self):
-        doc = self.db.get("ua1")
+        doc = self.db.get(self.auction_doc_id)
         doc["current_stage"] += 1
         self.db.save(doc)
         logging.info('---------------- Start stage {0} ----------------'.format(doc["current_stage"]))
@@ -170,8 +174,8 @@ class Auction(object):
         pass
 
 
-def auction_run(tender_id):
-    auction = Auction(tender_id)
+def auction_run(auction_doc_id, port):
+    auction = Auction(auction_doc_id, port)
     SCHEDULER.start()
     auction.schedule_auction()
     auction.wait_to_end()
@@ -180,9 +184,10 @@ def auction_run(tender_id):
 
 def main():
     parser = argparse.ArgumentParser(description='---- Auction ----')
-    parser.add_argument('tender_id', type=str, help='Tender_id')
+    parser.add_argument('auction_doc_id', type=str, help='auction_doc_id')
+    parser.add_argument('port', type=int, help='Port')
     args = parser.parse_args()
-    auction_run(args.tender_id)
+    auction_run(args.auction_doc_id, args.port)
 
 
 ##############################################################

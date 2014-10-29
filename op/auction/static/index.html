@@ -15,7 +15,7 @@
     <link href="static/css/starter-template.css" rel="stylesheet">
 
 </head>
-
+{% raw %}
 <body>
     <div class="navbar navbar-inverse navbar-fixed-bottom" role="navigation">
         <div class="container">
@@ -85,6 +85,11 @@
     </div>
     <!-- /.container -->
 </body>
+{% endraw %}
+<script type=text/javascript>
+    var db_url = '{{ db_url }}';
+    var auction_doc_id = '{{ auction_doc_id }}';
+</script>
 <!-- <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.min.js"></script> -->
 <script src="vendor/angular/angular.min.js"></script>
 <!-- <script src="//cdn.jsdelivr.net/pouchdb/3.0.6/pouchdb.min.js"></script> -->

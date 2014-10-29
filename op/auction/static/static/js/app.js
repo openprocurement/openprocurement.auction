@@ -1,9 +1,10 @@
 var app = angular.module('app', ['ui.bootstrap', 'pascalprecht.translate']);
 var db = {};
 
+
 app.constant('AuctionConfig', {dbname: 'auction',
-                               auction_doc_id: 'ua1',
-                               remote_db: 'http://localhost:8001/auction'});
+                               auction_doc_id: auction_doc_id,
+                               remote_db: db_url});
 
 app.controller('AuctionController', function($scope, $log, $rootScope, AuctionConfig){
     db = $scope.db = new PouchDB(AuctionConfig.dbname);
