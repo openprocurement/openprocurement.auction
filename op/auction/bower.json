@@ -19,6 +19,7 @@
     "angular-translate": "2.4.2",
     "pouchdb": "~3.0.6",
     "bootstrap": "~3.2.0",
-    "angular-bootstrap": "0.11.2"
+    "angular-bootstrap": "0.11.2",
+    "angular-timer": "1.1.7"
   }
 }
