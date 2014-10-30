@@ -18,6 +18,13 @@ SCHEDULER.timezone = timezone('Europe/Kiev')
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s[%(asctime)s]: %(message)s')
 
+INITIAL_BIDS_TEMPLATE = Template('''{
+    "bidder_id": "$bidder_id",
+    "time": "$time",
+    "label": {"en": "$bidder_name"},
+    "amount": $amount
+}''')
+
 PREMELIMITARY_BIDS_TEMPLATE = Template('''{
     "type": "premelimitary_bids",
     "start": "$start_time",
@@ -38,10 +45,17 @@ BIDS_TEMPLATE = Template('''{
     "amount": $amount
 }''')
 
+ANNOUNCEMENT_TEMPLATE = Template('''{
+    "type": "announcement",
+    "start": "$start_time",
+    "label": {"en": "Announcement"}
+}''')
+
 ROUNDS = 3
-PAUSE_SECONDS = 5
-BIDS_SECONDS = 10
-PREMELIMITARY_BIDS_SECONDS = 5
+PAUSE_SECONDS = 120
+BIDS_SECONDS = 120
+PREMELIMITARY_BIDS_SECONDS = 300
+ANNOUNCEMENT_SECONDS = 150
 
 
 class Auction(object):
@@ -98,7 +112,17 @@ class Auction(object):
         doc = self.db.get(self.auction_doc_id)
         if doc:
             self.db.delete(doc)
-        auction_document = {"_id": self.auction_doc_id, "stages": [], "current_stage": -1}
+        auction_document = {"_id": self.auction_doc_id, "stages": [],
+                            "initial_bids": [], "current_stage": -1}
+        # Initital Bids
+        for index in xrange(self.bidders_count):
+            auction_document["initial_bids"].append(json.loads(INITIAL_BIDS_TEMPLATE.substitute(
+                time="",
+                bidder_id=index,
+                bidder_name="Bidder #{0}".format(index),
+                amount="null"
+            )))
+
         # Schedule PREMELIMITARY_BIDS
         premelimitary_bids = json.loads(PREMELIMITARY_BIDS_TEMPLATE.substitute(
             start_time=self.startDate.isoformat()
@@ -146,14 +170,20 @@ class Auction(object):
                         self.next_stage, 'date',
                         run_date=next_stage_timedelta,
                     )
+        announcement = json.loads(ANNOUNCEMENT_TEMPLATE.substitute(
+            start_time=next_stage_timedelta.isoformat()
+        ))
+        auction_document['stages'].append(announcement)
 
+        next_stage_timedelta += timedelta(seconds=ANNOUNCEMENT_SECONDS)
+        auction_document['endDate'] = next_stage_timedelta.isoformat()
         self.db.save(auction_document)
         self.server = run_server("0.0.0.0", self.port,
                                  db_url=self.database_url,
                                  auction_doc_id=self.auction_doc_id)
         SCHEDULER.add_job(
             self.end_auction, 'date',
-            run_date=next_stage_timedelta
+            run_date=next_stage_timedelta + timedelta(seconds=20)
         )
 
     def wait_to_end(self):
@@ -162,6 +192,18 @@ class Auction(object):
     def start_auction(self):
         logging.info('---------------- Start auction ----------------')
         doc = self.db.get(self.auction_doc_id)
+        # Initital Bids
+        bids = deepcopy(self._auction_data['data']['bids'])
+        doc["initial_bids"] = []
+        for index, bid in enumerate(sorted(bids,
+                                           key=lambda item: item["amount"],
+                                           reverse=True)):
+            doc["initial_bids"].append(json.loads(INITIAL_BIDS_TEMPLATE.substitute(
+                time="",
+                bidder_id=index,
+                bidder_name="Bidder #{0}".format(index),
+                amount=bid["amount"]
+            )))
         doc["current_stage"] = 0
         self.db.save(doc)
 
