@@ -2,6 +2,8 @@ from flask import Flask, render_template
 
 app = Flask(__name__, static_url_path='', template_folder='static')
 from multiprocessing import Process
+from datetime import datetime
+from pytz import timezone
 
 
 @app.route('/')
@@ -10,6 +12,11 @@ def index():
         'index.html', db_url=app.config['db_url'],
         auction_doc_id=app.config['auction_doc_id']
     )
+
+
+@app.route('/get_corrent_server_time')
+def current_server_time():
+    return datetime.now(timezone('Europe/Kiev')).isoformat()
 
 
 def server(host, port,
