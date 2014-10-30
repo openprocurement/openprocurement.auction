@@ -1,4 +1,4 @@
-body { padding-bottom: 70px; }
+body { padding-bottom: 70px; padding-top: 10px;}
 
 }
 .col-xs-m1 {
@@ -59,4 +59,21 @@ body { padding-bottom: 70px; }
 .header-fixed > thead > tr > th {
     width: 20%;
     float: left;
+}
+
+.progress-fixed-top {
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height: 5px;
+}
+
+.auction-stages>div:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+.auction-stages>div.bg-primary {
+  color: #fff;
+  background-color: #428bca;
 }
