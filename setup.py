@@ -3,7 +3,7 @@ import os
 
 version = '1.0'
 
-setup(name='op.auction',
+setup(name='openprocurement.auction',
       version=version,
       description="",
       long_description=open("README.txt").read() + "\n" +
@@ -32,7 +32,7 @@ setup(name='op.auction',
       ],
       entry_points={
         'console_scripts': [
-              'auction_worker = op.auction:main',
+              'auction_worker = openprocurement.auction:main',
           ]
         }
       )

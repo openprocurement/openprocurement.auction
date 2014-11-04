@@ -52,5 +52,5 @@ docs/_build/
 
 # PyBuilder
 target/
-op/auction/node_modules/
-op/auction/static/vendor/
+openprocurement/auction/node_modules/
+openprocurement/auction/static/vendor/
