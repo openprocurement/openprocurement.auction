@@ -28,7 +28,7 @@ INITIAL_BIDS_TEMPLATE = Template('''{
 PREMELIMITARY_BIDS_TEMPLATE = Template('''{
     "type": "premelimitary_bids",
     "start": "$start_time",
-    "label": {"en": "Premelimitary bids"}
+    "label": {"en": "Preliminary bids"}
 }''')
 
 PAUSE_TEMPLATE = Template('''{
@@ -113,7 +113,8 @@ class Auction(object):
         if doc:
             self.db.delete(doc)
         auction_document = {"_id": self.auction_doc_id, "stages": [],
-                            "initial_bids": [], "current_stage": -1}
+                            "initial_bids": [], "current_stage": -1,
+                            "minimalStep": self._auction_data["data"]["minimalStep"]}
         # Initital Bids
         for index in xrange(self.bidders_count):
             auction_document["initial_bids"].append(json.loads(INITIAL_BIDS_TEMPLATE.substitute(
