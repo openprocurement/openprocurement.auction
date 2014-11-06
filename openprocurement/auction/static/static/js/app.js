@@ -95,6 +95,7 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
         live: true,
         continuous: true,
         include_docs: true,
+        limit: 1000,
         since: 'now',
         onChange: function(change) {
             $log.debug('onChanges:info - ', change);

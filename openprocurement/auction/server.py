@@ -13,7 +13,7 @@ from openprocurement.auction.forms import BidsForm
 def index():
     return render_template(
         'index.html',
-        db_url=getattr(app.config.get('auction', None), 'db_url', 'http://localhost:9000/auction'),
+        db_url=getattr(app.config.get('auction', None), 'database_url', 'http://localhost:9000/auction'),
         auction_doc_id=getattr(app.config.get('auction', None), 'auction_doc_id', 'ua1')
     )
 
