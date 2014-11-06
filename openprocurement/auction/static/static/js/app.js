@@ -19,8 +19,9 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
         "current_stage": null,
 
     }
-    PouchDB.sync(AuctionConfig.dbname, AuctionConfig.remote_db, {
-        live: true
+    PouchDB.replicate(AuctionConfig.remote_db, AuctionConfig.dbname, {
+        live: true,
+        doc_ids: [AuctionConfig.auction_doc_id] 
     })
     $scope.$watch(bidder_id, function (newValue, oldValue) {
         $log.info(newValue);
@@ -94,6 +95,7 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
         live: true,
         continuous: true,
         include_docs: true,
+        since: 'now',
         onChange: function(change) {
             $log.debug('onChanges:info - ', change);
             if (change.id == AuctionConfig.auction_doc_id) {
