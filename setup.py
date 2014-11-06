@@ -27,7 +27,10 @@ setup(name='openprocurement.auction',
           'requests',
           'APScheduler',
           'iso8601',
-          'Flask'
+          'Flask',
+          'WTForms',
+          'WTForms-JSON',
+          'gevent'
           # -*- Extra requirements: -*-
       ],
       entry_points={
