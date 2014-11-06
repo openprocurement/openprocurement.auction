@@ -1,16 +1,20 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__, static_url_path='', template_folder='static')
-from multiprocessing import Process
+
+from gevent.wsgi import WSGIServer
 from datetime import datetime
 from pytz import timezone
+
+from openprocurement.auction.forms import BidsForm
 
 
 @app.route('/')
 def index():
     return render_template(
-        'index.html', db_url=app.config.get('db_url', ''),
-        auction_doc_id=app.config.get('auction_doc_id', '')
+        'index.html',
+        db_url=getattr(app.config.get('auction', None), 'db_url', 'http://localhost:9000/auction'),
+        auction_doc_id=getattr(app.config.get('auction', None), 'auction_doc_id', 'ua1')
     )
 
 
@@ -18,23 +22,28 @@ def index():
 def current_server_time():
     return datetime.now(timezone('Europe/Kiev')).isoformat()
 
-# Serurity
+
 @app.route('/postbid', methods=['POST'])
 def postBid():
-    import pdb; pdb.set_trace() # ktarasz - Debug
-    personId = (int)(request.form['personId'])
-    print personId
+    auction = app.config['auction']
+    with auction.bids_actions:
+        form = BidsForm.from_json(request.json)
+        form.document = auction.db.get(auction.auction_doc_id)
+        if form.validate():
+            # write data
+            auction.db.get(auction.auction_doc_id)
+            auction.add_bid(form.document['current_stage'],
+                            {'amount': request.json['bid'],
+                             'stage': form.document['current_stage'],
+                             'bidder_id': request.json['bidder_id']})
+            response = {'status': 'ok', 'data': request.json}
+        else:
+            response = {'status': 'failed', 'errors': form.errors}
+        return jsonify(response)
 
 
-def server(host, port,
-           db_url="http://localhost:9000/auction",
-           auction_doc_id="ua1"):
-    app.config['db_url'] = db_url
-    app.config['auction_doc_id'] = auction_doc_id
-    app.run(host=host, port=port)
-
-
-def run_server(*args, **kwargs):
-    p = Process(target=server, args=args, kwargs=kwargs)
-    p.start()
-    return p
+def run_server(auction):
+    app.config['auction'] = auction
+    server = WSGIServer((auction.host, auction.port, ), app)
+    server.start()
+    return server
