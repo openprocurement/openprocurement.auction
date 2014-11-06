@@ -8,11 +8,12 @@ import json
 from copy import deepcopy
 from datetime import timedelta, datetime
 from pytz import timezone
-from multiprocessing import Event
-from apscheduler.schedulers.background import BackgroundScheduler
+from gevent.event import Event
+from gevent.coros import BoundedSemaphore
+from apscheduler.schedulers.gevent import GeventScheduler
 from .server import run_server
 from string import Template
-SCHEDULER = BackgroundScheduler()
+SCHEDULER = GeventScheduler()
 SCHEDULER.timezone = timezone('Europe/Kiev')
 
 logging.basicConfig(level=logging.INFO,
@@ -25,8 +26,8 @@ INITIAL_BIDS_TEMPLATE = Template('''{
     "amount": $amount
 }''')
 
-PREMELIMITARY_BIDS_TEMPLATE = Template('''{
-    "type": "premelimitary_bids",
+PREMELINARY_BIDS_TEMPLATE = Template('''{
+    "type": "premeliminary_bids",
     "start": "$start_time",
     "label": {"en": "Preliminary bids"}
 }''')
@@ -60,16 +61,22 @@ ANNOUNCEMENT_SECONDS = 150
 
 class Auction(object):
     """docstring for Auction"""
-    def __init__(self, auction_doc_id, port=8888,
+    def __init__(self, auction_doc_id, host='', port=8888,
                  database_url='http://localhost:9000/auction'):
         super(Auction, self).__init__()
+        self.host = host
         self.port = port
         self.auction_doc_id = auction_doc_id
         self.tender_url = 'http://api-sandbox.openprocurement.org/tenders/{0}/auction'.format(auction_doc_id)
         self._auction_data = {}
         self._end_auction_event = Event()
+        self.bids_actions = BoundedSemaphore()
         self.database_url = database_url
+        self._bids_data = []
         self.db = couchdb.client.Database('http://localhost:9000/auction')
+
+    def add_bid(self, bid):
+        self._bids_data.append(bid)
 
     @property
     def startDate(self):
@@ -77,7 +84,7 @@ class Auction(object):
             self._auction_data['data']['period']['startDate']
         )
         if datetime.now(timezone('Europe/Kiev')) > date:
-            date = datetime.now(timezone('Europe/Kiev')) + timedelta(seconds=10)
+            date = datetime.now(timezone('Europe/Kiev')) + timedelta(seconds=20)
             self._auction_data['data']['period']['startDate'] = date.isoformat()
         return date
 
@@ -125,7 +132,7 @@ class Auction(object):
             )))
 
         # Schedule PREMELIMITARY_BIDS
-        premelimitary_bids = json.loads(PREMELIMITARY_BIDS_TEMPLATE.substitute(
+        premelimitary_bids = json.loads(PREMELINARY_BIDS_TEMPLATE.substitute(
             start_time=self.startDate.isoformat()
         ))
         auction_document['stages'].append(premelimitary_bids)
@@ -179,9 +186,7 @@ class Auction(object):
         next_stage_timedelta += timedelta(seconds=ANNOUNCEMENT_SECONDS)
         auction_document['endDate'] = next_stage_timedelta.isoformat()
         self.db.save(auction_document)
-        self.server = run_server("0.0.0.0", self.port,
-                                 db_url=self.database_url,
-                                 auction_doc_id=self.auction_doc_id)
+        self.server = run_server(self)
         SCHEDULER.add_job(
             self.end_auction, 'date',
             run_date=next_stage_timedelta + timedelta(seconds=20)
@@ -229,6 +234,7 @@ class Auction(object):
         logging.info('---------------- End Round ----------------')
         doc = self.db.get(self.auction_doc_id)
         doc["current_stage"] += 1
+        logging.info(self._bids_data)
         bids = deepcopy(doc["stages"][doc["current_stage"] - self.bidders_count:doc["current_stage"]])
         for index, bid in enumerate(sorted(bids,
                                            key=lambda item: item["amount"],
@@ -245,7 +251,7 @@ class Auction(object):
 
     def end_auction(self):
         logging.info('---------------- End auction ----------------')
-        self.server.terminate()
+        self.server.stop()
         self.put_auction_data()
         self._end_auction_event.set()
 
@@ -259,7 +265,7 @@ class Auction(object):
 
 
 def auction_run(auction_doc_id, port, database_url):
-    auction = Auction(auction_doc_id, port, database_url)
+    auction = Auction(auction_doc_id, port=port, database_url=database_url)
     SCHEDULER.start()
     auction.schedule_auction()
     auction.wait_to_end()
