@@ -12,6 +12,11 @@ from gevent.event import Event
 from gevent.coros import BoundedSemaphore
 from apscheduler.schedulers.gevent import GeventScheduler
 from .server import run_server
+from .utils import (
+    filter_by_bidder_id, sorting_by_amount,
+    get_latest_bid_for_bidder,
+    sorting_by_time
+)
 from string import Template
 SCHEDULER = GeventScheduler()
 SCHEDULER.timezone = timezone('Europe/Kiev')
@@ -26,8 +31,8 @@ INITIAL_BIDS_TEMPLATE = Template('''{
     "amount": $amount
 }''')
 
-PREMELINARY_BIDS_TEMPLATE = Template('''{
-    "type": "premeliminary_bids",
+PRELINARY_BIDS_TEMPLATE = Template('''{
+    "type": "preliminary_bids",
     "start": "$start_time",
     "label": {"en": "Preliminary bids"}
 }''')
@@ -43,7 +48,8 @@ BIDS_TEMPLATE = Template('''{
     "bidder_id": "$bidder_id",
     "start": "$start_time",
     "label": {"en": "$bidder_name"},
-    "amount": $amount
+    "amount": $amount,
+    "time": "$time"
 }''')
 
 ANNOUNCEMENT_TEMPLATE = Template('''{
@@ -55,7 +61,7 @@ ANNOUNCEMENT_TEMPLATE = Template('''{
 ROUNDS = 3
 PAUSE_SECONDS = 120
 BIDS_SECONDS = 120
-PREMELIMITARY_BIDS_SECONDS = 300
+PRELIMITARY_BIDS_SECONDS = 300
 ANNOUNCEMENT_SECONDS = 150
 
 
@@ -72,11 +78,13 @@ class Auction(object):
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
         self.database_url = database_url
-        self._bids_data = []
+        self._bids_data = {}
         self.db = couchdb.client.Database('http://localhost:9000/auction')
 
-    def add_bid(self, bid):
-        self._bids_data.append(bid)
+    def add_bid(self, round_id, bid):
+        if round_id not in self._bids_data:
+            self._bids_data[round_id] = []
+        self._bids_data[round_id].append(bid)
 
     @property
     def startDate(self):
@@ -97,10 +105,14 @@ class Auction(object):
             "data": {
                 "bids": [{
                     "amount": 500,
-                    "currency": "UAH"
+                    "currency": "UAH",
+                    "bidder_id": "0",
+                    "time": "2014-10-29T14:15:00+02:00"
                 }, {
                     "amount": 485,
-                    "currency": "UAH"
+                    "currency": "UAH",
+                    "bidder_id": "1",
+                    "time": "2014-10-29T14:13:00+02:00"
                 }],
                 "minimalStep": {
                     "amount": 35,
@@ -112,6 +124,8 @@ class Auction(object):
             }
         }
         self.bidders_count = len(self._auction_data["data"]["bids"])
+        self.bidders_id = [bid["bidder_id"]
+                           for bid in self._auction_data["data"]["bids"]]
 
     def schedule_auction(self):
         self.get_auction_info()
@@ -131,18 +145,18 @@ class Auction(object):
                 amount="null"
             )))
 
-        # Schedule PREMELIMITARY_BIDS
-        premelimitary_bids = json.loads(PREMELINARY_BIDS_TEMPLATE.substitute(
+        # Schedule PRELIMITARY_BIDS
+        prelimitary_bids = json.loads(PRELINARY_BIDS_TEMPLATE.substitute(
             start_time=self.startDate.isoformat()
         ))
-        auction_document['stages'].append(premelimitary_bids)
+        auction_document['stages'].append(prelimitary_bids)
         SCHEDULER.add_job(self.start_auction, 'date', run_date=self.startDate)
 
         next_stage_timedelta = self.startDate + timedelta(
-            seconds=PREMELIMITARY_BIDS_SECONDS
+            seconds=PRELIMITARY_BIDS_SECONDS
         )
         SCHEDULER.add_job(
-            self.end_premelimitary_bids, 'date',
+            self.end_prelimitary_bids, 'date',
             run_date=next_stage_timedelta,
         )
         # Schedule Bids Rounds
@@ -164,7 +178,8 @@ class Auction(object):
                     start_time=next_stage_timedelta.isoformat(),
                     bidder_id="",
                     bidder_name="",
-                    amount="null"
+                    amount="null",
+                    time=""
                 ))
                 auction_document['stages'].append(bid_stage)
                 next_stage_timedelta += timedelta(seconds=BIDS_SECONDS)
@@ -175,7 +190,7 @@ class Auction(object):
                     )
                 else:
                     SCHEDULER.add_job(
-                        self.next_stage, 'date',
+                        self.end_bids_stage, 'date',
                         run_date=next_stage_timedelta,
                     )
         announcement = json.loads(ANNOUNCEMENT_TEMPLATE.substitute(
@@ -201,53 +216,110 @@ class Auction(object):
         # Initital Bids
         bids = deepcopy(self._auction_data['data']['bids'])
         doc["initial_bids"] = []
-        for index, bid in enumerate(sorted(bids,
-                                           key=lambda item: item["amount"],
-                                           reverse=True)):
+        bids_info = sorting_by_amount(bids)
+        for index, bid in enumerate(bids_info):
             doc["initial_bids"].append(json.loads(INITIAL_BIDS_TEMPLATE.substitute(
-                time="",
-                bidder_id=index,
-                bidder_name="Bidder #{0}".format(index),
+                time=bid["time"],
+                bidder_id=bid["bidder_id"],
+                bidder_name="Bidder #{0}".format(bid["bidder_id"]),
                 amount=bid["amount"]
             )))
+        doc['stages'][0]['amount'] = bids_info[-1]['amount']
         doc["current_stage"] = 0
         self.db.save(doc)
 
-    def end_premelimitary_bids(self):
-        logging.info('---------------- End Premelimitary Bids ----------------')
+    def end_prelimitary_bids(self):
+        logging.info('---------------- End Prelimitary Bids ----------------')
+        self.bids_actions.acquire()
         doc = self.db.get(self.auction_doc_id)
-        # TODO: get premelimitary bids
-        bids = deepcopy(self._auction_data['data']['bids'])
-        for index, bid in enumerate(sorted(bids,
-                                           key=lambda item: item["amount"],
-                                           reverse=True)):
+        # TODO: get prelimitary bids
+        all_bids = deepcopy(doc["initial_bids"])
+        if doc['current_stage'] in self._bids_data:
+            all_bids += self._bids_data[doc['current_stage']]
+
+        minimal_bids = []
+        for bidder_id in self.bidders_id:
+            minimal_bids.append(get_latest_bid_for_bidder(all_bids, bidder_id))
+        for index, bid_info in enumerate(sorting_by_amount(minimal_bids)):
             doc["stages"][2 + index] = json.loads(BIDS_TEMPLATE.substitute(
                 start_time=doc["stages"][2 + index]["start"],
-                bidder_id=index,
-                bidder_name="Bidder #{0}".format(index),
-                amount=bid["amount"]
+                bidder_id=bid_info['bidder_id'],
+                bidder_name="Bidder #{0}".format(bid_info['bidder_id']),
+                amount=bid_info["amount"],
+                time=bid_info["time"]
+            ))
+
+        prelimitary_bids_results = []
+        for index, bid_info in enumerate(sorting_by_time(minimal_bids)):
+            prelimitary_bids_results.append(json.loads(BIDS_TEMPLATE.substitute(
+                start_time=bid_info["time"],
+                bidder_id=bid_info['bidder_id'],
+                bidder_name="Bidder #{0}".format(bid_info['bidder_id']),
+                amount=bid_info["amount"],
+                time=bid_info["time"]
+            )))
+        doc["stages"][1:1] = prelimitary_bids_results
+
+        doc["current_stage"] += (self.bidders_count + 1)
+        self.db.save(doc)
+        self.bids_actions.release()
+
+    def approve_bids_information(self, doc):
+        all_bids = []
+        if doc['current_stage'] in self._bids_data:
+            all_bids += self._bids_data[doc['current_stage']]
+        if all_bids:
+            bid_info = get_latest_bid_for_bidder(
+                all_bids, doc["stages"][doc["current_stage"]]['bidder_id']
+            )
+            doc["stages"][doc["current_stage"]] = json.loads(BIDS_TEMPLATE.substitute(
+                start_time=doc["stages"][doc["current_stage"]]["start"],
+                bidder_id=bid_info['bidder_id'],
+                bidder_name="Bidder #{0}".format(bid_info['bidder_id']),
+                amount=bid_info["amount"],
+                time=bid_info["time"]
+            ))
+
+    def end_round(self):
+        self.bids_actions.acquire()
+        logging.info('---------------- End Round ----------------')
+        doc = self.db.get(self.auction_doc_id)
+        self.approve_bids_information(doc)
+
+        round_starts = doc["current_stage"] - self.bidders_count + 1
+        round_ends = doc["current_stage"] + 1
+        all_bids = deepcopy(doc["stages"][round_starts:round_ends])
+            
+        minimal_bids = []
+        for bidder_id in self.bidders_id:
+            minimal_bids.append(get_latest_bid_for_bidder(all_bids, bidder_id))
+
+        for index, bid_info in enumerate(sorting_by_amount(minimal_bids)):
+            doc["stages"][doc["current_stage"] + 2 + index] = json.loads(BIDS_TEMPLATE.substitute(
+                start_time=doc["stages"][doc["current_stage"] + 2 + index]["start"],
+                bidder_id=bid_info['bidder_id'],
+                bidder_name="Bidder #{0}".format(bid_info['bidder_id']),
+                amount=bid_info["amount"],
+                time=bid_info["time"]
             ))
         doc["current_stage"] += 1
         self.db.save(doc)
-
-    def end_round(self):
-        logging.info('---------------- End Round ----------------')
-        doc = self.db.get(self.auction_doc_id)
-        doc["current_stage"] += 1
-        logging.info(self._bids_data)
-        bids = deepcopy(doc["stages"][doc["current_stage"] - self.bidders_count:doc["current_stage"]])
-        for index, bid in enumerate(sorted(bids,
-                                           key=lambda item: item["amount"],
-                                           reverse=True)):
-            bid["start"] = doc["stages"][doc["current_stage"] + 1 + index]["start"]
-            doc["stages"][doc["current_stage"] + 1 + index] = bid
-        self.db.save(doc)
+        self.bids_actions.release()
 
     def next_stage(self):
         doc = self.db.get(self.auction_doc_id)
         doc["current_stage"] += 1
         self.db.save(doc)
         logging.info('---------------- Start stage {0} ----------------'.format(doc["current_stage"]))
+
+    def end_bids_stage(self):
+        self.bids_actions.acquire()
+        doc = self.db.get(self.auction_doc_id)
+        self.approve_bids_information(doc)
+        doc["current_stage"] += 1
+        self.db.save(doc)
+        logging.info('---------------- Start stage {0} ----------------'.format(doc["current_stage"]))
+        self.bids_actions.release()
 
     def end_auction(self):
         logging.info('---------------- End auction ----------------')
