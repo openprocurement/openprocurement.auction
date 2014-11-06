@@ -31,11 +31,11 @@ def postBid():
         form.document = auction.db.get(auction.auction_doc_id)
         if form.validate():
             # write data
-            auction.db.get(auction.auction_doc_id)
+            current_time = datetime.now(timezone('Europe/Kiev'))
             auction.add_bid(form.document['current_stage'],
                             {'amount': request.json['bid'],
-                             'stage': form.document['current_stage'],
-                             'bidder_id': request.json['bidder_id']})
+                             'bidder_id': request.json['bidder_id'],
+                             'time': current_time.isoformat()})
             response = {'status': 'ok', 'data': request.json}
         else:
             response = {'status': 'failed', 'errors': form.errors}
