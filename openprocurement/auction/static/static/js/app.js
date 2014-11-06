@@ -9,6 +9,11 @@ app.constant('AuctionConfig', {
 });
 
 app.controller('AuctionController', function($scope, $http, $log, $rootScope, AuctionConfig) {
+    $scope.alerts = [];
+    $scope.closeAlert = function(index) {
+      $scope.alerts.splice(index, 1);
+    };
+
     db = $scope.db = new PouchDB(AuctionConfig.dbname);
     $scope.auction_doc = {
         "current_stage": null,
@@ -17,6 +22,13 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
     PouchDB.sync(AuctionConfig.dbname, AuctionConfig.remote_db, {
         live: true
     })
+    $scope.$watch(bidder_id, function (newValue, oldValue) {
+        $log.info(newValue);
+        $scope.bidder_id = newValue;
+    });
+    $scope.setuser = function(bidder_id) {
+        $scope.bidder_id = bidder_id;
+    }
     $scope.update_countdown_time = function(start_date, end_date) {
         $scope.interval = (end_date - start_date) / 1000;
         if ($scope.interval > 0) {
@@ -24,9 +36,24 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
             $scope.$broadcast('timer-start');
         };
     }
+    $scope.show_bids_form = function (argument) {
+        if ((angular.isNumber($scope.auction_doc.current_stage))&&($scope.auction_doc.current_stage >= 0)){
+            if (($scope.auction_doc.stages[$scope.auction_doc.current_stage].type == 'bids')
+                &&($scope.auction_doc.stages[$scope.auction_doc.current_stage].bidder_id == $scope.bidder_id)){
+                return true;
+            } else if (($scope.auction_doc.stages[$scope.auction_doc.current_stage].type == 'preliminary_bids')) {
+                for(var i in $scope.auction_doc.initial_bids) {
+                    if ($scope.auction_doc.initial_bids[i].bidder_id == $scope.bidder_id){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
     $scope.sync_countdown_time_with_server = function(start) {
         $http.get('/get_corrent_server_time').success(function(data) {
-            $scope.last_sync = new Date(data);;
+            $scope.last_sync = new Date(data);
             if (($scope.auction_doc) && ($scope.auction_doc.stages[$scope.auction_doc.current_stage + 1])) {
                 var end = new Date($scope.auction_doc.stages[$scope.auction_doc.current_stage + 1]["start"]);
             } else if ($scope.auction_doc) {
@@ -41,12 +68,16 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
         if ($scope.BidsForm.$valid) {
             $http.post('/postbid', {
                 'bid': $scope.BidsForm.bid,
-                'bidder_id': bidder_id || "0"
+                'bidder_id': $scope.bidder_id || bidder_id || "0"
             }).success(function(data) {
                 if (data.status == 'failed') {
-                    $log.error('Errors while biding:', data.errors);
+                    for(var error_id in data.errors){
+                        for(var i in data.errors[error_id]){
+                            $scope.alerts.push({type: 'danger', msg: data.errors[error_id][i]});
+                        }
+                    }
                 } else {
-                    $log.info('Success bid:', data.data);
+                    $scope.alerts.push({type: 'success', msg: 'Bid placed'});
                 }
             });
         }
@@ -67,7 +98,8 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
             $log.debug('onChanges:info - ', change);
             if (change.id == AuctionConfig.auction_doc_id) {
                 $rootScope.$apply(function(argument) {
-                    if (($scope.auction_doc.current_stage == null) || (change.doc.current_stage - $scope.auction_doc.current_stage == 0)) {
+                    if (($scope.auction_doc.current_stage == null) || (change.doc.current_stage - $scope.auction_doc.current_stage == 0) ||(change.doc.current_stage == -1)) {
+                        $scope.auction_doc = change.doc;
                         $scope.sync_countdown_time_with_server();
                     } else {
                         if (change.doc.stages[change.doc.current_stage]["start"]) {
@@ -81,8 +113,8 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
                             var end = new Date(change.doc.endDate)
                         }
                         $scope.update_countdown_time(start, end)
+                        $scope.auction_doc = change.doc;
                     }
-                    $scope.auction_doc = change.doc;
                 });
             }
         }
