@@ -40,6 +40,12 @@
                     </li>
                     <li><a href="#">Settings</a>
                     </li>
+                    <div class="navbar-left">
+                        <div class="btn-group btn-group-sm">
+                            <button ng-repeat="item in auction_doc.initial_bids" type="button" ng-click="setuser(item.bidder_id)" class="btn btn-default navbar-btn">Login in as {{ item.label.en }}</button>
+                            <button type="button" ng-click="setuser(null)" class="btn btn-default navbar-btn">Login in as viewer</button>
+                        </div>
+                    </div>
                 </ul>
             </div>
             <!--/.nav-collapse -->
@@ -51,34 +57,31 @@
             </div>
         </timer>
     </div>
-    <div class="container">
 
-    </div>
-
-    <div class="container-fluid auction-stages">
+    <div class="container-fluid auction-stages" ng-cloak>
         <div class="row">
-            <div class="col-xs-4 hidden-xs">
+            <div class="col-xs-3 hidden-xs">
                 <strong>Time</strong>
             </div>
-            <div class="col-xs-4 hidden-xs">
+            <div class="col-xs-9 hidden-xs">
                 <strong>Bidder</strong>
-            </div>
-            <div class="col-xs-4 hidden-xs">
-                <strong>Bid</strong>
+                <span class="pull-right">
+                    <strong>Bid</strong>
+                </span>
             </div>
         </div>
 
         <div class="row" ng-repeat="item in auction_doc.initial_bids">
-            <div class="col-xs-3">{{ item.time }}</div>
+            <div class="col-xs-3">{{ item.time|date : 'shortTime' }}</div>
             <div class="col-xs-9">{{ item.label.en }}
-                <span class="pull-right">{{ item.amount }} {{ auction_doc.minimalStep.currency }}</span>
+                <span ng-if="item.amount" class="pull-right">{{ item.amount }} {{ auction_doc.minimalStep.currency }}</span>
             </div>
         </div>
         <div class="row " ng-repeat="stage in auction_doc.stages" ng-class="{true: 'bg-primary', false: ''}[auction_doc.current_stage == $index]">
             <div class="col-xs-3">{{ stage.start|date : 'shortTime' }}</div>
             <div class="col-xs-9">{{ stage.label.en }}
                 <span class="pull-right">
-                    <span ng-class="{true:'text-muted', false:''}[auction_doc.current_stage < $index]">{{ stage['amount'] }}
+                    <span ng-if="stage['type'] == 'bids'" ng-class="{true:'text-muted', false:''}[auction_doc.current_stage < $index]">{{ stage['amount'] }}
                         <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span>
                     </span>
                 </span>
@@ -89,15 +92,16 @@
 
 
         <hr>
-        <div ng-show="['bids', 'premeliminary_bids'].indexOf(auction_doc.stages[auction_doc.current_stage].type) != -1" class="panel panel-default bg-warning fixed-bottom">
+        <div ng-show="show_bids_form()" class="panel panel-default bg-warning fixed-bottom">
             <div class="panel-body bg-warning">
                 <div class="row">
                     <div class="col-xs-12">
+                        <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.msg}}</alert>
                         <form id="BidsForm" name="BidsForm" class="form-inline" role="form">
                             <div class="input-group">
-                                <input type="number" class="form-control" id="bid" name="bid" ng-model="BidsForm.bid" placeholder="from {{ auction_doc.stages[auction_doc.current_stage].amount - auction_doc.minimalStep.amount }} or lower">
+                                <input type="number" class="form-control" id="bid" name="bid" ng-model="BidsForm.bid" placeholder="{{ auction_doc.stages[auction_doc.current_stage].amount - auction_doc.minimalStep.amount }} or lower">
                                 <div class="input-group-btn">
-                                    <button type="submit" ng-click="post_bid()" class="btn btn-success">Submit</button>
+                                    <button type="submit" ng-click="post_bid()" class="btn btn-success">Place a bid</button>
                                 </div>
                             </div>
                         </form>
