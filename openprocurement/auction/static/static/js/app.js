@@ -8,7 +8,7 @@ app.constant('AuctionConfig', {
     remote_db: db_url
 });
 
-app.controller('AuctionController', function($scope, $http, $log, $rootScope, AuctionConfig) {
+app.controller('AuctionController', function($scope, $http, $log, $rootScope, $timeout, AuctionConfig) {
     $scope.alerts = [];
     $scope.bidder_id = null;
     $scope.allow_bidding = true;
@@ -85,6 +85,9 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
                     });
                     $scope.allow_bidding = false;
                 }
+                $timeout(function() {
+                    $scope.alerts = [];
+                }, 4000)
             });
         }
     };
