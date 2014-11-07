@@ -98,6 +98,7 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
         }else{
             return $scope.auction_doc.stages[$scope.auction_doc.current_stage].amount - $scope.auction_doc.minimalStep.amount
         }
+        return 0
     }
     $scope.db.changes({
         live: true,
