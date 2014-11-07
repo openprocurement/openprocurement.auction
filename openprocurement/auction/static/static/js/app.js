@@ -10,6 +10,7 @@ app.constant('AuctionConfig', {
 
 app.controller('AuctionController', function($scope, $http, $log, $rootScope, AuctionConfig) {
     $scope.alerts = [];
+    $scope.bidder_id = null;
     $scope.closeAlert = function(index) {
       $scope.alerts.splice(index, 1);
     };
