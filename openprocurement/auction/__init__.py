@@ -251,15 +251,16 @@ class Auction(object):
             ))
 
         prelimitary_bids_results = []
-        for bid_info in sorting_by_time(minimal_bids):
-            if bid_info in self._bids_data[doc['current_stage']]:
-                prelimitary_bids_results.append(json.loads(BIDS_TEMPLATE.substitute(
-                    start_time=bid_info["time"],
-                    bidder_id=bid_info['bidder_id'],
-                    bidder_name="Bidder #{0}".format(bid_info['bidder_id']),
-                    amount=bid_info["amount"],
-                    time=bid_info["time"]
-                )))
+        if doc['current_stage'] in self._bids_data:
+            for bid_info in sorting_by_time(minimal_bids):
+                if bid_info in self._bids_data[doc['current_stage']]:
+                    prelimitary_bids_results.append(json.loads(BIDS_TEMPLATE.substitute(
+                        start_time=bid_info["time"],
+                        bidder_id=bid_info['bidder_id'],
+                        bidder_name="Bidder #{0}".format(bid_info['bidder_id']),
+                        amount=bid_info["amount"],
+                        time=bid_info["time"]
+                    )))
         doc["stages"][1:1] = prelimitary_bids_results
 
         doc["current_stage"] += (len(prelimitary_bids_results) + 1)
