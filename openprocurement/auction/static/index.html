@@ -99,7 +99,7 @@
                         <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.msg}}</alert>
                         <form id="BidsForm" name="BidsForm" class="form-inline" role="form">
                             <div class="input-group">
-                                <input type="number" class="form-control" id="bid" name="bid" ng-model="BidsForm.bid" placeholder="{{ auction_doc.stages[auction_doc.current_stage].amount - auction_doc.minimalStep.amount }} or lower">
+                                <input type="number" class="form-control" id="bid" name="bid" ng-model="BidsForm.bid" placeholder="{{ max_bid_amount() }} or lower">
                                 <div class="input-group-btn">
                                     <button type="submit" ng-click="post_bid()" class="btn btn-success">Place a bid</button>
                                 </div>

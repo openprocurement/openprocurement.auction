@@ -224,7 +224,6 @@ class Auction(object):
                 bidder_name="Bidder #{0}".format(bid["bidder_id"]),
                 amount=bid["amount"]
             )))
-        doc['stages'][0]['amount'] = bids_info[-1]['amount']
         doc["current_stage"] = 0
         self.db.save(doc)
 

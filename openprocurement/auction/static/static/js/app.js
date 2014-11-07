@@ -23,10 +23,7 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
         live: true,
         doc_ids: [AuctionConfig.auction_doc_id] 
     })
-    $scope.$watch(bidder_id, function (newValue, oldValue) {
-        $log.info(newValue);
-        $scope.bidder_id = newValue;
-    });
+
     $scope.setuser = function(bidder_id) {
         $scope.bidder_id = bidder_id;
     }
@@ -90,6 +87,17 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
                 $scope.auction_doc = doc;
             });
         });
+    }
+    $scope.max_bid_amount =function (argument) {
+        if ($scope.auction_doc.current_stage == 0){
+            for (var i = $scope.auction_doc.initial_bids.length - 1; i >= 0; i--) {
+                if ($scope.auction_doc.initial_bids[i].bidder_id == $scope.bidder_id){
+                    return $scope.auction_doc.initial_bids[i].amount - $scope.auction_doc.minimalStep.amount
+                }
+            };
+        }else{
+            return $scope.auction_doc.stages[$scope.auction_doc.current_stage].amount - $scope.auction_doc.minimalStep.amount
+        }
     }
     $scope.db.changes({
         live: true,
