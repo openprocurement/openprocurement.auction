@@ -68,13 +68,14 @@ ANNOUNCEMENT_SECONDS = 150
 class Auction(object):
     """docstring for Auction"""
     def __init__(self, auction_doc_id, host='', port=8888,
-                 database_url='http://localhost:9000/auction'):
+                 database_url='http://localhost:9000/auction',
+                 auction_data={}):
         super(Auction, self).__init__()
         self.host = host
         self.port = port
         self.auction_doc_id = auction_doc_id
         self.tender_url = 'http://api-sandbox.openprocurement.org/tenders/{0}/auction'.format(auction_doc_id)
-        self._auction_data = {}
+        self._auction_data = auction_data
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
         self.database_url = database_url
@@ -101,28 +102,29 @@ class Auction(object):
         # if response.ok:
         #     self._auction_data = response.json()
         # else:
-        self._auction_data = {
-            "data": {
-                "bids": [{
-                    "amount": 500,
-                    "currency": "UAH",
-                    "bidder_id": "0",
-                    "time": "2014-10-29T14:15:00+02:00"
-                }, {
-                    "amount": 485,
-                    "currency": "UAH",
-                    "bidder_id": "1",
-                    "time": "2014-10-29T14:13:00+02:00"
-                }],
-                "minimalStep": {
-                    "amount": 35,
-                    "currency": "UAH"
-                },
-                "period": {
-                    "startDate": "2014-10-29T14:13:00+02:00"
+        if not self._auction_data:
+            self._auction_data = {
+                "data": {
+                    "bids": [{
+                        "amount": 500,
+                        "currency": "UAH",
+                        "bidder_id": "0",
+                        "time": "2014-10-29T14:15:00+02:00"
+                    }, {
+                        "amount": 485,
+                        "currency": "UAH",
+                        "bidder_id": "1",
+                        "time": "2014-10-29T14:13:00+02:00"
+                    }],
+                    "minimalStep": {
+                        "amount": 35,
+                        "currency": "UAH"
+                    },
+                    "period": {
+                        "startDate": "2014-10-29T14:13:00+02:00"
+                    }
                 }
             }
-        }
         self.bidders_count = len(self._auction_data["data"]["bids"])
         self.bidders_id = [bid["bidder_id"]
                            for bid in self._auction_data["data"]["bids"]]
@@ -336,8 +338,9 @@ class Auction(object):
         pass
 
 
-def auction_run(auction_doc_id, port, database_url):
-    auction = Auction(auction_doc_id, port=port, database_url=database_url)
+def auction_run(auction_doc_id, port, database_url, auction_data={}):
+    auction = Auction(auction_doc_id, port=port, database_url=database_url,
+                      auction_data=auction_data)
     SCHEDULER.start()
     auction.schedule_auction()
     auction.wait_to_end()
@@ -349,8 +352,13 @@ def main():
     parser.add_argument('auction_doc_id', type=str, help='auction_doc_id')
     parser.add_argument('port', type=int, help='Port')
     parser.add_argument('database_url', type=str, help='Database Url')
+    parser.add_argument('--auction_info', type=str, help='Auction File')
     args = parser.parse_args()
-    auction_run(args.auction_doc_id, args.port, args.database_url)
+    if args.auction_info:
+        auction_data = json.load(open(args.auction_info))
+    else:
+        auction_data = None
+    auction_run(args.auction_doc_id, args.port, args.database_url, auction_data)
 
 
 ##############################################################
