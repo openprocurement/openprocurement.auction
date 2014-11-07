@@ -1,7 +1,7 @@
 from wtforms import Form, FloatField, StringField
 from wtforms.validators import InputRequired, ValidationError, StopValidation
 import wtforms_json
-
+from .utils import get_latest_bid_for_bidder
 wtforms_json.init()
 
 ################################################################################
@@ -31,8 +31,9 @@ def validate_bid_change_on_preliminary_bids(form, field):
     """
     Bid must be lower then all previous bids amount minus minimalStep amount
     """
-    minimal_bid = min(form.document['initial_bids'],
-                      key=lambda item: item['amount'])
+    minimal_bid = get_latest_bid_for_bidder(form.document['initial_bids'],
+                                            form.bidder_id.data)
+
     if field.data > (minimal_bid['amount'] - form.document['minimalStep']['amount']):
         raise ValidationError(u'To high value')
 
@@ -52,10 +53,11 @@ def validate_bidder_id_on_preliminary_bids(form, field):
 
 
 class BidsForm(Form):
-    bid = FloatField('bid', [InputRequired(message=u'Bid amount is required'),
-                             validate_bid_value])
     bidder_id = StringField('bidder_id',
                             [InputRequired(message=u'No bidder id'), ])
+
+    bid = FloatField('bid', [InputRequired(message=u'Bid amount is required'),
+                             validate_bid_value])
 
     def validate_bid(form, field):
         stage_id = form.document['current_stage']
