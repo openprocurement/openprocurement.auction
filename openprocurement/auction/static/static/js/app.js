@@ -105,6 +105,7 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
                         $scope.auction_doc = change.doc;
                         $scope.sync_countdown_time_with_server();
                     } else {
+                        $scope.BidsForm.bid = null;
                         if (change.doc.stages[change.doc.current_stage]["start"]) {
                             var start = new Date(change.doc.stages[change.doc.current_stage]["start"]);
                         } else {
