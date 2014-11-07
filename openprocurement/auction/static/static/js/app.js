@@ -11,6 +11,7 @@ app.constant('AuctionConfig', {
 app.controller('AuctionController', function($scope, $http, $log, $rootScope, AuctionConfig) {
     $scope.alerts = [];
     $scope.bidder_id = null;
+    $scope.allow_bidding = true;
     $scope.closeAlert = function(index) {
         $scope.alerts.splice(index, 1);
     };
@@ -82,10 +83,14 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
                         type: 'success',
                         msg: 'Bid placed'
                     });
+                    $scope.allow_bidding = false;
                 }
             });
         }
     };
+    $scope.edit_bid = function() {
+        $scope.allow_bidding = true;
+    }
     $scope.get_auction_data = function() {
         db.get(AuctionConfig.auction_doc_id, function(err, doc) {
             $log.debug("Get doc", doc);
@@ -123,6 +128,7 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, Au
                         $scope.sync_countdown_time_with_server();
                     } else {
                         $scope.BidsForm.bid = null;
+                        $scope.allow_bidding = true;
                         if (change.doc.stages[change.doc.current_stage]["start"]) {
                             var start = new Date(change.doc.stages[change.doc.current_stage]["start"]);
                         } else {

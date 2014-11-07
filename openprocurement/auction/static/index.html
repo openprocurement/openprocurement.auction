@@ -99,9 +99,10 @@
                         <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.msg}}</alert>
                         <form id="BidsForm" name="BidsForm" class="form-inline" role="form">
                             <div class="input-group">
-                                <input type="number" class="form-control" id="bid" name="bid" ng-model="BidsForm.bid" placeholder="{{ max_bid_amount() }} or lower">
+                                <input type="number" ng-disabled="!allow_bidding" class="form-control" id="bid" name="bid" ng-model="BidsForm.bid" placeholder="{{ max_bid_amount() }} or lower">
                                 <div class="input-group-btn">
-                                    <button type="submit" ng-click="post_bid()" class="btn btn-success">Place a bid</button>
+                                    <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success">Place a bid</button>
+                                    <button type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-success">Edit</button>
                                 </div>
                             </div>
                         </form>
