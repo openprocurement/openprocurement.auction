@@ -70,28 +70,49 @@
                 </span>
             </div>
         </div>
-
-        <div class="row" ng-repeat="item in auction_doc.initial_bids">
-            <div class="col-xs-3">{{ item.time|date : 'shortTime' }}</div>
+        <div class="row" >
+            <div class="col-xs-4 round-element">
+                Initial bids:
+            </div>
+        </div>
+        <div class="row stage-element" ng-repeat="item in auction_doc.initial_bids">
+            <div class="col-xs-3 time-element">{{ item.time|date : 'shortTime' }}</div>
             <div class="col-xs-9">{{ item.label.en }}
                 <span ng-if="item.amount" class="pull-right">{{ item.amount }} {{ auction_doc.minimalStep.currency }}</span>
             </div>
         </div>
-        <div class="row " ng-repeat="stage in auction_doc.stages" ng-class="{true: 'bg-primary', false: ''}[auction_doc.current_stage == $index]">
-            <div class="col-xs-3">{{ stage.start|date : 'shortTime' }}</div>
-            <div class="col-xs-9">{{ stage.label.en }}
-                <span class="pull-right">
-                    <span ng-if="stage['type'] == 'bids'" ng-class="{true:'text-muted', false:''}[auction_doc.current_stage < $index]">{{ stage['amount'] }}
-                        <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span>
+        <div ng-repeat="stage in auction_doc.stages">
+            <div class="row" ng-if="stage['type'] == 'preliminary_bids'">
+                <div class="col-xs-6 round-element">
+                    Preliminary bids:
+                </div>
+            </div>
+            <div class="row" ng-if="stage['type'] == 'announcement'">
+                <div class="col-xs-6 round-element">
+                    Announcement:
+                </div>
+            </div>
+            <div class="row stage-element" ng-class="{true: 'current-stage', false: ''}[auction_doc.current_stage == $index]">
+                <div class="col-xs-3 time-element">{{ stage.start|date : 'shortTime' }}</div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'preliminary_bids'">All bidders</div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'pause'">Pause</div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'announcement'">Results relesing</div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'bids'">{{ stage.label.en }}
+                    <span class="pull-right">
+                        <span ng-if="stage['type'] == 'bids'" ng-class="{true:'text-muted', false:''}[auction_doc.current_stage < $index]">{{ stage['amount'] }}
+                            <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span>
+                        </span>
                     </span>
-                </span>
+                </div>
+            </div>
+            <div class="row" ng-if="stage['type'] == 'pause'">
+                <div class="col-xs-4 round-element">
+                    Round #{{ get_round_number($index) }}:
+                </div>
             </div>
         </div>
     </div>
     <div class="container-fluid">
-
-
-        <hr>
         <div ng-show="show_bids_form()" class="panel panel-default bg-warning fixed-bottom">
             <div class="panel-body bg-warning">
                 <div class="row">

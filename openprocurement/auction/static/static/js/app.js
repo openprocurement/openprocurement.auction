@@ -36,6 +36,17 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, $t
             $scope.$broadcast('timer-start');
         };
     }
+    $scope.get_round_number = function (pause_index) {
+      var pauses = [];
+      $scope.auction_doc.stages.forEach(function(item, index) {
+        if (item.type == 'pause') {
+          pauses.push(index);
+        };
+      })
+      for (var i in pauses) {
+        if (pause_index == pauses[i]) { return parseInt(i) + 1};
+      };
+    }
     $scope.show_bids_form = function(argument) {
         if ((angular.isNumber($scope.auction_doc.current_stage)) && ($scope.auction_doc.current_stage >= 0)) {
             if (($scope.auction_doc.stages[$scope.auction_doc.current_stage].type == 'bids') && ($scope.auction_doc.stages[$scope.auction_doc.current_stage].bidder_id == $scope.bidder_id)) {
