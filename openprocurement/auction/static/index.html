@@ -40,6 +40,7 @@
                     </li>
                     <li><a href="#">Settings</a>
                     </li>
+                    <li><a ng-click="restart_changes()">Restart sync</a></li>
                     <div class="navbar-left">
                         <div class="btn-group btn-group-sm">
                             <button ng-repeat="item in auction_doc.initial_bids" type="button" ng-click="setuser(item.bidder_id)" class="btn btn-default navbar-btn">Login in as {{ item.label.en }}</button>
