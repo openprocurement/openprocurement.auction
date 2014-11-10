@@ -2,6 +2,8 @@ var app = angular.module('app', ['ui.bootstrap', 'pascalprecht.translate', 'time
 var db = {};
 var bidder_id = "0"
 
+
+
 app.constant('AuctionConfig', {
   dbname: 'auction',
   auction_doc_id: auction_doc_id,
@@ -12,8 +14,13 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, $t
   $scope.alerts = [];
   $scope.bidder_id = null;
   $scope.allow_bidding = true;
-  $scope.closeAlert = function(index) {
-    $scope.alerts.splice(index, 1);
+  $scope.closeAlert = function(msg_id) {
+    for (var i = 0; i < $scope.alerts.length; i++) {
+      if ($scope.alerts[i].msg_id == msg_id) {
+        $scope.alerts.splice(i, 1);
+        return true;
+      }
+    };
   };
 
   db = $scope.db = new PouchDB(AuctionConfig.dbname);
@@ -21,7 +28,11 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, $t
     "current_stage": null,
 
   }
-
+  $scope.auto_close_alert = function(msg_id) {
+    $timeout(function() {
+      $scope.closeAlert(msg_id)
+    }, 4000);
+  }
   $scope.setuser = function(bidder_id) {
     $scope.bidder_id = bidder_id;
   }
@@ -81,22 +92,26 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, $t
         if (data.status == 'failed') {
           for (var error_id in data.errors) {
             for (var i in data.errors[error_id]) {
+              var msg_id = Math.random();
               $scope.alerts.push({
+                msg_id: msg_id,
                 type: 'danger',
                 msg: data.errors[error_id][i]
               });
+              $scope.auto_close_alert(msg_id);
             }
           }
         } else {
+          var msg_id = Math.random();
           $scope.alerts.push({
+            msg_id: msg_id,
             type: 'success',
             msg: 'Bid placed'
           });
+          $scope.auto_close_alert(msg_id);
           $scope.allow_bidding = false;
         }
-        $timeout(function() {
-          $scope.alerts = [];
-        }, 4000)
+
       });
     }
   };
@@ -126,49 +141,49 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, $t
     return 0
   }
   $scope.start_sync = function() {
-      $scope.replicate = PouchDB.replicate(AuctionConfig.remote_db, AuctionConfig.dbname, {
-        live: true,
-        doc_ids: [AuctionConfig.auction_doc_id]
-      })
-      $scope.changes = $scope.db.changes({
-        live: true,
-        continuous: true,
-        include_docs: true,
-        since: 'now',
-        onChange: function(change) {
-          $log.debug('onChanges:info - ', change);
-          if (change.id == AuctionConfig.auction_doc_id) {
-            $rootScope.$apply(function(argument) {
-              if (($scope.auction_doc.current_stage == null) || (change.doc.current_stage - $scope.auction_doc.current_stage == 0) || (change.doc.current_stage == -1)) {
-                $scope.auction_doc = change.doc;
-                $scope.sync_countdown_time_with_server();
+    $scope.replicate = PouchDB.replicate(AuctionConfig.remote_db, AuctionConfig.dbname, {
+      live: true,
+      doc_ids: [AuctionConfig.auction_doc_id]
+    })
+    $scope.changes = $scope.db.changes({
+      live: true,
+      continuous: true,
+      include_docs: true,
+      since: 'now',
+      onChange: function(change) {
+        $log.debug('onChanges:info - ', change);
+        if (change.id == AuctionConfig.auction_doc_id) {
+          $rootScope.$apply(function(argument) {
+            if (($scope.auction_doc.current_stage == null) || (change.doc.current_stage - $scope.auction_doc.current_stage == 0) || (change.doc.current_stage == -1)) {
+              $scope.auction_doc = change.doc;
+              $scope.sync_countdown_time_with_server();
+            } else {
+              $scope.BidsForm.bid = null;
+              $scope.allow_bidding = true;
+              if (change.doc.stages[change.doc.current_stage]["start"]) {
+                var start = new Date(change.doc.stages[change.doc.current_stage]["start"]);
               } else {
-                $scope.BidsForm.bid = null;
-                $scope.allow_bidding = true;
-                if (change.doc.stages[change.doc.current_stage]["start"]) {
-                  var start = new Date(change.doc.stages[change.doc.current_stage]["start"]);
-                } else {
-                  var start = new Date();
-                }
-                if (change.doc.stages[change.doc.current_stage + 1]) {
-                  var end = new Date(change.doc.stages[change.doc.current_stage + 1]["start"]);
-                } else {
-                  var end = new Date(change.doc.endDate)
-                }
-                $scope.update_countdown_time(start, end)
-                $scope.auction_doc = change.doc;
+                var start = new Date();
               }
-            });
-          }
+              if (change.doc.stages[change.doc.current_stage + 1]) {
+                var end = new Date(change.doc.stages[change.doc.current_stage + 1]["start"]);
+              } else {
+                var end = new Date(change.doc.endDate)
+              }
+              $scope.update_countdown_time(start, end)
+              $scope.auction_doc = change.doc;
+            }
+          });
         }
-      });
-    };
+      }
+    });
+  };
   $scope.sync = $scope.start_sync();
-  $scope.restart_changes = function () {
-    $scope.replicate.cancel();
-    $scope.changes.cancel();
-    $scope.start_sync();
-  }
+  $scope.restart_changes = function() {
+      $scope.replicate.cancel();
+      $scope.changes.cancel();
+      $scope.start_sync();
+    }
     // $scope.get_auction_data();
   $log.debug("Finish loading");
 });
