@@ -58,7 +58,6 @@
             </div>
         </timer>
     </div>
-
     <div class="container-fluid auction-stages" ng-cloak>
         <div class="row">
             <div class="col-xs-3 hidden-xs">
@@ -76,10 +75,12 @@
                 Initial bids:
             </div>
         </div>
-        <div class="row stage-element" ng-repeat="item in auction_doc.initial_bids">
-            <div class="col-xs-3 time-element">{{ item.time|date : 'shortTime' }}</div>
-            <div class="col-xs-9">{{ item.label.en }}
-                <span ng-if="item.amount" class="pull-right">{{ item.amount }} {{ auction_doc.minimalStep.currency }}</span>
+        <div class="row stage-element" ng-repeat="stage in auction_doc.initial_bids">
+            <div class="col-xs-3 time-element">{{ stage.time|date : 'shortTime' }}</div>
+            <div class="col-xs-9">
+                <span ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
+                <span ng-if="stage.bidder_id == bidder_id ">You</span>
+                <span ng-if="stage.amount" class="pull-right">{{ stage.amount }} {{ auction_doc.minimalStep.currency }}</span>
             </div>
         </div>
         <div ng-repeat="stage in auction_doc.stages">
@@ -97,11 +98,14 @@
                 <div class="col-xs-3 time-element">{{ stage.start|date : 'shortTime' }}</div>
                 <div class="col-xs-9" ng-if="stage['type'] == 'preliminary_bids'">All bidders</div>
                 <div class="col-xs-9" ng-if="stage['type'] == 'pause'">Pause</div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'announcement'">Results relesing</div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'bids'">{{ stage.label.en }}
+                <div class="col-xs-9" ng-if="stage['type'] == 'announcement'">Results Release</div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'bids'">
+                    <span ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
+                    <span ng-if="stage.bidder_id == bidder_id ">You</span>
                     <span class="pull-right">
-                        <span ng-if="stage['type'] == 'bids'" ng-class="{true:'text-muted', false:''}[auction_doc.current_stage < $index]">{{ stage['amount'] }}
-                            <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span>
+                        <span ng-if="stage['type'] == 'bids'" ng-class="{true: 'text-muted', '': false}[auction_doc.current_stage < $index]">
+                            <span ng-if="stage['changed']"><strong>{{ stage['amount'] }} <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span></strong></span>
+                            <span ng-if="!stage['changed']">{{ stage['amount'] }}<span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span></span>
                         </span>
                     </span>
                 </div>
@@ -118,7 +122,7 @@
             <div class="panel-body bg-warning">
                 <div class="row">
                     <div class="col-xs-12">
-                        <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.msg}}</alert>
+                        <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert(alert.msg_id)">{{alert.msg}}</alert>
                         <form id="BidsForm" name="BidsForm" class="form-inline" role="form">
                             <div class="input-group">
                                 <input type="number" ng-disabled="!allow_bidding" class="form-control" id="bid" name="bid" ng-model="BidsForm.bid" placeholder="{{ max_bid_amount() }} or lower">
