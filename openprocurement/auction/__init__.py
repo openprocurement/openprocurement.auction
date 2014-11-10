@@ -33,14 +33,12 @@ INITIAL_BIDS_TEMPLATE = Template('''{
 
 PRELINARY_BIDS_TEMPLATE = Template('''{
     "type": "preliminary_bids",
-    "start": "$start_time",
-    "label": {"en": "Preliminary bids"}
+    "start": "$start_time"
 }''')
 
 PAUSE_TEMPLATE = Template('''{
     "type": "pause",
-    "start": "$start_time",
-    "label": {"en": "Pause"}
+    "start": "$start_time"
 }''')
 
 BIDS_TEMPLATE = Template('''{
@@ -54,8 +52,7 @@ BIDS_TEMPLATE = Template('''{
 
 ANNOUNCEMENT_TEMPLATE = Template('''{
     "type": "announcement",
-    "start": "$start_time",
-    "label": {"en": "Announcement"}
+    "start": "$start_time"
 }''')
 
 ROUNDS = 3
@@ -254,13 +251,15 @@ class Auction(object):
         if doc['current_stage'] in self._bids_data:
             for bid_info in sorting_by_time(minimal_bids):
                 if bid_info in self._bids_data[doc['current_stage']]:
-                    prelimitary_bids_results.append(json.loads(BIDS_TEMPLATE.substitute(
+                    preliminary_bid = json.loads(BIDS_TEMPLATE.substitute(
                         start_time=bid_info["time"],
                         bidder_id=bid_info['bidder_id'],
                         bidder_name="Bidder #{0}".format(bid_info['bidder_id']),
                         amount=bid_info["amount"],
                         time=bid_info["time"]
-                    )))
+                    ))
+                    preliminary_bid["changed"] = True
+                    prelimitary_bids_results.append(preliminary_bid)
         doc["stages"][1:1] = prelimitary_bids_results
 
         doc["current_stage"] += (len(prelimitary_bids_results) + 1)
@@ -282,6 +281,7 @@ class Auction(object):
                 amount=bid_info["amount"],
                 time=bid_info["time"]
             ))
+            doc["stages"][doc["current_stage"]]["changed"] = True
 
     def end_round(self):
         self.bids_actions.acquire()
