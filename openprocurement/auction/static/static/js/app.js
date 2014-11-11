@@ -10,10 +10,22 @@ app.constant('AuctionConfig', {
   remote_db: db_url
 });
 
-app.controller('AuctionController', function($scope, $http, $log, $rootScope, $timeout, AuctionConfig) {
+app.controller('AuctionController', function(
+  $scope, AuctionConfig,
+  $timeout, $http, $log,
+  $rootScope, $location, $translate, $filter
+) {
+  $scope.format_date = function (date, format) {
+    return $filter('date')(date, $filter('translate')(format));
+  };
+  
+  $scope.changeLanguage = function (langKey) {
+    $translate.use(langKey);
+  };
   $scope.alerts = [];
   $scope.bidder_id = null;
   $scope.allow_bidding = true;
+
   $scope.closeAlert = function(msg_id) {
     for (var i = 0; i < $scope.alerts.length; i++) {
       if ($scope.alerts[i].msg_id == msg_id) {
@@ -86,7 +98,7 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, $t
   $scope.post_bid = function() {
     if ($scope.BidsForm.$valid) {
       $http.post('/postbid', {
-        'bid': $scope.BidsForm.bid,
+        'bid': $scope.bid,
         'bidder_id': $scope.bidder_id || bidder_id || "0"
       }).success(function(data) {
         if (data.status == 'failed') {
@@ -158,7 +170,7 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, $t
               $scope.auction_doc = change.doc;
               $scope.sync_countdown_time_with_server();
             } else {
-              $scope.BidsForm.bid = null;
+              $scope.bid = null;
               $scope.allow_bidding = true;
               if (change.doc.stages[change.doc.current_stage]["start"]) {
                 var start = new Date(change.doc.stages[change.doc.current_stage]["start"]);
@@ -173,6 +185,7 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, $t
               $scope.update_countdown_time(start, end)
               $scope.auction_doc = change.doc;
             }
+           
           });
         }
       }
@@ -185,5 +198,5 @@ app.controller('AuctionController', function($scope, $http, $log, $rootScope, $t
       $scope.start_sync();
     }
     // $scope.get_auction_data();
-  $log.debug("Finish loading");
+
 });
