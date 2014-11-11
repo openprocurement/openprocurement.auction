@@ -34,17 +34,22 @@
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1" collapse="navbarCollapsed">
 
                 <ul class="nav navbar-nav">
-                    <li><a href="#">Info</a>
+                    <li><a href="#" translate>Info</a>
                     </li>
-                    <li class="active"><a href="#">Bidding</a>
+                    <li class="active" translate><a href="#">Bidding</a>
                     </li>
-                    <li><a href="#">Settings</a>
+                    <li><a href="#" translate>Settings</a>
                     </li>
-                    <li><a ng-click="restart_changes()">Restart sync</a></li>
+                    <li><a ng-click="restart_changes()" translate>Restart sync</a></li>
                     <div class="navbar-left">
                         <div class="btn-group btn-group-sm">
-                            <button ng-repeat="item in auction_doc.initial_bids" type="button" ng-click="setuser(item.bidder_id)" class="btn btn-default navbar-btn">Login in as {{ item.label.en }}</button>
-                            <button type="button" ng-click="setuser(null)" class="btn btn-default navbar-btn">Login in as viewer</button>
+                            <button type="button" ng-click="changeLanguage('en')" class="btn btn-default navbar-btn" translate>English</button>
+                            <button type="button" ng-click="changeLanguage('uk')" class="btn btn-default navbar-btn" translate>Ukrainian</button>
+                            <button type="button" ng-click="changeLanguage('ru')" class="btn btn-default navbar-btn" translate>Russian</button>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button ng-repeat="item in auction_doc.initial_bids" type="button" ng-click="setuser(item.bidder_id)" class="btn btn-default navbar-btn"><span translate>Login in as</span> {{ item.label.en }}</button>
+                            <button type="button" ng-click="setuser(null)" class="btn btn-default navbar-btn"><span translate>Login in as viewer</span></button>
                         </div>
                     </div>
                 </ul>
@@ -61,58 +66,58 @@
     <div class="container-fluid auction-stages" ng-cloak>
         <div class="row">
             <div class="col-xs-3 hidden-xs">
-                <strong>Time</strong>
+                <strong translate>Time</strong>
             </div>
             <div class="col-xs-9 hidden-xs">
-                <strong>Bidder</strong>
+                <strong translate>Bidder</strong>
                 <span class="pull-right">
-                    <strong>Bid</strong>
+                    <strong translate>Bid</strong>
                 </span>
             </div>
         </div>
         <div class="row" >
             <div class="col-xs-4 round-element">
-                Initial bids:
+                <span translate>Initial bids</span>:
             </div>
         </div>
         <div class="row stage-element" ng-repeat="stage in auction_doc.initial_bids">
-            <div class="col-xs-3 time-element">{{ stage.time|date : 'shortTime' }}</div>
+            <div class="col-xs-3 time-element">{{ format_date(stage.time, 'shortTime') }}</div>
             <div class="col-xs-9">
                 <span ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
-                <span ng-if="stage.bidder_id == bidder_id ">You</span>
-                <span ng-if="stage.amount" class="pull-right">{{ stage.amount }} {{ auction_doc.minimalStep.currency }}</span>
+                <span ng-if="stage.bidder_id == bidder_id " translate>You</span>
+                <span ng-if="stage.amount" class="pull-right"><span>{{ stage.amount }}</span> <span translate>{{ auction_doc.minimalStep.currency }}</span></span>
             </div>
         </div>
         <div ng-repeat="stage in auction_doc.stages">
             <div class="row" ng-if="stage['type'] == 'preliminary_bids'">
                 <div class="col-xs-6 round-element">
-                    Preliminary bids:
+                    <span translate>Preliminary bids</span>:
                 </div>
             </div>
             <div class="row" ng-if="stage['type'] == 'announcement'">
-                <div class="col-xs-6 round-element">
-                    Announcement:
+                <div class="col-xs-6 round-element" >
+                    <span translate>Announcement</span>:
                 </div>
             </div>
             <div class="row stage-element" ng-class="{true: 'current-stage', false: ''}[auction_doc.current_stage == $index]">
                 <div class="col-xs-3 time-element">{{ stage.start|date : 'shortTime' }}</div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'preliminary_bids'">All bidders</div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'pause'">Pause</div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'announcement'">Results Release</div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'preliminary_bids'" translate>All bidders</div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'pause'" translate>Pause</div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'announcement'" translate>Results Release</div>
                 <div class="col-xs-9" ng-if="stage['type'] == 'bids'">
                     <span ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
-                    <span ng-if="stage.bidder_id == bidder_id ">You</span>
+                    <span ng-if="stage.bidder_id == bidder_id " translate>You</span>
                     <span class="pull-right">
                         <span ng-if="stage['type'] == 'bids'" ng-class="{true: 'text-muted', '': false}[auction_doc.current_stage < $index]">
                             <span ng-if="stage['changed']"><strong>{{ stage['amount'] }} <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span></strong></span>
-                            <span ng-if="!stage['changed']">{{ stage['amount'] }}<span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span></span>
+                            <span ng-if="!stage['changed']">{{ stage['amount'] }} <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency|translate }}</span></span>
                         </span>
                     </span>
                 </div>
             </div>
             <div class="row" ng-if="stage['type'] == 'pause'">
                 <div class="col-xs-4 round-element">
-                    Round #{{ get_round_number($index) }}:
+                    <span translate>Round #</span>{{ get_round_number($index) }}:
                 </div>
             </div>
         </div>
@@ -125,18 +130,13 @@
                         <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert(alert.msg_id)">{{alert.msg}}</alert>
                         <form id="BidsForm" name="BidsForm" class="form-inline" role="form">
                             <div class="input-group">
-                                <input type="number" ng-disabled="!allow_bidding" class="form-control" id="bid" name="bid" ng-model="BidsForm.bid" placeholder="{{ max_bid_amount() }} or lower">
+                                <input type="number" ng-disabled="!allow_bidding" class="form-control" id="bid" name="bid" ng-model="bid" placeholder="{{ max_bid_amount() }} {{'or lower'|translate}}">
                                 <div class="input-group-btn">
-                                    <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success">Place a bid</button>
-                                    <button type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-link">Edit</button>
+                                    <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" translate>Place a bid</button>
+                                    <button type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-link" translate>Edit</button>
                                 </div>
                             </div>
                         </form>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-xs-12">
-                        <span class="pull-right"></span>
                     </div>
                 </div>
             </div>
@@ -150,12 +150,14 @@ var db_url = '{{ db_url }}';
 var auction_doc_id = '{{ auction_doc_id }}';
 </script>
 <!-- <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.min.js"></script> -->
-<script src="vendor/angular/angular.min.js"></script>
-<!-- <script src="//cdn.jsdelivr.net/pouchdb/3.0.6/pouchdb.min.js"></script> -->
+<script src="vendor/angular/angular.js"></script>
 <script src="vendor/pouchdb/dist/pouchdb.min.js"></script>
-<script src="vendor/angular-translate/angular-translate.min.js"></script>
 <script src="vendor/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
 <script src="vendor/angular-timer/dist/angular-timer.min.js"></script>
+<!-- <script src="//cdn.jsdelivr.net/pouchdb/3.0.6/pouchdb.min.js"></script> -->
+<script src="vendor/angular-translate/angular-translate.min.js"></script>
 <script src="static/js/app.js"></script>
+<script src="static/js/translations.js"></script>
+
 
 </html>
