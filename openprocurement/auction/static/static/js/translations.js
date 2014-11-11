@@ -24,7 +24,12 @@ app.config(['$translateProvider', function($translateProvider) {
     'or lower': 'or lower',
     'UAH': 'UAH',
     'shortTime': 'h:mm a',
-    'Restart sync': 'Restart sync'
+    'Restart sync': 'Restart sync',
+    'To low value': 'To low value',
+    'To high value': 'To high value',
+    'Not valid bidder': 'Not valid bidder',
+    'Stage not for bidding': 'Stage not for bidding',
+    'Bid placed': 'Bid placed'
   });
 
   $translateProvider.translations('uk', {
@@ -52,7 +57,12 @@ app.config(['$translateProvider', function($translateProvider) {
     'or lower': 'або менше',
     'UAH': 'грн',
     'shortTime': 'HH:mm',
-    'Restart sync': 'Перезапуск синхронізації'
+    'Restart sync': 'Перезапуск синхронізації',
+    'To low value': 'Надто низька заявка',
+    'To high value': 'Надто висока заявка',
+    'Not valid bidder': 'Ви не є валідний користувачем',
+    'Stage not for bidding': 'Даний етап аукціону не передбачає приймання заявок',
+    'Bid placed': 'Заявку прийнято'
   });
 
   $translateProvider.translations('ru', {
@@ -65,11 +75,11 @@ app.config(['$translateProvider', function($translateProvider) {
     'Ukrainian': 'Украинский',
     'Edit': 'Изменить',
     'Info': 'Информация',
-    'Initial bids': 'Первоначальные заявки',
+    'Initial bids': 'Первоначальные ставки',
     'Login in as viewer': 'Вход в качестве зрителя',
     'Login in as': 'Вход в качестве',
     'Place a bid': 'Сделать ставку',
-    'Preliminary bids': 'Предварительные заявки',
+    'Preliminary bids': 'Предварительные ставки',
     'Round #': 'Раунд №',
     'Settings': 'Настройки',
     'Time': 'Время',
@@ -80,7 +90,12 @@ app.config(['$translateProvider', function($translateProvider) {
     'or lower': 'или меньше',
     'UAH': 'грн',
     'shortTime': 'HH:mm',
-    'Restart sync': 'Перезапуск синхронизации'
+    'Restart sync': 'Перезапуск синхронизации',
+    'To low value': 'Слишком низкая ставка',
+    'To high value': 'Слишком высокая ставка',
+    'Not valid bidder': ' Вы не являетесь валидный пользователем',
+    'Stage not for bidding': 'Данный этап аукциона не предусматривает приема ставок',
+    'Bid placed': 'Ставку принято'
   });
   $translateProvider.preferredLanguage('en');
 }])

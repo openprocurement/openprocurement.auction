@@ -18,7 +18,7 @@ app.controller('AuctionController', function(
   $scope.format_date = function (date, format) {
     return $filter('date')(date, $filter('translate')(format));
   };
-  
+
   $scope.changeLanguage = function (langKey) {
     $translate.use(langKey);
   };
@@ -43,7 +43,7 @@ app.controller('AuctionController', function(
   $scope.auto_close_alert = function(msg_id) {
     $timeout(function() {
       $scope.closeAlert(msg_id)
-    }, 4000);
+    }, 400000);
   }
   $scope.setuser = function(bidder_id) {
     $scope.bidder_id = bidder_id;
