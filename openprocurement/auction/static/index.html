@@ -85,7 +85,8 @@
             <div class="col-xs-9">
                 <span ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
                 <span ng-if="stage.bidder_id == bidder_id " translate>You</span>
-                <span ng-if="stage.amount" class="pull-right"><span>{{ stage.amount }}</span> <span translate>{{ auction_doc.minimalStep.currency }}</span></span>
+                <span ng-if="stage.amount" class="pull-right">
+                    <strong><span>{{ stage.amount }}</span> <span translate>{{ auction_doc.minimalStep.currency }}</span></span></strong>
             </div>
         </div>
         <div ng-repeat="stage in auction_doc.stages">
