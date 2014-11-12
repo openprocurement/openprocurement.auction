@@ -56,9 +56,10 @@ ANNOUNCEMENT_TEMPLATE = Template('''{
 }''')
 
 ROUNDS = 3
-PAUSE_SECONDS = 120
-BIDS_SECONDS = 120
-PRELIMITARY_BIDS_SECONDS = 300
+FIRST_PAUSE_SECONDS = 10
+PAUSE_SECONDS = 12
+BIDS_SECONDS = 12
+PRELIMITARY_BIDS_SECONDS = 30
 ANNOUNCEMENT_SECONDS = 150
 
 
@@ -145,31 +146,27 @@ class Auction(object):
             )))
 
         # Schedule PRELIMITARY_BIDS
-        prelimitary_bids = json.loads(PRELINARY_BIDS_TEMPLATE.substitute(
-            start_time=self.startDate.isoformat()
-        ))
-        auction_document['stages'].append(prelimitary_bids)
         SCHEDULER.add_job(self.start_auction, 'date', run_date=self.startDate)
-
-        next_stage_timedelta = self.startDate + timedelta(
-            seconds=PRELIMITARY_BIDS_SECONDS
-        )
-        SCHEDULER.add_job(
-            self.end_prelimitary_bids, 'date',
-            run_date=next_stage_timedelta,
-        )
         # Schedule Bids Rounds
+        next_stage_timedelta = self.startDate
         for round_id in xrange(ROUNDS):
             # Schedule PAUSE Stage
             pause_stage = json.loads(PAUSE_TEMPLATE.substitute(
                 start_time=next_stage_timedelta.isoformat()
             ))
             auction_document['stages'].append(pause_stage)
-            next_stage_timedelta += timedelta(seconds=PAUSE_SECONDS)
-            SCHEDULER.add_job(
-                self.next_stage, 'date',
-                run_date=next_stage_timedelta,
-            )
+            if round_id == 0:
+                next_stage_timedelta += timedelta(seconds=FIRST_PAUSE_SECONDS)
+                SCHEDULER.add_job(
+                    self.end_first_pause, 'date',
+                    run_date=next_stage_timedelta,
+                )
+            else:
+                next_stage_timedelta += timedelta(seconds=PAUSE_SECONDS)
+                SCHEDULER.add_job(
+                    self.next_stage, 'date',
+                    run_date=next_stage_timedelta,
+                )
 
             # Schedule BIDS Stages
             for index in xrange(self.bidders_count):
@@ -226,20 +223,17 @@ class Auction(object):
         doc["current_stage"] = 0
         self.db.save(doc)
 
-    def end_prelimitary_bids(self):
+    def end_first_pause(self):
         logging.info('---------------- End Prelimitary Bids ----------------')
         self.bids_actions.acquire()
         doc = self.db.get(self.auction_doc_id)
         # TODO: get prelimitary bids
         all_bids = deepcopy(doc["initial_bids"])
-        if doc['current_stage'] in self._bids_data:
-            all_bids += self._bids_data[doc['current_stage']]
-
         minimal_bids = []
         for bidder_id in self.bidders_id:
             minimal_bids.append(get_latest_bid_for_bidder(all_bids, bidder_id))
         for index, bid_info in enumerate(sorting_by_amount(minimal_bids)):
-            doc["stages"][2 + index] = json.loads(BIDS_TEMPLATE.substitute(
+            doc["stages"][1 + index] = json.loads(BIDS_TEMPLATE.substitute(
                 start_time=doc["stages"][2 + index]["start"],
                 bidder_id=bid_info['bidder_id'],
                 bidder_name="Bidder #{0}".format(bid_info['bidder_id']),
@@ -247,22 +241,7 @@ class Auction(object):
                 time=bid_info["time"]
             ))
 
-        prelimitary_bids_results = []
-        if doc['current_stage'] in self._bids_data:
-            for bid_info in sorting_by_time(minimal_bids):
-                if bid_info in self._bids_data[doc['current_stage']]:
-                    preliminary_bid = json.loads(BIDS_TEMPLATE.substitute(
-                        start_time=bid_info["time"],
-                        bidder_id=bid_info['bidder_id'],
-                        bidder_name="Bidder #{0}".format(bid_info['bidder_id']),
-                        amount=bid_info["amount"],
-                        time=bid_info["time"]
-                    ))
-                    preliminary_bid["changed"] = True
-                    prelimitary_bids_results.append(preliminary_bid)
-        doc["stages"][1:1] = prelimitary_bids_results
-
-        doc["current_stage"] += (len(prelimitary_bids_results) + 1)
+        doc["current_stage"] += 1
         self.db.save(doc)
         self.bids_actions.release()
 
