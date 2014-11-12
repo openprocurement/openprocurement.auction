@@ -29,7 +29,9 @@ app.config(['$translateProvider', function($translateProvider) {
     'To high value': 'To high value',
     'Not valid bidder': 'Not valid bidder',
     'Stage not for bidding': 'Stage not for bidding',
-    'Bid placed': 'Bid placed'
+    'Bid placed': 'Bid placed',
+    'Your proposal' : 'Your proposal :',
+    'Finished': 'Finished'
   });
 
   $translateProvider.translations('uk', {
@@ -62,7 +64,9 @@ app.config(['$translateProvider', function($translateProvider) {
     'To high value': 'Надто висока заявка',
     'Not valid bidder': 'Ви не є валідний користувачем',
     'Stage not for bidding': 'Даний етап аукціону не передбачає приймання заявок',
-    'Bid placed': 'Заявку прийнято'
+    'Bid placed': 'Заявку прийнято',
+    'Your proposal :': 'Ваша заявка:',
+    'Finished': 'Завершено'
   });
 
   $translateProvider.translations('ru', {
@@ -95,7 +99,9 @@ app.config(['$translateProvider', function($translateProvider) {
     'To high value': 'Слишком высокая ставка',
     'Not valid bidder': ' Вы не являетесь валидный пользователем',
     'Stage not for bidding': 'Данный этап аукциона не предусматривает приема ставок',
-    'Bid placed': 'Ставку принято'
+    'Bid placed': 'Ставку принято',
+    'Your proposal :': 'Ваше предложение:',
+    'Finished': 'Завершено'
   });
   $translateProvider.preferredLanguage('en');
 }])
