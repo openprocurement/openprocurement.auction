@@ -56,17 +56,26 @@ app.controller('AuctionController', function(
     };
   }
   $scope.get_round_number = function(pause_index) {
-    var pauses = [];
-    $scope.auction_doc.stages.forEach(function(item, index) {
-      if (item.type == 'pause') {
-        pauses.push(index);
-      };
-    })
+    var pauses = [0];
+    if($scope.auction_doc.stages){
+      $scope.auction_doc.stages.forEach(function(item, index) {
+        if (item.type == 'pause') {
+          pauses.push(index);
+        };
+      })
+      pauses.push($scope.auction_doc.stages.length - 1);
+    }
+    if (pause_index <= pauses[0]){
+      return "-> 1"
+    }
     for (var i in pauses) {
-      if (pause_index == pauses[i]) {
-        return parseInt(i) + 1
-      };
+      if (pause_index < pauses[i]) {
+        return $filter('translate')('Round #') + (parseInt(i) - 1).toString()
+      }else if ((pause_index == pauses[i])&&(pause_index != $scope.auction_doc.stages.length - 1)){
+        return (parseInt(i) - 1).toString() + "->" + (parseInt(i)).toString()
+      }
     };
+    return $filter('translate')('Finished') 
   }
   $scope.show_bids_form = function(argument) {
     if ((angular.isNumber($scope.auction_doc.current_stage)) && ($scope.auction_doc.current_stage >= 0)) {

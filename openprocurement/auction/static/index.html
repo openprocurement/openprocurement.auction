@@ -19,7 +19,7 @@
 
 <body>
     <div class="container">
-        <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle collapsed" ng-init="navbarCollapsed=true" ng-click="navbarCollapsed = !navbarCollapsed">
                     <span class="sr-only">Toggle navigation</span>
@@ -27,16 +27,19 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#">
-                    <timer countdown="1" max-time-unit="second" interval="1000">{{countdown | number:0}} sec</timer>
-                </a>
+                <div class="navbar-brand pull-left round-info">
+                        <timer countdown="1" max-time-unit="second" interval="1000">{{countdown | number:0}} sec</timer>
+                </div>
+                <div class="navbar-brand pull-right round-information">
+                    {{ get_round_number(auction_doc.current_stage)}}
+                </div>
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1" collapse="navbarCollapsed">
 
                 <ul class="nav navbar-nav">
                     <li><a href="#" translate>Info</a>
                     </li>
-                    <li class="active" translate><a href="#">Bidding</a>
+                    <li class="active"><a href="#" translate>Bidding</a>
                     </li>
                     <li><a href="#" translate>Settings</a>
                     </li>
@@ -75,13 +78,17 @@
                 </span>
             </div>
         </div>
-        <div class="row" >
-            <div class="col-xs-4 round-element">
+        <div class="row hidden-xs" >
+            <span class="round-element">
                 <span translate>Initial bids</span>:
-            </div>
+            </span>
         </div>
         <div class="row stage-element" ng-repeat="stage in auction_doc.initial_bids">
-            <div class="col-xs-3 time-element">{{ format_date(stage.time, 'shortTime') }}</div>
+            <div class="col-xs-3 time-element hidden-xs">{{ format_date(stage.time, 'shortTime') }}</div>
+            <div class="col-xs-3 visible-xs">
+                <img class="stage-icon" ng-if="stage.time" ng-src="static/img/past_stage.png"><img>
+                <img class="stage-icon" ng-if="!stage.time" ng-src="static/img/current_stage.png"><img>
+            </div>
             <div class="col-xs-9">
                 <span ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
                 <span ng-if="stage.bidder_id == bidder_id " translate>You</span>
@@ -90,18 +97,23 @@
             </div>
         </div>
         <div ng-repeat="stage in auction_doc.stages">
-            <div class="row" ng-if="stage['type'] == 'preliminary_bids'">
-                <div class="col-xs-6 round-element">
+            <div class="row hidden-xs" ng-if="stage['type'] == 'preliminary_bids'">
+                <span class="round-element">
                     <span translate>Preliminary bids</span>:
-                </div>
+                </span>
             </div>
-            <div class="row" ng-if="stage['type'] == 'announcement'">
-                <div class="col-xs-6 round-element" >
+            <div class="row hidden-xs" ng-if="stage['type'] == 'announcement'">
+                <span class="round-element" >
                     <span translate>Announcement</span>:
-                </div>
+                </span>
             </div>
             <div class="row stage-element" ng-class="{true: 'current-stage', false: ''}[auction_doc.current_stage == $index]">
-                <div class="col-xs-3 time-element">{{ stage.start|date : 'shortTime' }}</div>
+                <div class="col-xs-3 visible-xs">
+                    <img class="stage-icon" ng-if="auction_doc.current_stage > $index" ng-src="static/img/past_stage.png"></img>
+                    <img class="stage-icon" ng-if="auction_doc.current_stage == $index" ng-src="static/img/current_stage.png"></img>
+                    <img class="stage-icon" ng-if="auction_doc.current_stage < $index" ng-src="static/img/future_stage.png"></img>
+                </div>
+                <div class="col-xs-3 time-element hidden-xs">{{ format_date(stage.start, 'shortTime') }}</div>
                 <div class="col-xs-9" ng-if="stage['type'] == 'preliminary_bids'" translate>All bidders</div>
                 <div class="col-xs-9" ng-if="stage['type'] == 'pause'" translate>Pause</div>
                 <div class="col-xs-9" ng-if="stage['type'] == 'announcement'" translate>Results Release</div>
@@ -109,17 +121,15 @@
                     <span ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
                     <span ng-if="stage.bidder_id == bidder_id " translate>You</span>
                     <span class="pull-right">
-                        <span ng-if="stage['type'] == 'bids'" ng-class="{true: 'text-muted', '': false}[auction_doc.current_stage < $index]">
+                        <span ng-if="stage['type'] == 'bids'" ng-class="{true: 'text-future', '': false}[auction_doc.current_stage < $index]">
                             <span ng-if="stage['changed']"><strong>{{ stage['amount'] }} <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span></strong></span>
                             <span ng-if="!stage['changed']">{{ stage['amount'] }} <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency|translate }}</span></span>
                         </span>
                     </span>
                 </div>
             </div>
-            <div class="row" ng-if="stage['type'] == 'pause'">
-                <div class="col-xs-4 round-element">
-                    <span translate>Round #</span>{{ get_round_number($index) }}:
-                </div>
+            <div class="row hidden-xs" ng-if="stage['type'] == 'pause'">
+                <span class="round-element">{{ get_round_number($index + 1) }}:</span>
             </div>
         </div>
     </div>
@@ -129,7 +139,8 @@
                 <div class="row">
                     <div class="col-xs-12">
                         <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert(alert.msg_id)">{{ alert.msg | translate }}</alert>
-                        <form id="BidsForm" name="BidsForm" class="form-inline" role="form">
+                        <form id="BidsForm" name="BidsForm" role="form">
+                            <label for="bid" translate>Your proposal :</label>
                             <div class="input-group">
                                 <input type="number" ng-disabled="!allow_bidding" class="form-control" id="bid" name="bid" ng-model="bid" placeholder="{{ max_bid_amount() }} {{'or lower'|translate}}">
                                 <div class="input-group-btn">
