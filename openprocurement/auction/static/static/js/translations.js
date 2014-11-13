@@ -14,7 +14,7 @@ app.config(['$translateProvider', function($translateProvider) {
     'Login in as': 'Login in as',
     'Place a bid': 'Place a bid',
     'Preliminary bids': 'Preliminary bids',
-    'Round #': 'Round #',
+    'Round': 'Round',
     'Settings': 'Settings',
     'Time': 'Time',
     'You': 'You',
@@ -31,7 +31,8 @@ app.config(['$translateProvider', function($translateProvider) {
     'Stage not for bidding': 'Stage not for bidding',
     'Bid placed': 'Bid placed',
     'Your proposal' : 'Your proposal :',
-    'Finished': 'Finished'
+    'Finished': 'Finished',
+    'sec': 'sec'
   });
 
   $translateProvider.translations('uk', {
@@ -49,7 +50,7 @@ app.config(['$translateProvider', function($translateProvider) {
     'Login in as': 'Вхід в якості ',
     'Place a bid': 'Зробити заявку',
     'Preliminary bids': 'Попередні заявки',
-    'Round #': 'Раунд №',
+    'Round': 'Раунд',
     'Settings': 'Налаштування',
     'Time': 'Час',
     'You': 'Ви',
@@ -66,7 +67,8 @@ app.config(['$translateProvider', function($translateProvider) {
     'Stage not for bidding': 'Даний етап аукціону не передбачає приймання заявок',
     'Bid placed': 'Заявку прийнято',
     'Your proposal :': 'Ваша заявка:',
-    'Finished': 'Завершено'
+    'Finished': 'Завершено',
+    'sec': 'сек'
   });
 
   $translateProvider.translations('ru', {
@@ -84,7 +86,7 @@ app.config(['$translateProvider', function($translateProvider) {
     'Login in as': 'Вход в качестве',
     'Place a bid': 'Сделать ставку',
     'Preliminary bids': 'Предварительные ставки',
-    'Round #': 'Раунд №',
+    'Round': 'Раунд',
     'Settings': 'Настройки',
     'Time': 'Время',
     'You': 'Вы',
@@ -101,7 +103,8 @@ app.config(['$translateProvider', function($translateProvider) {
     'Stage not for bidding': 'Данный этап аукциона не предусматривает приема ставок',
     'Bid placed': 'Ставку принято',
     'Your proposal :': 'Ваше предложение:',
-    'Finished': 'Завершено'
+    'Finished': 'Завершено',
+    'sec': 'сек'
   });
   $translateProvider.preferredLanguage('en');
 }])

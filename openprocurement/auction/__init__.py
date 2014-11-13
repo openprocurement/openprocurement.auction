@@ -233,7 +233,7 @@ class Auction(object):
             minimal_bids.append(get_latest_bid_for_bidder(all_bids, bidder_id))
         for index, bid_info in enumerate(sorting_by_amount(minimal_bids)):
             doc["stages"][1 + index] = json.loads(BIDS_TEMPLATE.substitute(
-                start_time=doc["stages"][2 + index]["start"],
+                start_time=doc["stages"][1 + index]["start"],
                 bidder_id=bid_info['bidder_id'],
                 bidder_name="Bidder #{0}".format(bid_info['bidder_id']),
                 amount=bid_info["amount"],

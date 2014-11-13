@@ -19,7 +19,7 @@
 
 <body>
     <div class="container">
-        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="navbar navbar-fixed-top" role="navigation">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle collapsed" ng-init="navbarCollapsed=true" ng-click="navbarCollapsed = !navbarCollapsed">
                     <span class="sr-only">Toggle navigation</span>
@@ -27,11 +27,20 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <div class="navbar-brand pull-left round-info">
-                        <timer countdown="1" max-time-unit="second" interval="1000">{{countdown | number:0}} sec</timer>
+                <div class="navbar-brand pull-left round-info timer-text">
+                        <timer countdown="1" max-time-unit="second" interval="1000">{{countdown | number:0}} {{ 'sec' |translate}}</timer>
                 </div>
-                <div class="navbar-brand pull-right round-information">
-                    {{ get_round_number(auction_doc.current_stage)}}
+                <div class="navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'pause'">
+                    <span class="round-number">
+                    {{get_round_number(auction_doc.current_stage).data[0]}} &#8594; {{get_round_number(auction_doc.current_stage).data[1]}}
+                    </span>
+                </div>
+                <div class="navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'round'">
+                    <p translate>Round</p>
+                    <p class="round-number">{{get_round_number(auction_doc.current_stage).data}}</p>
+                </div>
+                <div class="navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'finish'">
+                    <p class="round-number" translate>Finish</p>
                 </div>
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1" collapse="navbarCollapsed">
@@ -61,11 +70,12 @@
         </div>
         <timer countdown="1" interval="1000">
             <div class="progress progress-fixed-top">
-                <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{($parent.interval - countdown)/$parent.interval*100}}" aria-valuemin="0" aria-valuemax="100" style="width: {{($parent.interval - countdown)/$parent.interval*100}}%">
+                <div class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="{{($parent.interval - countdown)/$parent.interval*100}}" aria-valuemin="0" aria-valuemax="100" style="width: {{($parent.interval - countdown)/$parent.interval*100}}%">
                 </div>
             </div>
         </timer>
     </div>
+
     <div class="container-fluid auction-stages" ng-cloak>
         <div class="row">
             <div class="col-xs-3 hidden-xs">
@@ -85,51 +95,45 @@
         </div>
         <div class="row stage-element" ng-repeat="stage in auction_doc.initial_bids">
             <div class="col-xs-3 time-element hidden-xs">{{ format_date(stage.time, 'shortTime') }}</div>
-            <div class="col-xs-3 visible-xs">
+            <div class="col-xs-3 stage-icon-element visible-xs">
                 <img class="stage-icon" ng-if="stage.time" ng-src="static/img/past_stage.png"><img>
                 <img class="stage-icon" ng-if="!stage.time" ng-src="static/img/current_stage.png"><img>
             </div>
             <div class="col-xs-9">
-                <span ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
-                <span ng-if="stage.bidder_id == bidder_id " translate>You</span>
-                <span ng-if="stage.amount" class="pull-right">
-                    <strong><span>{{ stage.amount }}</span> <span translate>{{ auction_doc.minimalStep.currency }}</span></span></strong>
+                <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
+                <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
+                <span ng-if="stage.amount" class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]">
+                    <span>{{ stage.amount }}</span> <span class="amount-currency" translate>{{ auction_doc.minimalStep.currency }}</span>
+                </span>
             </div>
         </div>
         <div ng-repeat="stage in auction_doc.stages">
-            <div class="row hidden-xs" ng-if="stage['type'] == 'preliminary_bids'">
-                <span class="round-element">
-                    <span translate>Preliminary bids</span>:
-                </span>
-            </div>
             <div class="row hidden-xs" ng-if="stage['type'] == 'announcement'">
                 <span class="round-element" >
                     <span translate>Announcement</span>:
                 </span>
             </div>
             <div class="row stage-element" ng-class="{true: 'current-stage', false: ''}[auction_doc.current_stage == $index]">
-                <div class="col-xs-3 visible-xs">
+                <div class="col-xs-3 stage-icon-element visible-xs">
                     <img class="stage-icon" ng-if="auction_doc.current_stage > $index" ng-src="static/img/past_stage.png"></img>
                     <img class="stage-icon" ng-if="auction_doc.current_stage == $index" ng-src="static/img/current_stage.png"></img>
                     <img class="stage-icon" ng-if="auction_doc.current_stage < $index" ng-src="static/img/future_stage.png"></img>
                 </div>
                 <div class="col-xs-3 time-element hidden-xs">{{ format_date(stage.start, 'shortTime') }}</div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'preliminary_bids'" translate>All bidders</div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'pause'" translate>Pause</div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'announcement'" translate>Results Release</div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'preliminary_bids'" translate><span class="stage-label">All bidders</span></div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'pause'"><span class="stage-label" translate>Pause</span></div>
+                <div class="col-xs-9" ng-if="stage['type'] == 'announcement'"><span class="stage-label" translate>Results Release</span></div>
                 <div class="col-xs-9" ng-if="stage['type'] == 'bids'">
-                    <span ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
-                    <span ng-if="stage.bidder_id == bidder_id " translate>You</span>
-                    <span class="pull-right">
-                        <span ng-if="stage['type'] == 'bids'" ng-class="{true: 'text-future', '': false}[auction_doc.current_stage < $index]">
-                            <span ng-if="stage['changed']"><strong>{{ stage['amount'] }} <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span></strong></span>
-                            <span ng-if="!stage['changed']">{{ stage['amount'] }} <span ng-if="stage['amount']">{{ auction_doc.minimalStep.currency|translate }}</span></span>
-                        </span>
+                    <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
+                    <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
+                    <span ng-if="(stage['type'] == 'bids')&&(stage['amount'])"  class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]" ng-class="{true: 'text-future', '': false}[auction_doc.current_stage < $index]">
+                            <span ng-if="stage['changed']"><strong>{{ stage['amount'] }} <span class="amount-currency" ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span></strong></span>
+                            <span ng-if="!stage['changed']">{{ stage['amount'] }} <span class="amount-currency" ng-if="stage['amount']">{{ auction_doc.minimalStep.currency|translate }}</span></span>
                     </span>
                 </div>
             </div>
             <div class="row hidden-xs" ng-if="stage['type'] == 'pause'">
-                <span class="round-element">{{ get_round_number($index + 1) }}:</span>
+                <span class="round-element">{{ get_round_number($index + 1).data }}:</span>
             </div>
         </div>
     </div>

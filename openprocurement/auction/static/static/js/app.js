@@ -66,16 +66,16 @@ app.controller('AuctionController', function(
       pauses.push($scope.auction_doc.stages.length - 1);
     }
     if (pause_index <= pauses[0]){
-      return "-> 1"
+      return {'type': 'pause', 'data': ['', '1',]}
     }
     for (var i in pauses) {
       if (pause_index < pauses[i]) {
-        return $filter('translate')('Round #') + (parseInt(i) - 1).toString()
+        return {'type': 'round', 'data': parseInt(i) - 1}
       }else if ((pause_index == pauses[i])&&(pause_index != $scope.auction_doc.stages.length - 1)){
-        return (parseInt(i) - 1).toString() + "->" + (parseInt(i)).toString()
+        return {'type': 'pause', 'data': [(parseInt(i) - 1).toString() , (parseInt(i)).toString(), ]}
       }
     };
-    return $filter('translate')('Finished') 
+    return {'type': 'finish'}
   }
   $scope.show_bids_form = function(argument) {
     if ((angular.isNumber($scope.auction_doc.current_stage)) && ($scope.auction_doc.current_stage >= 0)) {
@@ -149,17 +149,22 @@ app.controller('AuctionController', function(
   }
   $scope.max_bid_amount = function() {
     if ((angular.isString($scope.bidder_id)) && (angular.isObject($scope.auction_doc))) {
-      if ($scope.auction_doc.current_stage == 0) {
-        for (var i = $scope.auction_doc.initial_bids.length - 1; i >= 0; i--) {
-          if ($scope.auction_doc.initial_bids[i].bidder_id == $scope.bidder_id) {
-            return $scope.auction_doc.initial_bids[i].amount - $scope.auction_doc.minimalStep.amount
-          }
-        };
-      } else {
-        return $scope.auction_doc.stages[$scope.auction_doc.current_stage].amount - $scope.auction_doc.minimalStep.amount
-      }
+      return $scope.auction_doc.stages[$scope.auction_doc.current_stage].amount - $scope.auction_doc.minimalStep.amount
     }
     return 0
+  }
+  $scope.calculate_minimal_bid_amount = function () {
+    if ((angular.isObject($scope.auction_doc))&&(angular.isArray($scope.auction_doc.stages))&&(angular.isArray($scope.auction_doc.initial_bids))){
+      var bids = [];
+      filter_func = function(item, index) {
+        if (!angular.isUndefined(item.amount)) {
+          bids.push(item.amount);
+        };
+      }
+      $scope.auction_doc.stages.forEach(filter_func);
+      $scope.auction_doc.initial_bids.forEach(filter_func);
+      $scope.minimal_bid = bids.sort()[0];
+    }
   }
   $scope.start_sync = function() {
     $scope.replicate = PouchDB.replicate(AuctionConfig.remote_db, AuctionConfig.dbname, {
@@ -194,7 +199,7 @@ app.controller('AuctionController', function(
               $scope.update_countdown_time(start, end)
               $scope.auction_doc = change.doc;
             }
-           
+            $scope.calculate_minimal_bid_amount();
           });
         }
       }
