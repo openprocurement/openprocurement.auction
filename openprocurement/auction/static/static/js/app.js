@@ -5,7 +5,6 @@ var bidder_id = "0"
 
 
 app.constant('AuctionConfig', {
-  dbname: 'auction',
   auction_doc_id: auction_doc_id,
   remote_db: db_url
 });
@@ -15,11 +14,11 @@ app.controller('AuctionController', function(
   $timeout, $http, $log,
   $rootScope, $location, $translate, $filter
 ) {
-  $scope.format_date = function (date, format) {
+  $scope.format_date = function(date, format) {
     return $filter('date')(date, $filter('translate')(format));
   };
 
-  $scope.changeLanguage = function (langKey) {
+  $scope.changeLanguage = function(langKey) {
     $translate.use(langKey);
   };
   $scope.alerts = [];
@@ -35,7 +34,11 @@ app.controller('AuctionController', function(
     };
   };
 
-  db = $scope.db = new PouchDB(AuctionConfig.dbname);
+  db = $scope.db = new PouchDB(AuctionConfig.remote_db, {
+    ajax: {
+      cache: true
+    }
+  });
   $scope.auction_doc = {
     "current_stage": null,
 
@@ -57,7 +60,7 @@ app.controller('AuctionController', function(
   }
   $scope.get_round_number = function(pause_index) {
     var pauses = [0];
-    if($scope.auction_doc.stages){
+    if ($scope.auction_doc.stages) {
       $scope.auction_doc.stages.forEach(function(item, index) {
         if (item.type == 'pause') {
           pauses.push(index);
@@ -65,17 +68,28 @@ app.controller('AuctionController', function(
       })
       pauses.push($scope.auction_doc.stages.length - 1);
     }
-    if (pause_index <= pauses[0]){
-      return {'type': 'pause', 'data': ['', '1',]}
+    if (pause_index <= pauses[0]) {
+      return {
+        'type': 'pause',
+        'data': ['', '1', ]
+      }
     }
     for (var i in pauses) {
       if (pause_index < pauses[i]) {
-        return {'type': 'round', 'data': parseInt(i) - 1}
-      }else if ((pause_index == pauses[i])&&(pause_index != $scope.auction_doc.stages.length - 1)){
-        return {'type': 'pause', 'data': [(parseInt(i) - 1).toString() , (parseInt(i)).toString(), ]}
+        return {
+          'type': 'round',
+          'data': parseInt(i) - 1
+        }
+      } else if ((pause_index == pauses[i]) && (pause_index != $scope.auction_doc.stages.length - 1)) {
+        return {
+          'type': 'pause',
+          'data': [(parseInt(i) - 1).toString(), (parseInt(i)).toString(), ]
+        }
       }
     };
-    return {'type': 'finish'}
+    return {
+      'type': 'finish'
+    }
   }
   $scope.show_bids_form = function(argument) {
     if ((angular.isNumber($scope.auction_doc.current_stage)) && ($scope.auction_doc.current_stage >= 0)) {
@@ -92,7 +106,7 @@ app.controller('AuctionController', function(
     return false;
   }
   $scope.sync_countdown_time_with_server = function(start) {
-    $http.get('/get_corrent_server_time').success(function(data) {
+    $http.get('/get_current_server_time').success(function(data) {
       $scope.last_sync = new Date(data);
       if (($scope.auction_doc) && ($scope.auction_doc.stages[$scope.auction_doc.current_stage + 1])) {
         var end = new Date($scope.auction_doc.stages[$scope.auction_doc.current_stage + 1]["start"]);
@@ -106,7 +120,7 @@ app.controller('AuctionController', function(
   }
   $scope.post_bid = function() {
     if ($scope.BidsForm.$valid) {
-      $http.post('/postbid', {
+      $http.post(AuctionConfig.auction_doc_id + '/postbid', {
         'bid': $scope.bid,
         'bidder_id': $scope.bidder_id || bidder_id || "0"
       }).success(function(data) {
@@ -153,8 +167,8 @@ app.controller('AuctionController', function(
     }
     return 0
   }
-  $scope.calculate_minimal_bid_amount = function () {
-    if ((angular.isObject($scope.auction_doc))&&(angular.isArray($scope.auction_doc.stages))&&(angular.isArray($scope.auction_doc.initial_bids))){
+  $scope.calculate_minimal_bid_amount = function() {
+    if ((angular.isObject($scope.auction_doc)) && (angular.isArray($scope.auction_doc.stages)) && (angular.isArray($scope.auction_doc.initial_bids))) {
       var bids = [];
       filter_func = function(item, index) {
         if (!angular.isUndefined(item.amount)) {
@@ -167,45 +181,51 @@ app.controller('AuctionController', function(
     }
   }
   $scope.start_sync = function() {
-    $scope.replicate = PouchDB.replicate(AuctionConfig.remote_db, AuctionConfig.dbname, {
-      live: true,
-      doc_ids: [AuctionConfig.auction_doc_id]
-    })
+
     $scope.changes = $scope.db.changes({
       live: true,
+      style: 'main_only',
       continuous: true,
       include_docs: true,
-      since: 'now',
+      since: 0,
       onChange: function(change) {
         $log.debug('onChanges:info - ', change);
         if (change.id == AuctionConfig.auction_doc_id) {
-          $rootScope.$apply(function(argument) {
-            if (($scope.auction_doc.current_stage == null) || (change.doc.current_stage - $scope.auction_doc.current_stage == 0) || (change.doc.current_stage == -1)) {
-              $scope.auction_doc = change.doc;
-              $scope.sync_countdown_time_with_server();
-            } else {
-              $scope.bid = null;
-              $scope.allow_bidding = true;
-              if (change.doc.stages[change.doc.current_stage]["start"]) {
-                var start = new Date(change.doc.stages[change.doc.current_stage]["start"]);
-              } else {
-                var start = new Date();
-              }
-              if (change.doc.stages[change.doc.current_stage + 1]) {
-                var end = new Date(change.doc.stages[change.doc.current_stage + 1]["start"]);
-              } else {
-                var end = new Date(change.doc.endDate)
-              }
-              $scope.update_countdown_time(start, end)
-              $scope.auction_doc = change.doc;
-            }
-            $scope.calculate_minimal_bid_amount();
-          });
+          $scope.replace_document(change.doc);
         }
       }
     });
   };
-  $scope.sync = $scope.start_sync();
+  $scope.replace_document = function(new_doc) {
+    $rootScope.$apply(function(argument) {
+      if (($scope.auction_doc.current_stage == null) || (new_doc.current_stage - $scope.auction_doc.current_stage == 0) || (new_doc.current_stage == -1)) {
+        $scope.auction_doc = new_doc;
+        $scope.sync_countdown_time_with_server();
+      } else {
+        $scope.bid = null;
+        $scope.allow_bidding = true;
+        if (new_doc.stages[new_doc.current_stage]["start"]) {
+          var start = new Date(new_doc.stages[new_doc.current_stage]["start"]);
+        } else {
+          var start = new Date();
+        }
+        if (new_doc.stages[new_doc.current_stage + 1]) {
+          var end = new Date(new_doc.stages[new_doc.current_stage + 1]["start"]);
+        } else {
+          var end = new Date(new_doc.endDate)
+        }
+        $scope.update_countdown_time(start, end)
+        $scope.auction_doc = new_doc;
+      }
+      $scope.calculate_minimal_bid_amount();
+    });
+  }
+  $scope.db.get(AuctionConfig.auction_doc_id).then(
+    function(newdoc) {
+      $scope.replace_document(newdoc);
+      $scope.sync = $scope.start_sync();
+    });
+
   $scope.restart_changes = function() {
       $scope.replicate.cancel();
       $scope.changes.cancel();
