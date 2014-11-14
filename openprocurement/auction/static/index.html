@@ -10,9 +10,9 @@
 
     <title>Auction Software</title>
     <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"> -->
-    <link rel="stylesheet" href="vendor/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/vendor/bootstrap/dist/css/bootstrap.min.css">
     <!-- Custom styles for this template -->
-    <link href="static/css/starter-template.css" rel="stylesheet">
+    <link href="/static/css/starter-template.css" rel="stylesheet">
 
 </head>
 {% raw %}
@@ -96,8 +96,8 @@
         <div class="row stage-element" ng-repeat="stage in auction_doc.initial_bids">
             <div class="col-xs-3 time-element hidden-xs">{{ format_date(stage.time, 'shortTime') }}</div>
             <div class="col-xs-3 stage-icon-element visible-xs">
-                <img class="stage-icon" ng-if="stage.time" ng-src="static/img/past_stage.png"><img>
-                <img class="stage-icon" ng-if="!stage.time" ng-src="static/img/current_stage.png"><img>
+                <img class="stage-icon" ng-if="stage.time" ng-src="/static/img/past_stage.png"><img>
+                <img class="stage-icon" ng-if="!stage.time" ng-src="/static/img/current_stage.png"><img>
             </div>
             <div class="col-xs-9">
                 <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
@@ -115,9 +115,9 @@
             </div>
             <div class="row stage-element" ng-class="{true: 'current-stage', false: ''}[auction_doc.current_stage == $index]">
                 <div class="col-xs-3 stage-icon-element visible-xs">
-                    <img class="stage-icon" ng-if="auction_doc.current_stage > $index" ng-src="static/img/past_stage.png"></img>
-                    <img class="stage-icon" ng-if="auction_doc.current_stage == $index" ng-src="static/img/current_stage.png"></img>
-                    <img class="stage-icon" ng-if="auction_doc.current_stage < $index" ng-src="static/img/future_stage.png"></img>
+                    <img class="stage-icon" ng-if="auction_doc.current_stage > $index" ng-src="/static/img/past_stage.png"></img>
+                    <img class="stage-icon" ng-if="auction_doc.current_stage == $index" ng-src="/static/img/current_stage.png"></img>
+                    <img class="stage-icon" ng-if="auction_doc.current_stage < $index" ng-src="/static/img/future_stage.png"></img>
                 </div>
                 <div class="col-xs-3 time-element hidden-xs">{{ format_date(stage.start, 'shortTime') }}</div>
                 <div class="col-xs-9" ng-if="stage['type'] == 'preliminary_bids'" translate><span class="stage-label">All bidders</span></div>
@@ -166,14 +166,14 @@ var db_url = '{{ db_url }}';
 var auction_doc_id = '{{ auction_doc_id }}';
 </script>
 <!-- <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.min.js"></script> -->
-<script src="vendor/angular/angular.js"></script>
-<script src="vendor/pouchdb/dist/pouchdb.min.js"></script>
-<script src="vendor/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
-<script src="vendor/angular-timer/dist/angular-timer.min.js"></script>
+<script src="/vendor/angular/angular.js"></script>
+<script src="/vendor/pouchdb/dist/pouchdb.min.js"></script>
+<script src="/vendor/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+<script src="/vendor/angular-timer/dist/angular-timer.min.js"></script>
 <!-- <script src="//cdn.jsdelivr.net/pouchdb/3.0.6/pouchdb.min.js"></script> -->
-<script src="vendor/angular-translate/angular-translate.min.js"></script>
-<script src="static/js/app.js"></script>
-<script src="static/js/translations.js"></script>
+<script src="/vendor/angular-translate/angular-translate.min.js"></script>
+<script src="/static/js/app.js"></script>
+<script src="/static/js/translations.js"></script>
 
 
 </html>
