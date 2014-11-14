@@ -30,12 +30,16 @@ setup(name='openprocurement.auction',
           'Flask',
           'WTForms',
           'WTForms-JSON',
+          'Flask-Redis',
           'gevent'
           # -*- Extra requirements: -*-
       ],
       entry_points={
-        'console_scripts': [
+          'console_scripts': [
               'auction_worker = openprocurement.auction:main',
+          ],
+          'paste.app_factory': [
+              'auctions_server = openprocurement.auction.auctions_server:make_auctions_app'
           ]
-        }
+      },
       )
