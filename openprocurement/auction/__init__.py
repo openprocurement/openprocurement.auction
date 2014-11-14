@@ -13,11 +13,14 @@ from gevent.coros import BoundedSemaphore
 from apscheduler.schedulers.gevent import GeventScheduler
 from .server import run_server
 from .utils import (
-    filter_by_bidder_id, sorting_by_amount,
-    get_latest_bid_for_bidder,
-    sorting_by_time
+    sorting_by_amount,
+    get_latest_bid_for_bidder
 )
 from string import Template
+from gevent import monkey
+
+monkey.patch_all()
+
 SCHEDULER = GeventScheduler()
 SCHEDULER.timezone = timezone('Europe/Kiev')
 
@@ -59,7 +62,6 @@ ROUNDS = 3
 FIRST_PAUSE_SECONDS = 300
 PAUSE_SECONDS = 120
 BIDS_SECONDS = 120
-ANNOUNCEMENT_SECONDS = 150
 
 
 class Auction(object):
@@ -192,8 +194,6 @@ class Auction(object):
             start_time=next_stage_timedelta.isoformat()
         ))
         auction_document['stages'].append(announcement)
-
-        next_stage_timedelta += timedelta(seconds=ANNOUNCEMENT_SECONDS)
         auction_document['endDate'] = next_stage_timedelta.isoformat()
         self.db.save(auction_document)
         self.server = run_server(self)
