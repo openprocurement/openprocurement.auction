@@ -27,7 +27,7 @@ class AuctionsDataBridge(object):
         self.current_worker_port = int(self.config_get('starts_port'))
         self.mapings = Redis.from_url(self.config_get('redis_url'))
         self.circus_client = CircusClient(endpoint=self.config_get('circus_endpoint'))
-        self.url = 'http://api-sandbox.openprocurement.org/api/0/tenders?offset=2014-11-14T21%3A55%3A43.616889'
+        self.url = self.tenders_url
 
     def config_get(self, name):
         return self.config.get('main', name)
@@ -36,9 +36,10 @@ class AuctionsDataBridge(object):
         return urljoin(self.tenders_url, 'tenders/{}'.format(tender_id))
 
     def get_teders_list(self):
+        self.offset = ''
         while True:
             logger.debug('Start request to {}'.format(self.url))
-            response = requests.get(self.url)
+            response = requests.get(self.url, params={'offset': self.offset})
 
             logger.debug('Request response: {}'.format(response.status_code))
             if response.ok:
@@ -54,7 +55,7 @@ class AuctionsDataBridge(object):
                         yield tender_response.json()
                     else:
                         logger.error('Error')
-                self.url = response_json['next_page']['uri']
+                self.offset = response_json['next_page']['offset']
 
     def start_auction_worker(self, tender):
         self.mapings.set(tender['data']['id'], "http://localhost:{}/".format(self.current_worker_port))
@@ -74,7 +75,8 @@ class AuctionsDataBridge(object):
                         },
                         "stderr_stream": {
                             "class": "StdoutStream"
-                        }
+                        },
+                        "respawn": False
                     }
                 }
             }
@@ -86,10 +88,11 @@ class AuctionsDataBridge(object):
         while True:
             logger.info('Start data sync...')
             for tender in self.get_teders_list():
-                if 'awardPeriod' in tender['data'] and \
-                        'startDate' in tender['data']['awardPeriod'] and \
-                        not tender['data']['awardPeriod']['endDate'] and \
-                        'minimalStep' in tender['data']:
+                if 'auctionPeriod' in tender['data'] and \
+                        'startDate' in tender['data']['auctionPeriod'] and \
+                        not tender['data']['auctionPeriod']['endDate'] and \
+                        'minimalStep' in tender['data'] and \
+                        tender['data']['status'] == "qualification":
                     logger.debug('Item {}'.format(tender))
                     self.start_auction_worker(tender)
             logger.info('Wait...')

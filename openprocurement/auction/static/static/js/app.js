@@ -2,7 +2,16 @@ var app = angular.module('app', ['ui.bootstrap', 'pascalprecht.translate', 'time
 var db = {};
 var bidder_id = "0"
 
-
+var get_bidder = function getQueryVariable() {
+    var query = window.location.search.substring(1);
+    var vars = query.split('&');
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+        if (decodeURIComponent(pair[0]) == 'bidder_id') {
+            return decodeURIComponent(pair[1]);
+        }
+    }
+}
 
 app.constant('AuctionConfig', {
   auction_doc_id: auction_doc_id,
@@ -17,13 +26,13 @@ app.controller('AuctionController', function(
   $scope.format_date = function(date, format) {
     return $filter('date')(date, $filter('translate')(format));
   };
+  $scope.bidder_id = get_bidder();
   $scope.lang = 'en';
   $scope.changeLanguage = function(langKey) {
     $translate.use(langKey);
     $scope.lang = langKey;
   };
   $scope.alerts = [];
-  $scope.bidder_id = null;
   $scope.allow_bidding = true;
 
   $scope.closeAlert = function(msg_id) {

@@ -80,7 +80,7 @@ class Auction(object):
         self.host = host
         self.port = port
         self.auction_doc_id = auction_doc_id
-        self.tender_url = 'http://api-sandbox.openprocurement.org/api/0/tenders/{0}'.format(auction_doc_id)
+        self.tender_url = 'http://api-sandbox.openprocurement.org/api/0.3/tenders/{0}'.format(auction_doc_id)
         self._auction_data = auction_data
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
@@ -96,11 +96,11 @@ class Auction(object):
     @property
     def startDate(self):
         date = iso8601.parse_date(
-            self._auction_data['data']['awardPeriod']['startDate']
+            self._auction_data['data']['auctionPeriod']['startDate']
         )
         if datetime.now(timezone('Europe/Kiev')) > date:
             date = datetime.now(timezone('Europe/Kiev')) + timedelta(seconds=20)
-            self._auction_data['data']['awardPeriod']['startDate'] = date.isoformat()
+            self._auction_data['data']['auctionPeriod']['startDate'] = date.isoformat()
         return date
 
     def get_auction_info(self):
@@ -131,12 +131,10 @@ class Auction(object):
                 }
             }
         self.bidders_count = len(self._auction_data["data"]["bids"])
-        self.bidders = [bid["bidders"][0]["id"]["uid"]
-                        for bid in self._auction_data["data"]["bids"]]
-
+        self.bidders = [bid for bid in range(len(self._auction_data["data"]["bids"]))]
         self.mapping = {}
         for index, uid in enumerate(self.bidders):
-            self.mapping[uid] = index + 1
+            self.mapping[uid] = str(index + 1)
 
     def schedule_auction(self):
         self.get_auction_info()
@@ -216,6 +214,7 @@ class Auction(object):
         self._end_auction_event.wait()
     
     def start_auction(self):
+        self.get_auction_info()
         logging.info('---------------- Start auction ----------------')
         doc = self.db.get(self.auction_doc_id)
         # Initital Bids
@@ -224,28 +223,29 @@ class Auction(object):
         bids_info = sorting_start_bids_by_amount(bids)
         for index, bid in enumerate(bids_info):
             doc["initial_bids"].append(json.loads(INITIAL_BIDS_TEMPLATE.substitute(
-                time=bid["date"],
-                bidder_id=bid["bidders"][0]["id"]["uid"],
-                bidder_name=self.mapping[bid["bidders"][0]["id"]["uid"]], #"Bidder #{0}".format(bid["bidder_id"]),
+                time=bid["date"] if "date" in bid else self.startDate,
+                # bidder_id=bid["bidders"][0]["id"]["uid"],
+                bidder_id=index,
+                bidder_name=self.mapping[index], #self.mapping[bid["bidders"][0]["id"]["uid"]]
                 amount=bid["totalValue"]["amount"]
             )))
         doc["current_stage"] = 0
         self.db.save(doc)
 
     def end_first_pause(self):
-        logging.info('---------------- End Firs Pause ----------------')
+        logging.info('---------------- End First Pause ----------------')
         self.bids_actions.acquire()
         doc = self.db.get(self.auction_doc_id)
         # TODO: get prelimitary bids
         all_bids = deepcopy(doc["initial_bids"])
         minimal_bids = []
         for bidder in self.bidders:
-            minimal_bids.append(get_latest_bid_for_bidder(all_bids, bidder))
+            minimal_bids.append(get_latest_bid_for_bidder(all_bids, str(bidder)))
         for index, bid_info in enumerate(sorting_by_amount(minimal_bids)):
             doc["stages"][1 + index] = json.loads(BIDS_TEMPLATE.substitute(
                 start_time=doc["stages"][1 + index]["start"],
                 bidder_id=bid_info['bidder_id'],
-                bidder_name=self.mapping[bid_info["bidders"][0]["id"]["uid"]],
+                bidder_name=self.mapping[int(bid_info['bidder_id'])],
                 amount=bid_info["amount"],
                 time=bid_info["time"]
             ))
@@ -265,7 +265,7 @@ class Auction(object):
             doc["stages"][doc["current_stage"]] = json.loads(BIDS_TEMPLATE.substitute(
                 start_time=doc["stages"][doc["current_stage"]]["start"],
                 bidder_id=bid_info['bidder_id'],
-                bidder_name=self.mapping[bid_info["bidders"][0]["id"]["uid"]],
+                bidder_name=self.mapping[int(bid_info['bidder_id'])],
                 amount=bid_info["amount"],
                 time=bid_info["time"]
             ))
@@ -283,13 +283,13 @@ class Auction(object):
             
         minimal_bids = []
         for bidder_id in self.bidders:
-            minimal_bids.append(get_latest_bid_for_bidder(all_bids, bidder_id))
+            minimal_bids.append(get_latest_bid_for_bidder(all_bids, str(bidder_id)))
 
         for index, bid_info in enumerate(sorting_by_amount(minimal_bids)):
             doc["stages"][doc["current_stage"] + 2 + index] = json.loads(BIDS_TEMPLATE.substitute(
                 start_time=doc["stages"][doc["current_stage"] + 2 + index]["start"],
                 bidder_id=bid_info['bidder_id'],
-                bidder_name=self.mapping[bid_info["bidders"][0]["id"]["uid"]],
+                bidder_name=self.mapping[int(bid_info['bidder_id'])],
                 amount=bid_info["amount"],
                 time=bid_info["time"]
             ))

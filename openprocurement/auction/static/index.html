@@ -55,13 +55,9 @@
                     <li><a ng-click="restart_changes()" translate>Restart sync</a></li>
                     <div class="navbar-left">
                         <div class="btn-group btn-group-sm">
-                            <button type="button" ng-click="changeLanguage('en')" class="btn btn-default navbar-btn" translate>English</button>
-                            <button type="button" ng-click="changeLanguage('uk')" class="btn btn-default navbar-btn" translate>Ukrainian</button>
-                            <button type="button" ng-click="changeLanguage('ru')" class="btn btn-default navbar-btn" translate>Russian</button>
-                        </div>
-                        <div class="btn-group btn-group-sm">
-                            <button ng-repeat="item in auction_doc.initial_bids" type="button" ng-click="setuser(item.bidder_id)" class="btn btn-default navbar-btn"><span translate>Login in as</span> {{ item.label[lang] }}</button>
-                            <button type="button" ng-click="setuser(null)" class="btn btn-default navbar-btn"><span translate>Login in as viewer</span></button>
+                            <button type="button" ng-click="changeLanguage('en')" class="btn btn-default navbar-btn">English</button>
+                            <button type="button" ng-click="changeLanguage('uk')" class="btn btn-default navbar-btn">Українська</button>
+                            <button type="button" ng-click="changeLanguage('ru')" class="btn btn-default navbar-btn">Русский</button>
                         </div>
                     </div>
                 </ul>
