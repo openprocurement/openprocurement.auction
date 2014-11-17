@@ -1,0 +1,113 @@
+import argparse
+import logging
+import logging.config
+import requests
+import ConfigParser
+import os
+from time import sleep
+from urlparse import urljoin
+from redis import Redis
+from circus.client import CircusClient
+
+logger = logging.getLogger(__name__)
+
+
+class AuctionsDataBridge(object):
+    """docstring for AuctionsDataBridge"""
+    def __init__(self, config):
+        super(AuctionsDataBridge, self).__init__()
+        self.config = config
+        self.tenders_url = urljoin(
+            self.config_get('tenders_api_server'),
+            '/api/{}/tenders'.format(
+                self.config_get('tenders_api_version')
+            )
+        )
+        self.couch_url = urljoin(self.config_get('couch_url'), self.config_get('auctions_db'))
+        self.current_worker_port = int(self.config_get('starts_port'))
+        self.mapings = Redis.from_url(self.config_get('redis_url'))
+        self.circus_client = CircusClient(endpoint=self.config_get('circus_endpoint'))
+        self.url = 'http://api-sandbox.openprocurement.org/api/0/tenders?offset=2014-11-14T21%3A55%3A43.616889'
+
+    def config_get(self, name):
+        return self.config.get('main', name)
+
+    def tender_url(self, tender_id):
+        return urljoin(self.tenders_url, 'tenders/{}'.format(tender_id))
+
+    def get_teders_list(self):
+        while True:
+            logger.debug('Start request to {}'.format(self.url))
+            response = requests.get(self.url)
+
+            logger.debug('Request response: {}'.format(response.status_code))
+            if response.ok:
+                response_json = response.json()
+                if len(response_json['data']) == 0:
+                    break
+                for item in response_json['data']:
+                    tender_url = self.tender_url(item['id'])
+                    logger.debug('Start request to {}'.format(tender_url))
+                    tender_response = requests.get(tender_url)
+                    logger.debug('Request response: {}'.format(tender_response.status_code))
+                    if tender_response.ok:
+                        yield tender_response.json()
+                    else:
+                        logger.error('Error')
+                self.url = response_json['next_page']['uri']
+
+    def start_auction_worker(self, tender):
+        self.mapings.set(tender['data']['id'], "http://localhost:{}/".format(self.current_worker_port))
+        logger.info(self.circus_client.call(
+            {
+                "command": "add",
+                "properties": {
+                    "cmd": self.config_get('auction_worker'),
+                    "args": '{} {} {}'.format(tender['data']['id'],
+                                              self.current_worker_port,
+                                              self.couch_url),
+                    "name": "auction_worker_{}".format(tender['data']['id']),
+                    "start": True,
+                    "options": {
+                        "stdout_stream": {
+                            "class": "StdoutStream"
+                        },
+                        "stderr_stream": {
+                            "class": "StdoutStream"
+                        }
+                    }
+                }
+            }
+        ))
+        self.current_worker_port += 1
+
+    def run(self):
+        logger.info('Start Auctions Bridge')
+        while True:
+            logger.info('Start data sync...')
+            for tender in self.get_teders_list():
+                if 'awardPeriod' in tender['data'] and \
+                        'startDate' in tender['data']['awardPeriod'] and \
+                        not tender['data']['awardPeriod']['endDate'] and \
+                        'minimalStep' in tender['data']:
+                    logger.debug('Item {}'.format(tender))
+                    self.start_auction_worker(tender)
+            logger.info('Wait...')
+            sleep(300)
+
+
+def main():
+    parser = argparse.ArgumentParser(description='---- Auctions Bridge ----')
+    parser.add_argument('config', type=str, help='Path to configuration file')
+    params = parser.parse_args()
+    if os.path.isfile(params.config):
+        logging.config.fileConfig(params.config)
+        config = ConfigParser.ConfigParser()
+        config.read(params.config)
+        AuctionsDataBridge(config).run()
+
+
+##############################################################
+
+if __name__ == "__main__":
+    main()
