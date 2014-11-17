@@ -74,10 +74,10 @@
 
     <div class="container-fluid auction-stages" ng-cloak>
         <div class="row">
-            <div class="col-xs-3 hidden-xs">
+            <div class="col-xs-2 hidden-xs">
                 <strong translate>Time</strong>
             </div>
-            <div class="col-xs-9 hidden-xs">
+            <div class="col-xs-10  hidden-xs">
                 <strong translate>Bidder</strong>
                 <span class="pull-right">
                     <strong translate>Bid</strong>
@@ -90,12 +90,12 @@
             </span>
         </div>
         <div class="row stage-element" ng-repeat="stage in auction_doc.initial_bids">
-            <div class="col-xs-3 time-element hidden-xs">{{ format_date(stage.time, 'shortTime') }}</div>
-            <div class="col-xs-3 stage-icon-element visible-xs">
+            <div class="col-xs-2 time-element hidden-xs">{{ format_date(stage.time, 'shortTime') }}</div>
+            <div class="col-xs-2 stage-icon-element visible-xs">
                 <img class="stage-icon" ng-if="stage.time" ng-src="/static/img/past_stage.png"><img>
                 <img class="stage-icon" ng-if="!stage.time" ng-src="/static/img/current_stage.png"><img>
             </div>
-            <div class="col-xs-9">
+            <div class="col-xs-10 stage-info">
                 <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label[lang] }}</span>
                 <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
                 <span ng-if="stage.amount" class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]">
@@ -110,16 +110,16 @@
                 </span>
             </div>
             <div class="row stage-element" ng-class="{true: 'current-stage', false: ''}[auction_doc.current_stage == $index]">
-                <div class="col-xs-3 stage-icon-element visible-xs">
+                <div class="col-xs-2 stage-icon-element visible-xs">
                     <img class="stage-icon" ng-if="auction_doc.current_stage > $index" ng-src="/static/img/past_stage.png"></img>
                     <img class="stage-icon" ng-if="auction_doc.current_stage == $index" ng-src="/static/img/current_stage.png"></img>
                     <img class="stage-icon" ng-if="auction_doc.current_stage < $index" ng-src="/static/img/future_stage.png"></img>
                 </div>
-                <div class="col-xs-3 time-element hidden-xs">{{ format_date(stage.start, 'shortTime') }}</div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'preliminary_bids'" translate><span class="stage-label">All bidders</span></div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'pause'"><span class="stage-label" translate>Pause</span></div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'announcement'"><span class="stage-label" translate>Results Release</span></div>
-                <div class="col-xs-9" ng-if="stage['type'] == 'bids'">
+                <div class="col-xs-2 time-element hidden-xs">{{ format_date(stage.start, 'shortTime') }}</div>
+                <div class="col-xs-10 " ng-if="stage['type'] == 'preliminary_bids'" translate><span class="stage-label">All bidders</span></div>
+                <div class="col-xs-10 " ng-if="stage['type'] == 'pause'"><span class="stage-label" translate>Pause</span></div>
+                <div class="col-xs-10 " ng-if="stage['type'] == 'announcement'"><span class="stage-label" translate>Results Release</span></div>
+                <div class="col-xs-10 stage-bids" ng-if="stage['type'] == 'bids'">
                     <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label[lang] }}</span>
                     <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
                     <span ng-if="(stage['type'] == 'bids')&&(stage['amount'])"  class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]" ng-class="{true: 'text-future', '': false}[auction_doc.current_stage < $index]">
