@@ -37,6 +37,7 @@ setup(name='openprocurement.auction',
       entry_points={
           'console_scripts': [
               'auction_worker = openprocurement.auction:main',
+              'auctions_data_bridge = openprocurement.auction.databridge:main'
           ],
           'paste.app_factory': [
               'auctions_server = openprocurement.auction.auctions_server:make_auctions_app'

@@ -1,6 +1,7 @@
 from flask_redis import Redis
 from flask import Flask, render_template, request, abort
 
+import couchdb
 from datetime import datetime
 from pytz import timezone as tz
 from paste.proxy import make_proxy
@@ -35,9 +36,21 @@ def main_app_index(auction_doc_id):
     )
 
 
+@auctions_server.route('/tenders')
+def tenders_list_index():
+    db = couchdb.client.Database(
+        urljoin(auctions_server.config.get('EXT_COUCH_DB'),
+                auctions_server.config['COUCH_DB'])
+    )
+    return render_template(
+        'list.html',
+        documents=[auction for auction in db.view('_all_docs')]
+    )
+
+
 @auctions_server.route('/tenders/<auction_doc_id>/postbid', methods=['POST'])
 def auctions_server_postBid(auction_doc_id):
-    proxy_path = auctions_server.redis.get(auction_doc_id, '')
+    proxy_path = auctions_server.redis.get(auction_doc_id)
     if proxy_path:
         request.environ['PATH_INFO'] = '/postbid'
         return make_proxy(
