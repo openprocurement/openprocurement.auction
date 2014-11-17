@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" data-ng-app="app" ng-controller="AuctionController">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Auction Software</title>
+    <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"> -->
+    <link rel="stylesheet" href="/vendor/bootstrap/dist/css/bootstrap.min.css">
+    <!-- Custom styles for this template -->
+    <link href="/static/css/starter-template.css" rel="stylesheet">
+
+</head>
+<body>
+    <div class="container">
+        <ul class="list-group">
+            {% for auction in documents | reverse %}
+              <li class="list-group-item">Auction <a href="/tenders/{{ auction.id }}">{{ auction.id }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
