@@ -60,7 +60,7 @@
                             <button type="button" ng-click="changeLanguage('ru')" class="btn btn-default navbar-btn" translate>Russian</button>
                         </div>
                         <div class="btn-group btn-group-sm">
-                            <button ng-repeat="item in auction_doc.initial_bids" type="button" ng-click="setuser(item.bidder_id)" class="btn btn-default navbar-btn"><span translate>Login in as</span> {{ item.label.en }}</button>
+                            <button ng-repeat="item in auction_doc.initial_bids" type="button" ng-click="setuser(item.bidder_id)" class="btn btn-default navbar-btn"><span translate>Login in as</span> {{ item.label[lang] }}</button>
                             <button type="button" ng-click="setuser(null)" class="btn btn-default navbar-btn"><span translate>Login in as viewer</span></button>
                         </div>
                     </div>
@@ -100,7 +100,7 @@
                 <img class="stage-icon" ng-if="!stage.time" ng-src="/static/img/current_stage.png"><img>
             </div>
             <div class="col-xs-9">
-                <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
+                <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label[lang] }}</span>
                 <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
                 <span ng-if="stage.amount" class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]">
                     <span>{{ stage.amount }}</span> <span class="amount-currency" translate>{{ auction_doc.minimalStep.currency }}</span>
@@ -124,7 +124,7 @@
                 <div class="col-xs-9" ng-if="stage['type'] == 'pause'"><span class="stage-label" translate>Pause</span></div>
                 <div class="col-xs-9" ng-if="stage['type'] == 'announcement'"><span class="stage-label" translate>Results Release</span></div>
                 <div class="col-xs-9" ng-if="stage['type'] == 'bids'">
-                    <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label.en }}</span>
+                    <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label[lang] }}</span>
                     <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
                     <span ng-if="(stage['type'] == 'bids')&&(stage['amount'])"  class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]" ng-class="{true: 'text-future', '': false}[auction_doc.current_stage < $index]">
                             <span ng-if="stage['changed']"><strong>{{ stage['amount'] }} <span class="amount-currency" ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span></strong></span>

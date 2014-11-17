@@ -30,7 +30,7 @@ SCHEDULER.timezone = timezone('Europe/Kiev')
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s[%(asctime)s]: %(message)s')
 
-INITIAL_BIDS_TEMPLATE = Template('''{
+INITIAL_BIDS_TEMPLATE = Template(u'''{
     "bidder_id": "$bidder_id",
     "time": "$time",
     "label": {"en": "Bidder #$bidder_name",
@@ -39,26 +39,28 @@ INITIAL_BIDS_TEMPLATE = Template('''{
     "amount": $amount
 }''')
 
-PRELINARY_BIDS_TEMPLATE = Template('''{
+PRELINARY_BIDS_TEMPLATE = Template(u'''{
     "type": "preliminary_bids",
     "start": "$start_time"
 }''')
 
-PAUSE_TEMPLATE = Template('''{
+PAUSE_TEMPLATE = Template(u'''{
     "type": "pause",
     "start": "$start_time"
 }''')
 
-BIDS_TEMPLATE = Template('''{
+BIDS_TEMPLATE = Template(u'''{
     "type": "bids",
     "bidder_id": "$bidder_id",
     "start": "$start_time",
-    "label": {"en": "$bidder_name"},
+    "label": {"en": "Bidder #$bidder_name",
+              "ru": "Учасник №$bidder_name",
+              "uk": "Участник №$bidder_name"},
     "amount": $amount,
     "time": "$time"
 }''')
 
-ANNOUNCEMENT_TEMPLATE = Template('''{
+ANNOUNCEMENT_TEMPLATE = Template(u'''{
     "type": "announcement",
     "start": "$start_time"
 }''')

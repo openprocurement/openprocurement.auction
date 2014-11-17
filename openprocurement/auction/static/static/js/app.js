@@ -17,9 +17,10 @@ app.controller('AuctionController', function(
   $scope.format_date = function(date, format) {
     return $filter('date')(date, $filter('translate')(format));
   };
-
+  $scope.lang = 'en';
   $scope.changeLanguage = function(langKey) {
     $translate.use(langKey);
+    $scope.lang = langKey;
   };
   $scope.alerts = [];
   $scope.bidder_id = null;
