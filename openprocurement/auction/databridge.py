@@ -51,14 +51,17 @@ class AuctionsDataBridge(object):
     def get_teders_list(self):
         self.offset = ''
         while True:
-            logger.debug('Start request to {}'.format(self.url))
-            response = requests.get(self.url, params={'offset': self.offset,
-                                                      'opt_fields': 'status,auctionPeriod'})
+            params = {'offset': self.offset, 'opt_fields': 'status,auctionPeriod'}
+            logger.debug('Start request to {}, params: {}'.format(
+                self.url, params))
+            response = requests.get(self.url, params=params)
 
             logger.debug('Request response: {}'.format(response.status_code))
             if response.ok:
                 response_json = response.json()
                 if len(response_json['data']) == 0:
+                    logger.info("Change offset date to {}".format(response_json['next_page']['offset']))
+                    self.offset = response_json['next_page']['offset']
                     break
                 for item in response_json['data']:
                     if 'auctionPeriod' in item \
@@ -72,8 +75,6 @@ class AuctionsDataBridge(object):
                             continue
 
                         yield item
-                logger.info("Change offset date to {}".format(response_json['next_page']['offset']))
-            self.offset = response_json['next_page']['offset']
 
     def start_auction_worker(self, tender_item):
         self.mapings.set(tender_item['id'], "http://localhost:{}/".format(self.current_worker_port))
