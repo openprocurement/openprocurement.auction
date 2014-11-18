@@ -80,7 +80,7 @@ class Auction(object):
         self.host = host
         self.port = port
         self.auction_doc_id = auction_doc_id
-        self.tender_url = 'http://api-sandbox.openprocurement.org/api/0.3/tenders/{0}'.format(auction_doc_id)
+        self.tender_url = 'http://api-sandbox.openprocurement.org/api/0.3/tenders/{0}/auction'.format(auction_doc_id)
         self._auction_data = auction_data
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
@@ -98,6 +98,7 @@ class Auction(object):
         date = iso8601.parse_date(
             self._auction_data['data']['auctionPeriod']['startDate']
         )
+        date = date.astimezone(SCHEDULER.timezone)
         if datetime.now(timezone('Europe/Kiev')) > date:
             date = datetime.now(timezone('Europe/Kiev')) + timedelta(seconds=20)
             self._auction_data['data']['auctionPeriod']['startDate'] = date.isoformat()
@@ -133,7 +134,7 @@ class Auction(object):
                 }
             }
         self.bidders_count = len(self._auction_data["data"]["bids"])
-        self.bidders = [bid for bid in range(len(self._auction_data["data"]["bids"]))]
+        self.bidders = [bid["id"] for bid in self._auction_data["data"]["bids"]]
         self.mapping = {}
         for index, uid in enumerate(self.bidders):
             self.mapping[uid] = str(index + 1)
@@ -149,11 +150,11 @@ class Auction(object):
                             "initial_bids": [], "current_stage": -1,
                             "minimalStep": self._auction_data["data"]["minimalStep"]}
         # Initital Bids
-        for index in xrange(self.bidders_count):
+        for bid_info in self._auction_data["data"]["bids"]:
             auction_document["initial_bids"].append(json.loads(INITIAL_BIDS_TEMPLATE.substitute(
                 time="",
-                bidder_id=index,
-                bidder_name=index,
+                bidder_id=bid_info["id"],
+                bidder_name=self.mapping[bid_info["id"]],
                 amount="null"
             )))
 
@@ -210,7 +211,7 @@ class Auction(object):
         self.server = run_server(self)
         SCHEDULER.add_job(
             self.end_auction, 'date',
-            run_date=next_stage_timedelta + timedelta(seconds=20)
+            run_date=next_stage_timedelta + timedelta(seconds=5)
         )
 
     def wait_to_end(self):
@@ -227,10 +228,9 @@ class Auction(object):
         for index, bid in enumerate(bids_info):
             doc["initial_bids"].append(json.loads(INITIAL_BIDS_TEMPLATE.substitute(
                 time=bid["date"] if "date" in bid else self.startDate,
-                # bidder_id=bid["bidders"][0]["id"]["uid"],
-                bidder_id=index,
-                bidder_name=self.mapping[index], #self.mapping[bid["bidders"][0]["id"]["uid"]]
-                amount=bid["totalValue"]["amount"]
+                bidder_id=bid["id"],
+                bidder_name=self.mapping[bid["id"]], #self.mapping[bid["bidders"][0]["id"]["uid"]]
+                amount=bid["value"]["amount"]
             )))
         doc["current_stage"] = 0
         self.db.save(doc)
@@ -248,7 +248,7 @@ class Auction(object):
             doc["stages"][1 + index] = json.loads(BIDS_TEMPLATE.substitute(
                 start_time=doc["stages"][1 + index]["start"],
                 bidder_id=bid_info['bidder_id'],
-                bidder_name=self.mapping[int(bid_info['bidder_id'])],
+                bidder_name=self.mapping[bid_info['bidder_id']],
                 amount=bid_info["amount"],
                 time=bid_info["time"]
             ))
@@ -268,7 +268,7 @@ class Auction(object):
             doc["stages"][doc["current_stage"]] = json.loads(BIDS_TEMPLATE.substitute(
                 start_time=doc["stages"][doc["current_stage"]]["start"],
                 bidder_id=bid_info['bidder_id'],
-                bidder_name=self.mapping[int(bid_info['bidder_id'])],
+                bidder_name=self.mapping[bid_info['bidder_id']],
                 amount=bid_info["amount"],
                 time=bid_info["time"]
             ))
@@ -286,13 +286,13 @@ class Auction(object):
             
         minimal_bids = []
         for bidder_id in self.bidders:
-            minimal_bids.append(get_latest_bid_for_bidder(all_bids, str(bidder_id)))
+            minimal_bids.append(get_latest_bid_for_bidder(all_bids, bidder_id))
 
         for index, bid_info in enumerate(sorting_by_amount(minimal_bids)):
             doc["stages"][doc["current_stage"] + 2 + index] = json.loads(BIDS_TEMPLATE.substitute(
                 start_time=doc["stages"][doc["current_stage"] + 2 + index]["start"],
                 bidder_id=bid_info['bidder_id'],
-                bidder_name=self.mapping[int(bid_info['bidder_id'])],
+                bidder_name=self.mapping[bid_info['bidder_id']],
                 amount=bid_info["amount"],
                 time=bid_info["time"]
             ))
@@ -322,12 +322,25 @@ class Auction(object):
         self._end_auction_event.set()
 
     def put_auction_data(self):
-        # response = requests.put(requests.get(self.tender_url), data=self._auction_data)
-        # if response.ok:
-        #     logging.info('Auction data submitted')
-        # else:
-        #     logging.warn('Error while submit auction data: {}'.format(response.text))
-        pass
+        doc = self.db.get(self.auction_doc_id)
+        round_starts = doc["current_stage"] - self.bidders_count
+        round_ends = doc["current_stage"]
+        all_bids = deepcopy(doc["stages"][round_starts:round_ends])
+        for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
+            auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
+            self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
+            self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
+        self._auction_data["data"]["auctionPeriod"]["endDate"] = doc['endDate']
+        self._auction_data["data"]["status"] = "qualification"
+        response = requests.patch(
+            self.tender_url,
+            headers={'content-type': 'application/json'},
+            data=json.dumps(self._auction_data)
+        )
+        if response.ok:
+            logging.info('Auction data submitted')
+        else:
+            logging.warn('Error while submit auction data: {}'.format(response.text))
 
 
 def auction_run(auction_doc_id, port, database_url, auction_data={}):
