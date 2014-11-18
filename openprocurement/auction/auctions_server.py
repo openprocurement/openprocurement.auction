@@ -28,7 +28,7 @@ def after_request(response):
 
 
 @auctions_server.route('/tenders/<auction_doc_id>')
-def main_app_index(auction_doc_id):
+def auction_url(auction_doc_id):
     return render_template(
         'index.html',
         db_url=auctions_server.config.get('EXT_COUCH_DB'),
@@ -36,15 +36,34 @@ def main_app_index(auction_doc_id):
     )
 
 
-@auctions_server.route('/tenders')
-def tenders_list_index():
-    db = couchdb.client.Database(
-        urljoin(auctions_server.config.get('EXT_COUCH_DB'),
-                auctions_server.config['COUCH_DB'])
-    )
+@auctions_server.route('/')
+def archive_tenders_list_index():
+    map_fun = '''function(doc) {
+        var current_time = new Date();
+        var start = new Date(doc.stages[0].start);
+        var end = new Date(doc.endDate);
+        if ((current_time > start)&&(current_time<end)){
+            emit(start, doc);
+        }
+    }'''
     return render_template(
         'list.html',
-        documents=[auction for auction in db.view('_all_docs')]
+        documents=[auction.value for auction in auctions_server.db.query(map_fun)]
+    )
+
+
+@auctions_server.route('/archive')
+def auction_list_index():
+    map_fun = '''function(doc) {
+        var current_time = new Date();
+        var end = new Date(doc.endDate);
+        if (current_time>end){
+            emit(start, doc);
+        }
+    }'''
+    return render_template(
+        'list.html',
+        documents=[auction.value for auction in auctions_server.db.query(map_fun)]
     )
 
 
@@ -106,4 +125,8 @@ def make_auctions_app(global_conf,
     auctions_server.config['COUCH_DB'] = auctions_db
     auctions_server.config['TIMEZONE'] = tz(timezone)
     auctions_server.redis = Redis(auctions_server)
+    auctions_server.db = couchdb.client.Database(
+        urljoin(auctions_server.config.get('INT_COUCH_URL'),
+                auctions_server.config['COUCH_DB'])
+    )
     return auctions_server
