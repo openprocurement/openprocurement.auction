@@ -104,7 +104,9 @@ class Auction(object):
         return date
 
     def get_auction_info(self):
+        logging.info("Get data from {}".format(self.tender_url))
         response = requests.get(self.tender_url)
+        logging.info("Response from {}: {}".format(self.tender_url, response.ok))
         if response.ok:
             self._auction_data = response.json()
         if not self._auction_data:
@@ -143,6 +145,7 @@ class Auction(object):
         if doc:
             self.db.delete(doc)
         auction_document = {"_id": self.auction_doc_id, "stages": [],
+                            "tenderID": self._auction_data["data"].get("tenderID", ""),
                             "initial_bids": [], "current_stage": -1,
                             "minimalStep": self._auction_data["data"]["minimalStep"]}
         # Initital Bids
@@ -214,8 +217,8 @@ class Auction(object):
         self._end_auction_event.wait()
     
     def start_auction(self):
-        self.get_auction_info()
         logging.info('---------------- Start auction ----------------')
+        self.get_auction_info()
         doc = self.db.get(self.auction_doc_id)
         # Initital Bids
         bids = deepcopy(self._auction_data['data']['bids'])
