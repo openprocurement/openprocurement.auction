@@ -49,7 +49,7 @@ class AuctionsDataBridge(object):
         return urljoin(self.tenders_url, 'tenders/{}/auction'.format(tender_id))
 
     def get_teders_list(self):
-        self.offset = ''
+        
         while True:
             params = {'offset': self.offset, 'opt_fields': 'status,auctionPeriod'}
             logger.debug('Start request to {}, params: {}'.format(
@@ -111,6 +111,7 @@ class AuctionsDataBridge(object):
 
     def run(self):
         logger.info('Start Auctions Bridge')
+        self.offset = ''
         while True:
             logger.info('Start data sync...')
             for tender_item in self.get_teders_list():
