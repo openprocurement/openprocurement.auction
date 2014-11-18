@@ -8,6 +8,11 @@ from time import sleep
 from urlparse import urljoin
 from redis import Redis
 from circus.client import CircusClient
+from datetime import datetime
+from pytz import timezone
+
+import iso8601
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +35,7 @@ class AuctionsDataBridge(object):
                 self.config_get('tenders_api_version')
             )
         )
+        self.tz = timezone('Europe/Kiev')
         self.couch_url = urljoin(self.config_get('couch_url'), self.config_get('auctions_db'))
         self.current_worker_port = int(self.config_get('starts_port'))
         self.mapings = Redis.from_url(self.config_get('redis_url'))
@@ -40,13 +46,14 @@ class AuctionsDataBridge(object):
         return self.config.get('main', name)
 
     def tender_url(self, tender_id):
-        return urljoin(self.tenders_url, 'tenders/{}'.format(tender_id))
+        return urljoin(self.tenders_url, 'tenders/{}/auction'.format(tender_id))
 
     def get_teders_list(self):
         self.offset = ''
         while True:
             logger.debug('Start request to {}'.format(self.url))
-            response = requests.get(self.url, params={'offset': self.offset})
+            response = requests.get(self.url, params={'offset': self.offset,
+                                                      'opt_fields': 'status,auctionPeriod'})
 
             logger.debug('Request response: {}'.format(response.status_code))
             if response.ok:
@@ -54,27 +61,31 @@ class AuctionsDataBridge(object):
                 if len(response_json['data']) == 0:
                     break
                 for item in response_json['data']:
-                    tender_url = self.tender_url(item['id'])
-                    logger.debug('Start request to {}'.format(tender_url))
-                    tender_response = requests.get(tender_url)
-                    logger.debug('Request response: {}'.format(tender_response.status_code))
-                    if tender_response.ok:
-                        yield tender_response.json()
-                    else:
-                        logger.error('Error')
-                self.offset = response_json['next_page']['offset']
+                    if 'auctionPeriod' in item \
+                            and 'startDate' in item['auctionPeriod'] \
+                            and not item['auctionPeriod']['endDate'] \
+                            and item['status'] == "auction":
+                        
+                        date = iso8601.parse_date(item['auctionPeriod']['startDate'])
+                        date = date.astimezone(self.tz)
+                        if datetime.now(self.tz) > date:
+                            continue
 
-    def start_auction_worker(self, tender):
-        self.mapings.set(tender['data']['id'], "http://localhost:{}/".format(self.current_worker_port))
+                        yield item
+                logger.info("Change offset date to {}".format(response_json['next_page']['offset']))
+            self.offset = response_json['next_page']['offset']
+
+    def start_auction_worker(self, tender_item):
+        self.mapings.set(tender_item['id'], "http://localhost:{}/".format(self.current_worker_port))
         logger.info(self.circus_client.call(
             {
                 "command": "add",
                 "properties": {
                     "cmd": self.config_get('auction_worker'),
-                    "args": '{} {} {}'.format(tender['data']['id'],
+                    "args": '{} {} {}'.format(tender_item['id'],
                                               self.current_worker_port,
                                               self.couch_url),
-                    "name": "auction_worker_{}".format(tender['data']['id']),
+                    "name": "auction_worker_{}".format(tender_item['id']),
                     "start": True,
                     "options": {
                         "shell": True,
@@ -99,15 +110,10 @@ class AuctionsDataBridge(object):
         logger.info('Start Auctions Bridge')
         while True:
             logger.info('Start data sync...')
-            for tender in self.get_teders_list():
-                if 'auctionPeriod' in tender['data'] and \
-                        'startDate' in tender['data']['auctionPeriod'] and \
-                        not tender['data']['auctionPeriod']['endDate'] and \
-                        'minimalStep' in tender['data'] and \
-                        tender['data']['status'] == "qualification":
-                    logger.debug('Item {}'.format(tender))
-                    self.start_auction_worker(tender)
-                    sleep(3)
+            for tender_item in self.get_teders_list():
+                logger.debug('Item {}'.format(tender_item))
+                self.start_auction_worker(tender_item)
+                sleep(3)
             logger.info('Wait...')
             sleep(300)
 
