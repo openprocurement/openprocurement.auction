@@ -32,7 +32,10 @@ app.config(['$translateProvider', function($translateProvider) {
     'Bid placed': 'Bid placed',
     'Your proposal' : 'Your proposal :',
     'Finished': 'Finished',
-    'sec': 'sec'
+    'days': 'days',
+    'hours': 'hr',
+    'minutes': 'min',
+    'seconds': 'sec'
   });
 
   $translateProvider.translations('uk', {
@@ -68,7 +71,10 @@ app.config(['$translateProvider', function($translateProvider) {
     'Bid placed': 'Заявку прийнято',
     'Your proposal :': 'Ваша заявка:',
     'Finished': 'Завершено',
-    'sec': 'сек'
+    'days': 'днів',
+    'hours': 'год',
+    'minutes': 'хв',
+    'seconds': 'сек'
   });
 
   $translateProvider.translations('ru', {
@@ -104,7 +110,10 @@ app.config(['$translateProvider', function($translateProvider) {
     'Bid placed': 'Ставку принято',
     'Your proposal :': 'Ваше предложение:',
     'Finished': 'Завершено',
-    'sec': 'сек'
+    'days': 'дней',
+    'hours': 'час',
+    'minutes': 'мин',
+    'seconds': 'сек'
   });
   $translateProvider.preferredLanguage('en');
 }])

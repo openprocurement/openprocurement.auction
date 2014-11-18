@@ -235,6 +235,11 @@ app.controller('AuctionController', function(
         $scope.update_countdown_time(start, end)
         $scope.auction_doc = new_doc;
       }
+      var stage_el = document.getElementById('#stage-'+ new_doc.current_stage.toString())
+      if(stage_el){
+        window.scrollby(0, stage_el.getBoundingClientRect().top);
+        window.scrollby(0, -70);
+      }
       $scope.calculate_minimal_bid_amount();
     });
   }
