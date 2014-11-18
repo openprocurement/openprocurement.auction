@@ -75,6 +75,8 @@ class AuctionsDataBridge(object):
                             continue
 
                         yield item
+                logger.info("Change offset date to {}".format(response_json['next_page']['offset']))
+                self.offset = response_json['next_page']['offset']
 
     def start_auction_worker(self, tender_item):
         self.mapings.set(tender_item['id'], "http://localhost:{}/".format(self.current_worker_port))
