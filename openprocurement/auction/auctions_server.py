@@ -6,6 +6,9 @@ from datetime import datetime
 from pytz import timezone as tz
 from paste.proxy import make_proxy
 from urlparse import urljoin
+from gevent import monkey
+
+monkey.patch_all()
 
 auctions_server = Flask(
     __name__,
@@ -40,9 +43,8 @@ def auction_url(auction_doc_id):
 def archive_tenders_list_index():
     map_fun = '''function(doc) {
         var current_time = new Date();
-        var start = new Date(doc.stages[0].start);
         var end = new Date(doc.endDate);
-        if ((current_time > start)&&(current_time<end)){
+        if (current_time<end){
             emit(start, doc);
         }
     }'''
