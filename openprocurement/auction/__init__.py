@@ -34,8 +34,8 @@ INITIAL_BIDS_TEMPLATE = Template(u'''{
     "bidder_id": "$bidder_id",
     "time": "$time",
     "label": {"en": "Bidder #$bidder_name",
-              "ru": "Учасник №$bidder_name",
-              "uk": "Участник №$bidder_name"},
+              "ru": "Участник №$bidder_name",
+              "uk": "Учасник №$bidder_name"},
     "amount": $amount
 }''')
 
@@ -54,8 +54,8 @@ BIDS_TEMPLATE = Template(u'''{
     "bidder_id": "$bidder_id",
     "start": "$start_time",
     "label": {"en": "Bidder #$bidder_name",
-              "ru": "Учасник №$bidder_name",
-              "uk": "Участник №$bidder_name"},
+              "ru": "Участник №$bidder_name",
+              "uk": "Учасник №$bidder_name"},
     "amount": $amount,
     "time": "$time"
 }''')
