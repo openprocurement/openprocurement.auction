@@ -31,7 +31,7 @@ def sorting_by_amount(bids, reverse=True):
 
 def sorting_start_bids_by_amount(bids, reverse=True):
     def get_amount(item):
-        return item['totalValue']['amount']
+        return item['value']['amount']
 
     return sorted(bids, key=get_amount, reverse=reverse)
 
