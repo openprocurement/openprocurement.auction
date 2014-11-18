@@ -3,20 +3,28 @@ var db = {};
 var bidder_id = "0"
 
 var get_bidder = function getQueryVariable() {
-    var query = window.location.search.substring(1);
-    var vars = query.split('&');
-    for (var i = 0; i < vars.length; i++) {
-        var pair = vars[i].split('=');
-        if (decodeURIComponent(pair[0]) == 'bidder_id') {
-            return decodeURIComponent(pair[1]);
-        }
+  var query = window.location.search.substring(1);
+  var vars = query.split('&');
+  for (var i = 0; i < vars.length; i++) {
+    var pair = vars[i].split('=');
+    if (decodeURIComponent(pair[0]) == 'bidder_id') {
+      return decodeURIComponent(pair[1]);
     }
+  }
 }
 
 app.constant('AuctionConfig', {
   auction_doc_id: auction_doc_id,
   remote_db: db_url
 });
+
+app.filter('formatnumber', ['$filter',
+  function($filter) {
+    return function(val){
+      return $filter('number')(val).replace(/,/g, " ")
+    }
+  }
+]);
 
 app.controller('AuctionController', function(
   $scope, AuctionConfig,

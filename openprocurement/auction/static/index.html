@@ -99,7 +99,7 @@
                 <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label[lang] }}</span>
                 <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
                 <span ng-if="stage.amount" class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]">
-                    <span>{{ stage.amount }}</span> <span class="amount-currency" translate>{{ auction_doc.minimalStep.currency }}</span>
+                    <span>{{ stage.amount|formatnumber }}</span> <span class="amount-currency" translate>{{ auction_doc.minimalStep.currency }}</span>
                 </span>
             </div>
         </div>
@@ -123,8 +123,8 @@
                     <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label[lang] }}</span>
                     <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
                     <span ng-if="(stage['type'] == 'bids')&&(stage['amount'])"  class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]" ng-class="{true: 'text-future', '': false}[auction_doc.current_stage < $index]">
-                            <span ng-if="stage['changed']"><strong>{{ stage['amount'] }} <span class="amount-currency" ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span></strong></span>
-                            <span ng-if="!stage['changed']">{{ stage['amount'] }} <span class="amount-currency" ng-if="stage['amount']">{{ auction_doc.minimalStep.currency|translate }}</span></span>
+                            <span ng-if="stage['changed']"><strong>{{ stage['amount']|formatnumber }} <span class="amount-currency" ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span></strong></span>
+                            <span ng-if="!stage['changed']">{{ stage['amount']|formatnumber }} <span class="amount-currency" ng-if="stage['amount']">{{ auction_doc.minimalStep.currency|translate }}</span></span>
                     </span>
                 </div>
             </div>
