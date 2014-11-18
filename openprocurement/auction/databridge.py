@@ -12,6 +12,13 @@ from circus.client import CircusClient
 logger = logging.getLogger(__name__)
 
 
+def hook(watcher, arbiter, hook_name, **kwargs):
+    logger.info("remove watcer {}".format(watcher.name))
+    watcher = arbiter._watchers_names.pop(watcher.name)
+    del arbiter.watchers[arbiter.watchers.index(watcher)]
+    return True
+
+
 class AuctionsDataBridge(object):
     """docstring for AuctionsDataBridge"""
     def __init__(self, config):
@@ -70,13 +77,18 @@ class AuctionsDataBridge(object):
                     "name": "auction_worker_{}".format(tender['data']['id']),
                     "start": True,
                     "options": {
+                        "shell": True,
+                        "hooks": {
+                            "after_stop": ("openprocurement.auction.databridge.hook",
+                                           True)
+                        },
+                        "respawn": False,
                         "stdout_stream": {
                             "class": "StdoutStream"
                         },
                         "stderr_stream": {
                             "class": "StdoutStream"
-                        },
-                        "respawn": False
+                        }
                     }
                 }
             }
@@ -95,6 +107,7 @@ class AuctionsDataBridge(object):
                         tender['data']['status'] == "qualification":
                     logger.debug('Item {}'.format(tender))
                     self.start_auction_worker(tender)
+                    sleep(3)
             logger.info('Wait...')
             sleep(300)
 
