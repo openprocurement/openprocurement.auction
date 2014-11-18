@@ -19,7 +19,7 @@
     <div class="container">
         <ul class="list-group">
             {% for auction in documents | reverse %}
-              <li class="list-group-item">Auction <a href="/tenders/{{ auction.id }}">{{ auction.id }}</a></li>
+              <li class="list-group-item">Auction <a href="/tenders/{{ auction._id }}">{{ auction.tenderID }}</a> <span class="pull-right">{{ auction.stages[0].start }} - {{ auction.endDate }}</span></li>
             {% endfor %}
         </ul>
     </div>
