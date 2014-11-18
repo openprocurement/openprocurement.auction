@@ -28,7 +28,12 @@
                     <span class="icon-bar"></span>
                 </button>
                 <div class="navbar-brand pull-left round-info timer-text">
-                        <timer countdown="1" max-time-unit="second" interval="1000">{{countdown | number:0}} {{ 'sec' |translate}}</timer>
+                        <timer countdown="1" max-time-unit="second" interval="1000">
+                            <span ng-show="days">{{days}} {{'days'|translate}} </span>
+                            <span ng-show="hours">{{hours}} {{'hours'|translate}} </span>
+                            <span ng-show="minutes">{{minutes}} {{'minutes'|translate}} </span>
+                            <span ng-show="seconds">{{seconds}} {{'seconds'|translate}}</span>
+                        </timer>
                 </div>
                 <div class="navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'pause'">
                     <span class="round-number">
@@ -36,7 +41,7 @@
                     </span>
                 </div>
                 <div class="navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'round'">
-                    <p translate>Round</p>
+                    <p class="round-label" translate>Round</p>
                     <p class="round-number">{{get_round_number(auction_doc.current_stage).data}}</p>
                 </div>
                 <div class="navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'finish'">
@@ -109,7 +114,7 @@
                     <span translate>Announcement</span>:
                 </span>
             </div>
-            <div class="row stage-element" ng-class="{true: 'current-stage', false: ''}[auction_doc.current_stage == $index]">
+            <div id="stage-{{$index}}" class="row stage-element" ng-class="{true: 'current-stage', false: ''}[auction_doc.current_stage == $index]">
                 <div class="col-xs-2 stage-icon-element visible-xs">
                     <img class="stage-icon" ng-if="auction_doc.current_stage > $index" ng-src="/static/img/past_stage.png"></img>
                     <img class="stage-icon" ng-if="auction_doc.current_stage == $index" ng-src="/static/img/current_stage.png"></img>
