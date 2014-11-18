@@ -17,10 +17,17 @@
 </head>
 <body>
     <div class="container">
-        <ul class="list-group">
+        <div class="list-group">
             {% for auction in documents | reverse %}
-              <li class="list-group-item">Auction <a href="/tenders/{{ auction._id }}">{{ auction.tenderID }}</a> <span class="pull-right">{{ auction.stages[0].start }} - {{ auction.endDate }}</span></li>
+                <a href="/tenders/{{ auction._id }}" class="list-group-item text-center" >
+                <h4 class="list-group-item-heading">
+                    Тендер {{ auction.tenderID }}
+                </h4>
+                <p class="list-group-item-text">
+                   Час проведення: {{ auction.stages[0].start }} - {{ auction.endDate }}
+                </p>
+                </a>
             {% endfor %}
-        </ul>
+        </div>
     </div>
 </body>
