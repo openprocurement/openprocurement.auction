@@ -64,7 +64,7 @@ app.controller('AuctionController', function(
   $scope.auto_close_alert = function(msg_id) {
     $timeout(function() {
       $scope.closeAlert(msg_id)
-    }, 400000);
+    }, 4000);
   }
   $scope.setuser = function(bidder_id) {
     $scope.bidder_id = bidder_id;
@@ -235,17 +235,24 @@ app.controller('AuctionController', function(
         $scope.update_countdown_time(start, end)
         $scope.auction_doc = new_doc;
       }
-      var stage_el = document.getElementById('#stage-'+ new_doc.current_stage.toString())
-      if(stage_el){
-        window.scrollby(0, stage_el.getBoundingClientRect().top);
-        window.scrollby(0, -70);
-      }
+
       $scope.calculate_minimal_bid_amount();
+      $scope.scroll_to_stage();
     });
+  }
+  $scope.scroll_to_stage = function (argument) {
+    $timeout(function() {
+      var stage_el = document.getElementById('stage-'+ $scope.auction_doc.current_stage.toString())
+      if(stage_el){
+        window.scrollBy(0, stage_el.getBoundingClientRect().top);
+        window.scrollBy(0, -100);
+      }
+    }, 1000);
   }
   $scope.db.get(AuctionConfig.auction_doc_id).then(
     function(newdoc) {
       $scope.replace_document(newdoc);
+      $scope.scroll_to_stage();
       $scope.sync = $scope.start_sync();
     });
 
