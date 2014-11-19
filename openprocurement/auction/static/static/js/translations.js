@@ -35,7 +35,8 @@ app.config(['$translateProvider', function($translateProvider) {
     'days': 'days',
     'hours': 'hr',
     'minutes': 'min',
-    'seconds': 'sec'
+    'seconds': 'sec',
+    'minimum': 'minimum'
   });
 
   $translateProvider.translations('uk', {
@@ -74,7 +75,8 @@ app.config(['$translateProvider', function($translateProvider) {
     'days': 'днів',
     'hours': 'год',
     'minutes': 'хв',
-    'seconds': 'сек'
+    'seconds': 'сек',
+    'minimum': 'мінімум'
   });
 
   $translateProvider.translations('ru', {
@@ -113,7 +115,8 @@ app.config(['$translateProvider', function($translateProvider) {
     'days': 'дней',
     'hours': 'час',
     'minutes': 'мин',
-    'seconds': 'сек'
+    'seconds': 'сек',
+    'minimum': 'минимум'
   });
   $translateProvider.preferredLanguage('en');
 }])
