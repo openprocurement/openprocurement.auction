@@ -31,8 +31,8 @@
                         <timer countdown="1" max-time-unit="second" interval="1000">
                             <span ng-show="days">{{days}} {{'days'|translate}} </span>
                             <span ng-show="hours">{{hours}} {{'hours'|translate}} </span>
-                            <span ng-show="minutes">{{minutes}} {{'minutes'|translate}} </span>
-                            <span ng-show="seconds">{{seconds}} {{'seconds'|translate}}</span>
+                            <span ng-show="minutes&&!(days)">{{minutes}} {{'minutes'|translate}} </span>
+                            <span ng-show="seconds&&!((days)||(hours))">{{seconds}} {{'seconds'|translate}}</span>
                         </timer>
                 </div>
                 <div class="navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'pause'">
@@ -167,7 +167,7 @@ var db_url = '{{ db_url }}';
 var auction_doc_id = '{{ auction_doc_id }}';
 </script>
 <!-- <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.min.js"></script> -->
-<script src="/vendor/angular/angular.js"></script>
+<script src="/vendor/angular/angular.min.js"></script>
 <script src="/vendor/pouchdb/dist/pouchdb.min.js"></script>
 <script src="/vendor/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
 <script src="/vendor/angular-timer/dist/angular-timer.min.js"></script>
