@@ -118,5 +118,5 @@ app.config(['$translateProvider', function($translateProvider) {
     'seconds': 'сек',
     'minimum': 'минимум'
   });
-  $translateProvider.preferredLanguage('en');
+  $translateProvider.preferredLanguage('uk');
 }])
