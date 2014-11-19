@@ -39,8 +39,22 @@ ANNOUNCEMENT_TEMPLATE = Template(u'''{
 }''')
 
 
+RESULTS_TEMPLATE = Template(u'''{
+    "bidder_id": "{{ bidder_id }}",
+    "label": {"en": "Bidder #{{ bidder_name }}",
+              "ru": "Участник №{{ bidder_name }}",
+              "uk": "Учасник №{{ bidder_name }}"},
+    "amount": {{ amount }},
+    "time": "{{ time }}"
+}''')
+
+
 def generate_bids_stage(exist_stage_params, params):
     exist_stage_params.update(params)
     return loads(
         BIDS_TEMPLATE.render(**exist_stage_params)
     )
+
+
+def generate_resuls(params):
+    return loads(RESULTS_TEMPLATE.render(**params))

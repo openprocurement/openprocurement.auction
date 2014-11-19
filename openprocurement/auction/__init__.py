@@ -25,6 +25,7 @@ from .templates import (
     PAUSE_TEMPLATE,
     BIDS_TEMPLATE,
     ANNOUNCEMENT_TEMPLATE,
+    generate_resuls,
     generate_bids_stage
 )
 from gevent import monkey
@@ -45,7 +46,7 @@ BIDS_KEYS_FOR_COPY = (
 SCHEDULER = GeventScheduler()
 SCHEDULER.timezone = timezone('Europe/Kiev')
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s-[%(asctime)s]: %(message)s')
 
 
@@ -147,6 +148,7 @@ class Auction(object):
         auction_document = {"_id": self.auction_doc_id, "stages": [],
                             "tenderID": self._auction_data["data"].get("tenderID", ""),
                             "initial_bids": [], "current_stage": -1,
+                            "results": [],
                             "minimalStep": self._auction_data["data"]["minimalStep"]}
         # Initital Bids
         for bid_info in self._auction_data["data"]["bids"]:
@@ -265,17 +267,24 @@ class Auction(object):
 
     def next_stage(self):
         self.bids_actions.acquire()
-        doc = self.db.get(self.auction_doc_id)
-        doc["current_stage"] += 1
-        self.db.save(doc)
-        logging.info('---------------- Start stage {0} ----------------'.format(
-            doc["current_stage"])
-        )
+        self.get_auction_document()
+        self.auction_document["current_stage"] += 1
+        self.save_auction_document()
         self.bids_actions.release()
+        logging.info('---------------- Start stage {0} ----------------'.format(
+            self.auction_document["current_stage"])
+        )
 
     def end_auction(self):
         logging.info('---------------- End auction ----------------')
         self.server.stop()
+        self.get_auction_document()
+        start_stage, end_stage = self.get_round_stages(ROUNDS)
+        minimal_bids = deepcopy(self.auction_document["stages"][start_stage:end_stage])
+        minimal_bids = self.filter_bids_keys(sorting_by_amount(minimal_bids))
+        for item in minimal_bids:
+            self.auction_document["results"].append(generate_resuls(item))
+        self.save_auction_document()
         self.put_auction_data()
         self._end_auction_event.set()
 
@@ -312,9 +321,7 @@ class Auction(object):
                 )
 
     def put_auction_data(self):
-        self.get_auction_document()
-        start_stage, end_stage = self.get_round_stages(ROUNDS)
-        all_bids = deepcopy(self.auction_document["stages"][start_stage:end_stage])
+        all_bids = self.auction_document["results"]
         logging.info("Approved data: {}".format(all_bids))
         for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
             auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
