@@ -66,7 +66,7 @@ class AuctionsDataBridge(object):
                 for item in response_json['data']:
                     if 'auctionPeriod' in item \
                             and 'startDate' in item['auctionPeriod'] \
-                            and not item['auctionPeriod']['endDate'] \
+                            and 'endDate' not in item['auctionPeriod'] \
                             and item['status'] == "auction":
                         
                         date = iso8601.parse_date(item['auctionPeriod']['startDate'])
