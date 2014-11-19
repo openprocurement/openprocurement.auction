@@ -35,7 +35,7 @@ app.controller('AuctionController', function(
     return $filter('date')(date, $filter('translate')(format));
   };
   $scope.bidder_id = get_bidder();
-  $scope.lang = 'en';
+  $scope.lang = 'uk';
   $scope.changeLanguage = function(langKey) {
     $translate.use(langKey);
     $scope.lang = langKey;
