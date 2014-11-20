@@ -17,8 +17,8 @@
 </head>
 {% raw %}
 
-<body>
-    <div class="container">
+<body ng-if="document_exists" ng-cloak>
+    <div class="container" >
         <div class="header-auction navbar navbar-fixed-top" role="navigation">
             <div class="navbar-header header-auction-lining">
                 <div class="header-auction-item header-auction-nav">
@@ -84,7 +84,7 @@
         </timer>
     </div>
 
-    <div class="container-fluid auction-stages" ng-cloak>
+    <div class="container-fluid auction-stages">
         <div class="row">
             <div class="col-xs-2 hidden-xs">
                 <strong translate>Time</strong>

@@ -15,12 +15,13 @@ var get_bidder = function getQueryVariable() {
 
 app.constant('AuctionConfig', {
   auction_doc_id: auction_doc_id,
-  remote_db: db_url
+  remote_db: db_url,
+  restart_retries: 10
 });
 
 app.filter('formatnumber', ['$filter',
   function($filter) {
-    return function(val){
+    return function(val) {
       return $filter('number')(val).replace(/,/g, " ")
     }
   }
@@ -53,13 +54,12 @@ app.controller('AuctionController', function(
   };
 
   db = $scope.db = new PouchDB(AuctionConfig.remote_db, {
-    ajax: {
-      cache: true
-    }
+    // ajax: {
+    //   cache: true
+    // }
   });
   $scope.auction_doc = {
     "current_stage": null,
-
   }
   $scope.auto_close_alert = function(msg_id) {
     $timeout(function() {
@@ -199,20 +199,47 @@ app.controller('AuctionController', function(
     }
   }
   $scope.start_sync = function() {
-
     $scope.changes = $scope.db.changes({
       live: true,
       style: 'main_only',
       continuous: true,
       include_docs: true,
-      since: 0,
-      onChange: function(change) {
-        $log.debug('onChanges:info - ', change);
-        if (change.id == AuctionConfig.auction_doc_id) {
-          $scope.replace_document(change.doc);
-        }
+      since: 0
+    }).on('change', function(resp) {
+      $log.debug('Change: ', resp);
+      $scope.restart_retries = AuctionConfig.restart_retries;
+      if (resp.id == AuctionConfig.auction_doc_id) {
+        $scope.replace_document(resp.doc);
       }
-    });
+    }).on('error', function(err) {
+      $log.error('Changes error: ', err);
+      $scope.restart_retries -= 1;
+      if ($scope.restart_retries) {
+        $log.debug('Start restart feed pooling...')
+        $scope.restart_changes()
+      } else {
+        $log.error('Restart synchronization not allowed. Try restart times:', AuctionConfig.restart_retries);
+      }
+    })
+  };
+
+  $scope.db.get(AuctionConfig.auction_doc_id, function(err, doc) {
+    if (err) {
+      $log.error('Error:', err);
+      return 0
+    }
+    $scope.replace_document(doc);
+    $scope.document_exists = true;
+    $scope.scroll_to_stage();
+    $scope.restart_retries = AuctionConfig.restart_retries;
+    $scope.sync = $scope.start_sync();
+  });
+
+  $scope.restart_changes = function() {
+    $scope.changes.cancel();
+    $timeout(function() {
+      $scope.start_sync()
+    }, 1000);
   };
   $scope.replace_document = function(new_doc) {
     $rootScope.$apply(function(argument) {
@@ -240,27 +267,14 @@ app.controller('AuctionController', function(
       $scope.scroll_to_stage();
     });
   }
-  $scope.scroll_to_stage = function (argument) {
+  $scope.scroll_to_stage = function(argument) {
     $timeout(function() {
-      var stage_el = document.getElementById('stage-'+ $scope.auction_doc.current_stage.toString())
-      if(stage_el){
+      var stage_el = document.getElementById('stage-' + $scope.auction_doc.current_stage.toString())
+      if (stage_el) {
         window.scrollBy(0, stage_el.getBoundingClientRect().top);
         window.scrollBy(0, -100);
       }
-    }, 1000);
+    }, 500);
   }
-  $scope.db.get(AuctionConfig.auction_doc_id).then(
-    function(newdoc) {
-      $scope.replace_document(newdoc);
-      $scope.scroll_to_stage();
-      $scope.sync = $scope.start_sync();
-    });
-
-  $scope.restart_changes = function() {
-      $scope.replicate.cancel();
-      $scope.changes.cancel();
-      $scope.start_sync();
-    }
-    // $scope.get_auction_data();
 
 });
