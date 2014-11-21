@@ -18,7 +18,7 @@
 {% raw %}
 
 <body ng-if="document_exists" ng-cloak>
-    <div class="container" >
+    <div class="container">
         <div class="header-auction navbar navbar-fixed-top" role="navigation">
             <div class="navbar-header header-auction-lining">
                 <div class="header-auction-item header-auction-nav">
@@ -30,16 +30,21 @@
                     </button>
                 </div>
                 <div class="header-auction-item navbar-brand pull-left round-info timer-text">
-                    <timer countdown="1" max-time-unit="second" interval="1000">
-                        <span ng-show="days">
-                            <span class="timer-item">{{days}}</span>{{'days'|translate}}</span>
-                        <span ng-show="hours">
-                            <span class="timer-item">{{hours}}</span>{{'hours'|translate}}</span>
-                        <span ng-show="minutes&&!(days)">
-                            <span class="timer-item">{{minutes}}</span>{{'minutes'|translate}}</span>
-                        <span ng-show="seconds&&!((days)||(hours))">
-                            <span class="timer-item">{{seconds}}</span>{{'seconds'|translate}}</span>
-                    </timer>
+                    <span>
+                        <timer countdown="1" max-time-unit="second" interval="1000">
+                            <span ng-show="days">
+                                <span class="timer-item">{{days}}</span>{{'days'|translate}}</span>
+                            <span ng-show="hours">
+                                <span class="timer-item">{{hours}}</span>{{'hours'|translate}}</span>
+                            <span ng-show="minutes&&!(days)">
+                                <span class="timer-item">{{minutes}}</span>{{'minutes'|translate}}</span>
+                            <span ng-show="seconds&&!((days)||(hours))">
+                                <span class="timer-item">{{seconds}}</span>{{'seconds'|translate}}</span>
+                        </timer>
+                    </span>
+                    <span ng-if="timer_message" translate>
+                        {{ timer_message }}
+                    </span>
                 </div>
                 <div class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'pause'">
                     <span class="round-number">
@@ -84,110 +89,126 @@
         </timer>
     </div>
 
-    <div class="container-fluid auction-stages">
-        <div class="row">
-            <div class="col-xs-2 hidden-xs">
-                <strong translate>Time</strong>
-            </div>
-            <div class="col-xs-10  hidden-xs">
-                <strong translate>Bidder</strong>
-                <span class="pull-right">
-                    <strong translate>Bid</strong>
-                </span>
-            </div>
-        </div>
-        <div class="row hidden-xs">
-            <span class="round-element">
-                <span translate>Initial bids</span>:
-            </span>
-        </div>
-        <div class="row stage-element" ng-repeat="stage in auction_doc.initial_bids">
-            <div class="col-xs-2 time-element hidden-xs">{{ format_date(stage.time, 'shortTime') }}</div>
-            <div class="col-xs-2 stage-icon-element visible-xs">
-                <img class="stage-icon" ng-if="stage.time" ng-src="/static/img/past_stage.png">
-                <img>
-                <img class="stage-icon" ng-if="!stage.time" ng-src="/static/img/current_stage.png">
-                <img>
-            </div>
-            <div class="col-xs-10 stage-info">
-                <div class="stage-info-lining">
-                    <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label[lang] }}</span>
-                    <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
-                    <span ng-if="stage.amount" class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]">
-                        <span>{{ stage.amount|formatnumber }}</span>
-                        <span class="amount-currency" translate>{{ auction_doc.minimalStep.currency }}</span>
-                        <span class="label-minimum" ng-if="stage.amount == minimal_bid" translate>minimum</span>
-                    </span>
+    <div class="container">
+        <div class="auction-round past-round">
+            <div class="row">
+                <div class="col-xs-12 stage-item stage-round">
+                    <div class="stage-item-lining">
+                        <div class="stage-info">
+                            <div class="stage-info-lining">
+                                <span class="stage-info-item stage-label" translate>Initial bids</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div ng-repeat="stage in auction_doc.stages">
-            <div class="row hidden-xs" ng-if="stage['type'] == 'announcement'">
-                <span class="round-element">
-                    <span translate>Announcement</span>:
-                </span>
-            </div>
-            <div id="stage-{{$index}}" class="row stage-element" ng-class="{'current-stage': auction_doc.current_stage == $index, 'bids-stage-forecast': ((auction_doc.current_stage < $index)&&(stage['type'] == 'bids'))}">
-                <div class="stage-element-lining">
-                    <div class="col-xs-2 stage-icon-element visible-xs">
-                        <img class="stage-icon" ng-if="auction_doc.current_stage > $index" ng-src="/static/img/past_stage.png"></img>
-                        <img class="stage-icon" ng-if="auction_doc.current_stage == $index" ng-src="/static/img/current_stage.png"></img>
-                        <img class="stage-icon" ng-if="auction_doc.current_stage < $index" ng-src="/static/img/future_stage.png"></img>
-                    </div>
-                    <div class="col-xs-2 time-element hidden-xs">{{ format_date(stage.start, 'shortTime') }}</div>
-                    <div class="col-xs-10 stage-preliminary-bids " ng-if="stage['type'] == 'preliminary_bids'" translate>
-                        <span class="stage-label">All bidders</span>
-                    </div>
-                    <div class="col-xs-10 stage-pause " ng-if="stage['type'] == 'pause'">
-                        <span class="stage-label" translate>Pause</span>
-                    </div>
-                    <div class="col-xs-10 stage-announcement " ng-if="stage['type'] == 'announcement'">
-                        <span class="stage-label" translate>Results Release</span>
-                    </div>
-                    <div class="col-xs-10 stage-bids" ng-if="stage['type'] == 'bids'">
-                        <div class="stage-bids-lining">
-                            <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label[lang] }}</span>
-                            <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
-                            <span ng-if="(stage['type'] == 'bids')&&(stage['amount'])" class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]">
-                                <span ng-if="stage['changed']">
-                                    <strong>{{ stage['amount']|formatnumber }}
-                                        <span class="amount-currency" ng-if="stage['amount']">{{ auction_doc.minimalStep.currency }}</span>
-                                    </strong>
+            <div id="initial-bid-{{ $index + 1 }}" class="row auction-stage stage-item stage-bids" 
+                 ng-repeat="bid_info in auction_doc.initial_bids"
+                 ng-class="{'current-stage': auction_doc.current_stage == -1,
+                            'past-stage':  auction_doc.current_stage > -1}">
+                <div class="stage-item-lining">
+                    <i class="stage-icon"></i>
+                    <div class="stage-info">
+                        <div class="stage-info-lining">
+                            <span class="stage-info-item stage-label" ng-if="bid_info.bidder_id != bidder_id ">{{ bid_info.label[lang] }}</span>
+                            <span class="stage-info-item stage-label" ng-if="bid_info.bidder_id == bidder_id " translate>You</span>
+                            <span class="stage-info-item stage-amount" 
+                                  ng-if="bid_info['amount']"
+                                  ng-class="{true: 'minimal-amount', false: 'default-amount'}[bid_info.amount == minimal_bid]">
+                                <span class="label-price">
+                                    {{ bid_info['amount']|formatnumber }}
+                                    <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency }}</span>
                                 </span>
-                                <span ng-if="!stage['changed']">
-                                    {{ stage['amount']|formatnumber }}
-                                    <span class="amount-currency" ng-if="stage['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
-                                </span>
-                                <span class="label-minimum" ng-if="stage.amount == minimal_bid" translate>minimum</span>
+                                <span class="label-minimum" ng-if="bid_info.amount == minimal_bid" translate>minimum</span>
                             </span>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="row hidden-xs" ng-if="stage['type'] == 'pause'">
-                <span class="round-element">{{ get_round_number($index + 1).data }}:</span>
-            </div>
         </div>
-        <div class="row stage-element" ng-repeat="stage in auction_doc.results">
-            <div class="stage-element-lining">
-                <div class="col-xs-2 stage-icon-element visible-xs">
-                    <img class="stage-icon" ng-src="/static/img/past_stage.png"></img>
-                </div>
-                <div class="col-xs-2 time-element hidden-xs">{{ stage.time }}</div>
-                <div class="col-xs-10 stage-bids">
-                    <div class="stage-bids-lining">
-                        <span class="stage-label" ng-if="stage.bidder_id != bidder_id ">{{ stage.label[lang] }}</span>
-                        <span class="stage-label" ng-if="stage.bidder_id == bidder_id " translate>You</span>
-                        <span class="stage-amount" ng-class="{true: 'minimal-amount', false: 'default-amount'}[stage.amount == minimal_bid]">
-                            <span>
-                                {{ stage['amount']|formatnumber }}
-                                <span class="amount-currency" ng-if="stage['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
-                            </span>
-                            <span class="label-minimum" ng-if="stage.amount == minimal_bid" translate>minimum</span>
-                        </span>
+
+        <div class="auction-round" 
+             ng-class="{'past-round':  (auction_doc.current_stage > (stage + auction_doc.initial_bids.length)),
+                        'current-round': ((auction_doc.current_stage > stage)&&(auction_doc.current_stage <= (stage + auction_doc.initial_bids.length))),
+                        'future-round': auction_doc.current_stage < (stage + auction_doc.initial_bids.length)}"
+             ng-repeat="stage in Rounds">
+            <div class="row">
+                <div class="col-xs-12 stage-item stage-round">
+                    <div class="stage-item-lining">
+                        <div class="stage-info">
+                            <div class="stage-info-lining">
+                                <span class="stage-info-item stage-label" translate>Round {{ $index + 1}}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <div id="stage-{{ stage + $index + 1 }}" class="row auction-stage stage-item stage-bids" 
+                 ng-repeat="initial_bid in auction_doc.initial_bids" ng-class="{'current-stage': auction_doc.current_stage == (stage + $index + 1),
+                           'future-stage':  auction_doc.current_stage < (stage + $index + 1),
+                           'past-stage':  auction_doc.current_stage > (stage + $index + 1)}">
+                <div class="stage-item-lining">
+                    <i class="stage-icon"></i>
+                    <div class="stage-info">
+                        <div class="stage-info-lining">
+                            <span class="stage-info-item stage-label" ng-if="auction_doc.stages[stage + $index + 1].bidder_id != bidder_id ">{{ auction_doc.stages[stage + $index + 1].label[lang] }}</span>
+                            <span class="stage-info-item stage-label" ng-if="auction_doc.stages[stage + $index + 1].bidder_id == bidder_id " translate>You</span>
+                            <span class="stage-info-item stage-amount" 
+                                  ng-if="(auction_doc.stages[stage + $index + 1]['type'] == 'bids')&&(auction_doc.stages[stage + $index + 1]['amount'])"
+                                  ng-class="{true: 'minimal-amount', false: 'default-amount'}[auction_doc.stages[stage + $index + 1].amount == minimal_bid]">
+                                <span class="label-price" ng-if="auction_doc.stages[stage + $index + 1]['changed']">
+                                    <strong>{{ auction_doc.stages[stage + $index + 1]['amount']|formatnumber }}
+                                        <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency }}</span>
+                                    </strong>
+                                </span>
+                                <span class="label-price" ng-if="!auction_doc.stages[stage + $index + 1]['changed']">
+                                    {{ auction_doc.stages[stage + $index + 1]['amount']|formatnumber }}
+                                    <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
+                                </span>
+                                <span class="label-minimum" ng-if="auction_doc.stages[stage + $index + 1].amount == minimal_bid" translate>minimum</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auction-round"
+            ng-class="{'past-round': auction_doc.current_stage == (auction_doc.stages.length - 1),
+                       'future-round': auction_doc.current_stage < (auction_doc.stages.length - 1)}">
+            <div class="row">
+                <div class="col-xs-12 stage-item stage-round">
+                    <div class="stage-item-lining">
+                        <div class="stage-info">
+                            <div class="stage-info-lining">
+                                <span class="stage-info-item stage-label" translate>Announcement</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+            <div id="results-{{ $index + 1 }}" class="row auction-stage stage-item stage-bids current-stage" 
+                 ng-repeat="bid_info in auction_doc.results">
+                <div class="stage-item-lining">
+                    <i class="stage-icon"></i>
+                    <div class="stage-info">
+                        <div class="stage-info-lining">
+                            <span class="stage-info-item stage-label" ng-if="bid_info.bidder_id != bidder_id ">{{ bid_info.label[lang] }}</span>
+                            <span class="stage-info-item stage-label" ng-if="bid_info.bidder_id == bidder_id " translate>You</span>
+                            <span class="stage-info-item stage-amount" 
+                                  ng-if="bid_info['amount']"
+                                  ng-class="{true: 'minimal-amount', false: 'default-amount'}[bid_info.amount == minimal_bid]">
+                                <span class="label-price">
+                                    {{ bid_info['amount']|formatnumber }}
+                                    <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency }}</span>
+                                </span>
+                                <span class="label-minimum" ng-if="bid_info.amount == minimal_bid" translate>minimum</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>        
         </div>
     </div>
     <div class="container-fluid">
@@ -229,4 +250,5 @@ var auction_doc_id = '{{ auction_doc_id }}';
 <script src="/static/js/utils.js"></script>
 <script src="/static/js/translations.js"></script>
 <script src="/static/js/controllers.js"></script>
+
 </html>
