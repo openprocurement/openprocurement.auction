@@ -86,85 +86,45 @@ body {
   }
 
 /*----- Stage -----*/
-/*.stage-element {*/
-/*  border-bottom: 1px solid #e5e5e5;
-  font-size: 19px;*/
-/*  padding-bottom: 5px;
-  padding-top: 5px;*/
-  /*}*/
-/*.stage-element-lining {
-  display: table;
-  width: 100%;
-  }*/
-
-/*.time-element{
-  background-color: #e5e5e5;
-  border-bottom: 1px solid #e5e5e5;
-  border-right: 1px solid gray;
-  color: #999;
-  font-size: 20px;
-  }*/
-
-/*.stage-icon-element {
-  clear: left;
-  padding: 12px 0 8px 5px;
-  }
-.stage-bids,
-.stage-info {
-  padding-left: 0;
-  }*/
 .stage-item {
-  border-bottom: 1px solid #e5e5e5;
+  border-style: solid;
+  border-color: #e5e5e5;
+  border-width: 0 0 1px 0;
   font-size: 18px;
   padding: 0 0 0 5px;
   }
 .stage-round {
   padding: 0 0 0 2px;
   }
-/*.stage-info-lining,
-.stage-bids-lining,*/
 .stage-item-lining,
 .stage-info-lining {
-  /*min-height: 63px;*/
   display: table;
   width: 100%;
   }
 .stage-icon {
-  background: url(../img/future_stage.png) no-repeat 50% 50%;
-  background-size: 37px 37px;
+  background-image: url(../img/future_stage.png);
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  background-size: 36px 36px;
   display: table-cell;
   height: 37px;
   vertical-align: middle;
   width: 37px;
   }
-
 .past-round .past-stage .stage-icon {
-  background: url(../img/past_stage.png) no-repeat 50% 50%;
-}
-
+  background-image: url(../img/past_round_stage.png);
+  }
 .current-round .past-stage .stage-icon {
-  background: url(../img/past_stage.png) no-repeat 50% 50%;
-}
-
+  background-image: url(../img/past_stage.png);
+  }
 .current-round .current-stage .stage-icon {
-  background: url(../img/current_stage.png) no-repeat 50% 50%;
-}
-
+  background-image: url(../img/current_stage.png);
+  }
 .stage-info {
   display: table-cell;
   padding: 0 0 0 5px;
   vertical-align: middle;
   }
-/*.stage-preliminary-bids,
-.stage-announcement,
-.stage-pause {
-  display: table-cell;
-  float: none;
-  padding-left: 0;
-  vertical-align: middle;
-  }*/
-/*.stage-label,
-.stage-amount,*/
 .stage-info-item {
   display: table-cell;
   height: 45px;
@@ -182,25 +142,14 @@ body {
   border-radius: 6px 0 0 6px;
   font-size: 18px;
   line-height: 18px;
-  /*padding: 12px 11px 10px;*/
   padding: 4px 5px 0;
   white-space: nowrap;
   width: 150px;
   text-align: center;
   }
-/*.default-amount {
-  background-color: #f2f2f2;
-  }*/
 .minimal-amount {
   background-color: #fcc;
   }
-/*.amount-currency{
-  font-size: 16px;
-  }*/
-/*.label-price {*/
-  /*display: block;*/
-  /*padding: 4px 0 0;*/
-  /*}*/
 .label-minimum {
   color: #c00;
   display: block;
@@ -211,36 +160,24 @@ body {
   }
 
 /* Bids stage forecast*/
-.bids-stage-forecast {
-  color: #ccc;
+.future-stage .stage-amount {
+  color: #999;
   }
-.bids-stage-forecast .default-amount {
+/*.bids-stage-forecast .default-amount {
   background-color: #f5f5f5;
-  }
-.bids-stage-forecast .minimal-amount {
+  }*/
+.future-stage .minimal-amount {
   background-color: #fce5e5;
   }
-.bids-stage-forecast .label-minimum {
+.future-stage .label-minimum {
   color: #fb8484;
   }
 
 /* Current stage*/
-.current-stage {
+.my-bid-stage {
   background-color: #f2f2f2;
   overflow: hidden;
-  /*border-bottom: 1px solid #ccc;*/
   }
-
-/* Round element */
-/*.round-element {
-  border-bottom: 1px solid #000;
-  border-right: 1px solid #000;
-  border-top: 1px solid #000;
-  color: #5a6373;
-  font-size: 20px;
-  padding-left: 1.5em;
-  padding-right: 1em;
-  }*/
 
 /*----- Fixed bottom -----*/
 .fixed-bottom {
@@ -250,3 +187,62 @@ body {
   position: fixed;
   width: 100%;
   }
+
+
+/*Desctop view */
+@media (min-width: 768px) {
+  /*----- Header -----*/
+  /* Header auction*/
+  .header-auction .navbar-toggle {
+    display: block;
+    }
+  .header-auction .navbar-collapse.collapse {
+    display: none !important; /* fix bootstrap.min.css */
+    }
+  .header-auction .navbar-collapse.collapse.in {
+    display: block !important; /* fix bootstrap.min.css */
+    }
+
+  /*----- Stage -----*/
+  .stage-item {
+    border-width: 1px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    padding: 5px 10px 5px 12px;
+    }
+  .stage-item.stage-round {
+    border-width: 0;
+    }
+  .stage-icon {
+    background-size: 46px 46px;
+    height: 47px;
+    width: 47px;
+    }
+  .stage-info {
+    padding: 0 0 0 16px;
+    }
+  .stage-info-item {
+    height: 53px;
+    }
+  .stage-amount {
+    border-radius: 6px;
+    font-size: 22px;
+    width: 360px;
+    }
+  .amount-currency {
+    font-size: 16px;
+    }
+  .default-amount {
+    background-color: #f2f2f2;
+    }
+}
+@media (min-width: 992px) {
+  .container {
+    width: 896px;
+    }
+}
+@media (min-width: 1200px) {
+  .container {
+    width: 896px;
+    }
+}

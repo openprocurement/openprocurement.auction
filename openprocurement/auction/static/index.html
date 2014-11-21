@@ -31,19 +31,23 @@
                 </div>
                 <div class="header-auction-item navbar-brand pull-left round-info timer-text">
                     <span>
-                        <timer countdown="1" max-time-unit="second" interval="1000">
+                        <timer countdown="Countdown" end-time="TimerEnd" max-time-unit="second" interval="1000">
                             <span ng-show="days">
-                                <span class="timer-item">{{days}}</span>{{'days'|translate}}</span>
+                                <span class="timer-item">{{days}}</span>{{'days'|translate}}
+                            </span>
                             <span ng-show="hours">
-                                <span class="timer-item">{{hours}}</span>{{'hours'|translate}}</span>
+                                <span class="timer-item">{{hours}}</span>{{'hours'|translate}}
+                            </span>
                             <span ng-show="minutes&&!(days)">
-                                <span class="timer-item">{{minutes}}</span>{{'minutes'|translate}}</span>
+                                <span class="timer-item">{{minutes}}</span>{{'minutes'|translate}}
+                            </span>
                             <span ng-show="seconds&&!((days)||(hours))">
-                                <span class="timer-item">{{seconds}}</span>{{'seconds'|translate}}</span>
+                                <span class="timer-item">{{seconds}}</span>{{'seconds'|translate}}
+                            </span>
+                            <span ng-if="$parent.timer_message" translate>
+                                {{ timer_message }}
+                            </span>
                         </timer>
-                    </span>
-                    <span ng-if="timer_message" translate>
-                        {{ timer_message }}
                     </span>
                 </div>
                 <div class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'pause'">
@@ -81,9 +85,9 @@
             </div>
             <!--/.nav-collapse -->
         </div>
-        <timer countdown="1" interval="1000">
+        <timer countdown="Countdown" interval="1000">
             <div class="progress progress-fixed-top">
-                <div class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="{{($parent.interval - countdown)/$parent.interval*100}}" aria-valuemin="0" aria-valuemax="100" style="width: {{($parent.interval - countdown)/$parent.interval*100}}%">
+                <div class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="{{($parent.Countdown - countdown)/$parent.Countdown*100}}" aria-valuemin="0" aria-valuemax="100" style="width: {{($parent.Countdown - countdown)/$parent.Countdown*100}}%">
                 </div>
             </div>
         </timer>
@@ -105,7 +109,8 @@
             <div id="initial-bid-{{ $index + 1 }}" class="row auction-stage stage-item stage-bids" 
                  ng-repeat="bid_info in auction_doc.initial_bids"
                  ng-class="{'current-stage': auction_doc.current_stage == -1,
-                            'past-stage':  auction_doc.current_stage > -1}">
+                            'past-stage':  auction_doc.current_stage > -1,
+                            'my-bid-stage': bid_info.bidder_id == bidder_id}">
                 <div class="stage-item-lining">
                     <i class="stage-icon"></i>
                     <div class="stage-info">
@@ -137,7 +142,7 @@
                     <div class="stage-item-lining">
                         <div class="stage-info">
                             <div class="stage-info-lining">
-                                <span class="stage-info-item stage-label" translate>Round {{ $index + 1}}</span>
+                                <span class="stage-info-item stage-label" ><span translate>Round</span> {{ $index + 1}}</span>
                             </div>
                         </div>
                     </div>
@@ -145,9 +150,11 @@
             </div>
 
             <div id="stage-{{ stage + $index + 1 }}" class="row auction-stage stage-item stage-bids" 
-                 ng-repeat="initial_bid in auction_doc.initial_bids" ng-class="{'current-stage': auction_doc.current_stage == (stage + $index + 1),
-                           'future-stage':  auction_doc.current_stage < (stage + $index + 1),
-                           'past-stage':  auction_doc.current_stage > (stage + $index + 1)}">
+                 ng-repeat="initial_bid in auction_doc.initial_bids" 
+                 ng-class="{'current-stage': auction_doc.current_stage == (stage + $index + 1),
+                            'future-stage':  auction_doc.current_stage < (stage + $index + 1),
+                            'past-stage':  auction_doc.current_stage > (stage + $index + 1),
+                            'my-bid-stage': auction_doc.stages[stage + $index + 1].bidder_id == bidder_id}">
                 <div class="stage-item-lining">
                     <i class="stage-icon"></i>
                     <div class="stage-info">
@@ -175,7 +182,7 @@
         </div>
 
         <div class="auction-round"
-            ng-class="{'past-round': auction_doc.current_stage == (auction_doc.stages.length - 1),
+            ng-class="{'current-round': auction_doc.current_stage == (auction_doc.stages.length - 1),
                        'future-round': auction_doc.current_stage < (auction_doc.stages.length - 1)}">
             <div class="row">
                 <div class="col-xs-12 stage-item stage-round">
@@ -188,7 +195,7 @@
                     </div>
                 </div>
             </div> 
-            <div id="results-{{ $index + 1 }}" class="row auction-stage stage-item stage-bids current-stage" 
+            <div id="results-{{ $index + 1 }}" class="row auction-stage stage-item stage-bids past-stage" 
                  ng-repeat="bid_info in auction_doc.results">
                 <div class="stage-item-lining">
                     <i class="stage-icon"></i>
