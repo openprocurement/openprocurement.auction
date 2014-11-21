@@ -38,7 +38,9 @@ angular.module('auction')
       'minutes': 'min',
       'seconds': 'sec',
       'minimum': 'minimum',
-      'until the auction starts': 'until the auction starts'
+      'until the auction starts': 'until the auction starts',
+      'after the auction was completed': 'after the auction was completed',
+      'until the round starts': 'until the round starts'
     });
 
     $translateProvider.translations('uk', {
@@ -79,7 +81,9 @@ angular.module('auction')
       'minutes': 'хв',
       'seconds': 'сек',
       'minimum': 'мінімум',
-      'until the auction starts': 'до початку аукціону'
+      'until the auction starts': 'до початку аукціону',
+      'after the auction was completed': 'після завершення аукціону',
+      'until the round starts': 'до початку наступного раунду'
     });
 
     $translateProvider.translations('ru', {
@@ -120,7 +124,9 @@ angular.module('auction')
       'minutes': 'мин',
       'seconds': 'сек',
       'minimum': 'минимум',
-      'until the auction starts': 'до начала аукциона'
+      'until the auction starts': 'до начала аукциона',
+      'after the auction was completed': 'после окончания аукциона',
+      'until the round starts': 'до начала раунда'
     });
     $translateProvider.preferredLanguage('uk');
   }])
