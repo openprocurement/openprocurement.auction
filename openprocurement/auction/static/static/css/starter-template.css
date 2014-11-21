@@ -5,8 +5,8 @@ body {
 .col-xs-1, .col-xs-2, .col-xs-3, .col-xs-4, 
 .col-xs-5, .col-xs-6, .col-xs-7, .col-xs-8, 
 .col-xs-9, .col-xs-10, .col-xs-11, .col-xs-12 {
-  padding-right: 5px;
-  padding-left: 5px;
+  padding-right: 0;
+  padding-left: 0;
   }
 
 /*----- Header -----*/
@@ -86,84 +86,128 @@ body {
   }
 
 /*----- Stage -----*/
-.stage-element {
-  border-bottom: 1px solid #e5e5e5;
-  font-size: 19px;
-  padding-bottom: 5px;
-  padding-top: 5px;
-  }
-.stage-element-lining {
+/*.stage-element {*/
+/*  border-bottom: 1px solid #e5e5e5;
+  font-size: 19px;*/
+/*  padding-bottom: 5px;
+  padding-top: 5px;*/
+  /*}*/
+/*.stage-element-lining {
   display: table;
   width: 100%;
-  }
-.time-element{
+  }*/
+
+/*.time-element{
   background-color: #e5e5e5;
   border-bottom: 1px solid #e5e5e5;
   border-right: 1px solid gray;
   color: #999;
   font-size: 20px;
-  }
-.stage-icon {
-  height: auto;
-  width: 37px;
-  }
-.stage-icon-element {
+  }*/
+
+/*.stage-icon-element {
   clear: left;
   padding: 12px 0 8px 5px;
   }
 .stage-bids,
 .stage-info {
   padding-left: 0;
+  }*/
+.stage-item {
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 18px;
+  padding: 0 0 0 5px;
   }
-.stage-info-lining,
-.stage-bids-lining {
+.stage-round {
+  padding: 0 0 0 2px;
+  }
+/*.stage-info-lining,
+.stage-bids-lining,*/
+.stage-item-lining,
+.stage-info-lining {
+  /*min-height: 63px;*/
   display: table;
-  height: 63px;
   width: 100%;
   }
-.stage-preliminary-bids,
+.stage-icon {
+  background: url(../img/future_stage.png) no-repeat 50% 50%;
+  background-size: 37px 37px;
+  display: table-cell;
+  height: 37px;
+  vertical-align: middle;
+  width: 37px;
+  }
+
+.past-round .past-stage .stage-icon {
+  background: url(../img/past_stage.png) no-repeat 50% 50%;
+}
+
+.current-round .past-stage .stage-icon {
+  background: url(../img/past_stage.png) no-repeat 50% 50%;
+}
+
+.current-round .current-stage .stage-icon {
+  background: url(../img/current_stage.png) no-repeat 50% 50%;
+}
+
+.stage-info {
+  display: table-cell;
+  padding: 0 0 0 5px;
+  vertical-align: middle;
+  }
+/*.stage-preliminary-bids,
 .stage-announcement,
 .stage-pause {
   display: table-cell;
   float: none;
   padding-left: 0;
   vertical-align: middle;
-  }
-.stage-label,
-.stage-amount {
+  }*/
+/*.stage-label,
+.stage-amount,*/
+.stage-info-item {
   display: table-cell;
-  min-height: 63px;
+  height: 45px;
   vertical-align: middle;
   }
 .stage-label {
-  line-height: 19px;
-  padding: 0 5px 2px 0;
+  line-height: 16px;
+  padding: 0 5px 0 0;
+  }
+.stage-round .stage-label {
+  font-weight: bold;
+  height: 74px;
   }
 .stage-amount {
-  border-radius: 10px;
-  font-size: 24px;
-  line-height: 23px;
-  padding: 12px 11px 10px;
+  border-radius: 6px 0 0 6px;
+  font-size: 18px;
+  line-height: 18px;
+  /*padding: 12px 11px 10px;*/
+  padding: 4px 5px 0;
   white-space: nowrap;
-  width: 156px;
+  width: 150px;
   text-align: center;
   }
-.default-amount {
+/*.default-amount {
   background-color: #f2f2f2;
-  }
+  }*/
 .minimal-amount {
   background-color: #fcc;
   }
-.amount-currency{
+/*.amount-currency{
   font-size: 16px;
-  }
+  }*/
+/*.label-price {*/
+  /*display: block;*/
+  /*padding: 4px 0 0;*/
+  /*}*/
 .label-minimum {
   color: #c00;
   display: block;
-  font-size: 16px;
+  font-size: 10px;
   line-height: 16px;
   text-align: center;
-  padding: 1px 0 0;
+  padding: 2px 0 0;
   }
 
 /* Bids stage forecast*/
@@ -183,11 +227,12 @@ body {
 /* Current stage*/
 .current-stage {
   background-color: #f2f2f2;
-  border-bottom: 1px solid #ccc;
+  overflow: hidden;
+  /*border-bottom: 1px solid #ccc;*/
   }
 
 /* Round element */
-.round-element {
+/*.round-element {
   border-bottom: 1px solid #000;
   border-right: 1px solid #000;
   border-top: 1px solid #000;
@@ -195,7 +240,7 @@ body {
   font-size: 20px;
   padding-left: 1.5em;
   padding-right: 1em;
-  }
+  }*/
 
 /*----- Fixed bottom -----*/
 .fixed-bottom {
