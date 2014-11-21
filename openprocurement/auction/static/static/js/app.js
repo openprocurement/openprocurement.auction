@@ -6,7 +6,8 @@ app.constant('AuctionConfig', {
   auction_doc_id: auction_doc_id,
   remote_db: db_url,
   restart_retries: 10,
-  default_lang: 'uk'
+  default_lang: 'uk',
+  debug: true
 });
 
 app.filter('formatnumber', ['$filter',
@@ -16,3 +17,7 @@ app.filter('formatnumber', ['$filter',
     }
   }
 ]);
+
+app.config(['$logProvider', 'AuctionConfig', function($logProvider, AuctionConfig) {  
+   $logProvider.debugEnabled(AuctionConfig.debug); // default is true  
+}]);

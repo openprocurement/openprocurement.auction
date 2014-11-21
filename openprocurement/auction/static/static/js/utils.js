@@ -30,29 +30,20 @@ angular.module('auction')
     };
 
     // Get round data
-    function get_round_data(pause_index, auction_doc) {
-      var pauses = [0];
-      if (auction_doc.stages) {
-        auction_doc.stages.forEach(function(item, index) {
-          if (item.type == 'pause') {
-            pauses.push(index);
-          };
-        })
-        pauses.push(auction_doc.stages.length - 1);
-      }
-      if (pause_index <= pauses[0]) {
+    function get_round_data(pause_index, auction_doc, Rounds) {
+      if (pause_index <= Rounds[0]) {
         return {
           'type': 'pause',
           'data': ['', '1', ]
         }
       }
-      for (var i in pauses) {
-        if (pause_index < pauses[i]) {
+      for (var i in Rounds) {
+        if (pause_index < Rounds[i]) {
           return {
             'type': 'round',
             'data': parseInt(i) - 1
           }
-        } else if ((pause_index == pauses[i]) && (pause_index != auction_doc.stages.length - 1)) {
+        } else if ((pause_index == Rounds[i]) && (pause_index != auction_doc.stages.length - 1)) {
           return {
             'type': 'pause',
             'data': [(parseInt(i) - 1).toString(), (parseInt(i)).toString(), ]

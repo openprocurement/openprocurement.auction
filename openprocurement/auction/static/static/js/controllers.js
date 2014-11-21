@@ -39,6 +39,7 @@ angular.module('auction').controller('AuctionController', [
 
 
     $scope.update_countdown_time = function(start_date, end_date) {
+      $scope.timer_message = AuctionUtils.timer_message($scope.auction_doc, $scope.bidder_id);
       $scope.interval = (end_date - start_date) / 1000;
       if ($scope.interval > 0) {
         $scope.$broadcast('timer-set-countdown', $scope.interval);
@@ -46,7 +47,7 @@ angular.module('auction').controller('AuctionController', [
       };
     }
     $scope.get_round_number = function(pause_index) {
-      return AuctionUtils.get_round_data(pause_index, $scope.auction_doc);
+      return AuctionUtils.get_round_data(pause_index, $scope.auction_doc, $scope.Rounds);
     }
 
     $scope.show_bids_form = function(argument) {
@@ -204,13 +205,25 @@ angular.module('auction').controller('AuctionController', [
           $scope.update_countdown_time(start, end)
           $scope.auction_doc = new_doc;
         }
-
+        $scope.calculate_rounds();
         $scope.calculate_minimal_bid_amount();
         $scope.scroll_to_stage();
       });
     }
+    $scope.calculate_rounds = function(argument) {
+      $scope.Rounds = [];
+      $scope.auction_doc.stages.forEach(function(item, index) {
+        if (item.type == 'pause') {
+          $scope.Rounds.push(index)
+        }
+      })
+
+    }
     $scope.scroll_to_stage = function(argument) {
       AuctionUtils.scroll_to_stage($scope.auction_doc.current_stage);
+    }
+    $scope.array = function(int) {
+      return new Array(int);
     }
   }
 ]);

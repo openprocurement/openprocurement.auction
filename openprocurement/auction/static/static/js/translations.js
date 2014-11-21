@@ -37,11 +37,12 @@ angular.module('auction')
       'hours': 'hr',
       'minutes': 'min',
       'seconds': 'sec',
-      'minimum': 'minimum'
+      'minimum': 'minimum',
+      'until the auction starts': 'until the auction starts'
     });
 
     $translateProvider.translations('uk', {
-      'Announcement': 'Оголошення',
+      'Announcement': 'Оголошення результатів',
       'Bid': 'Заявка',
       'Bidder': 'Учасник',
       'Bidding': 'Торги',
@@ -77,11 +78,12 @@ angular.module('auction')
       'hours': 'год',
       'minutes': 'хв',
       'seconds': 'сек',
-      'minimum': 'мінімум'
+      'minimum': 'мінімум',
+      'until the auction starts': 'до початку аукціону'
     });
 
     $translateProvider.translations('ru', {
-      'Announcement': 'Объявление',
+      'Announcement': 'Объявление результатов',
       'Bid': 'Ставка',
       'Bidder': ' Участник',
       'Bidding': 'Торги',
@@ -117,7 +119,8 @@ angular.module('auction')
       'hours': 'час',
       'minutes': 'мин',
       'seconds': 'сек',
-      'minimum': 'минимум'
+      'minimum': 'минимум',
+      'until the auction starts': 'до начала аукциона'
     });
     $translateProvider.preferredLanguage('uk');
   }])
