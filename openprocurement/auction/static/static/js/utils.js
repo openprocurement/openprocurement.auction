@@ -2,10 +2,14 @@ angular.module('auction')
   .factory('AuctionUtils', ['$filter', '$timeout', function($filter, $timeout) {
     // Format msg for timer
     function timer_message(auction, bidder) {
-      if (auction.current_stage < 0) {
-        // * until the auction starts
-        return "until the auction starts"
-      };
+      // if (auction.current_stage < 0) {
+      //   // * until the auction starts
+      //   return "until the auction starts"
+      // }else if(auction.current_stage == (auction.stages.length - 1)){
+      //   return "after the auction was completed"
+      // }else if(auction.stages[auction.current_stage].type = 'pause'){
+      //   return "until the round starts"
+      // };
       // * until your turn
       // * until your turn ends
       // * until the round ends
@@ -41,12 +45,12 @@ angular.module('auction')
         if (pause_index < Rounds[i]) {
           return {
             'type': 'round',
-            'data': parseInt(i) - 1
+            'data': parseInt(i)
           }
         } else if ((pause_index == Rounds[i]) && (pause_index != auction_doc.stages.length - 1)) {
           return {
             'type': 'pause',
-            'data': [(parseInt(i) - 1).toString(), (parseInt(i)).toString(), ]
+            'data': [(parseInt(i)).toString(), (parseInt(i)+1).toString(), ]
           }
         }
       };

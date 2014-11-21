@@ -39,12 +39,30 @@ angular.module('auction').controller('AuctionController', [
 
 
     $scope.update_countdown_time = function(start_date, end_date) {
-      $scope.timer_message = AuctionUtils.timer_message($scope.auction_doc, $scope.bidder_id);
+      $rootScope.timer_message = AuctionUtils.timer_message($scope.auction_doc, $scope.bidder_id);
+      $log.debug('Timer msg:', $scope.timer_message)
+      $log.debug('Update countdown time options: start= ', start_date, ' end= ', end_date);
+
       $scope.interval = (end_date - start_date) / 1000;
+      // $scope.$broadcast('timer-stop')
       if ($scope.interval > 0) {
+        $log.debug('Setup countdown');
+        $scope.TimerStart = undefined;
         $scope.$broadcast('timer-set-countdown', $scope.interval);
-        $scope.$broadcast('timer-start');
+        $scope.Countdown = $scope.interval;
+        $log.debug('countdown:', $scope.interval)
+
+      }else{
+        $log.debug('Setup timer');
+        // main = document.getElementById('main-timer');
+        // if (main){
+        //   main.setAttribute('start-time', end_date.getTime());
+        // }
+        $scope.TimerStart = end_date.getTime();
+        $scope.TimerEnd = null;
+        $scope.Countdown = null;
       };
+      // $scope.$broadcast('timer-start');
     }
     $scope.get_round_number = function(pause_index) {
       return AuctionUtils.get_round_data(pause_index, $scope.auction_doc, $scope.Rounds);
@@ -54,12 +72,6 @@ angular.module('auction').controller('AuctionController', [
       if ((angular.isNumber($scope.auction_doc.current_stage)) && ($scope.auction_doc.current_stage >= 0)) {
         if (($scope.auction_doc.stages[$scope.auction_doc.current_stage].type == 'bids') && ($scope.auction_doc.stages[$scope.auction_doc.current_stage].bidder_id == $scope.bidder_id)) {
           return true;
-        } else if (($scope.auction_doc.stages[$scope.auction_doc.current_stage].type == 'preliminary_bids')) {
-          for (var i in $scope.auction_doc.initial_bids) {
-            if ($scope.auction_doc.initial_bids[i].bidder_id == $scope.bidder_id) {
-              return true;
-            }
-          }
         }
       }
       return false;
