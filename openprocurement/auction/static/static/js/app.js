@@ -1,4 +1,4 @@
-var app = angular.module('auction', ['ui.bootstrap', 'pascalprecht.translate', 'timer']);
+var app = angular.module('auction', ['ui.bootstrap', 'pascalprecht.translate', 'timer', 'angular-growl']);
 var db = {};
 var bidder_id = "0"
 
@@ -18,6 +18,9 @@ app.filter('formatnumber', ['$filter',
   }
 ]);
 
-app.config(['$logProvider', 'AuctionConfig', function($logProvider, AuctionConfig) {  
-   $logProvider.debugEnabled(AuctionConfig.debug); // default is true  
+app.config(['$logProvider', 'AuctionConfig', 'growlProvider', function($logProvider, AuctionConfig, growlProvider) {  
+   $logProvider.debugEnabled(AuctionConfig.debug); // default is true
+   growlProvider.globalTimeToLive({success: 4000, error: 10000, warning: 80000, info: 4000});
+   growlProvider.globalPosition('top-center');
+   growlProvider.onlyUniqueMessages(false);
 }]);
