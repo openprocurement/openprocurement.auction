@@ -20,6 +20,7 @@
     "pouchdb": "http://op:x9W3jZ@dist.quintagroup.com/op/pouchdb-3.1.1-prerelease.tgz",
     "bootstrap": "~3.2.0",
     "angular-bootstrap": "0.11.2",
-    "angular-timer": "http://op:x9W3jZ@dist.quintagroup.com/op/angular-timer-1.1.6.tgz"
+    "angular-timer": "http://op:x9W3jZ@dist.quintagroup.com/op/angular-timer-1.1.6.tgz",
+    "angular-growl-2": "0.7.2"
   }
 }
