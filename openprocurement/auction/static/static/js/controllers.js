@@ -1,18 +1,17 @@
 angular.module('auction').controller('AuctionController', [
   '$scope', 'AuctionConfig', 'AuctionUtils',
   '$timeout', '$http', '$log',
-  '$rootScope', '$location', '$translate', '$filter',
+  '$rootScope', '$location', '$translate', '$filter', 'growl', 'growlMessages',
   function(
     $scope, AuctionConfig, AuctionUtils,
     $timeout, $http, $log,
-    $rootScope, $location, $translate, $filter
+    $rootScope, $location, $translate, $filter, growl, growlMessages
   ) {
     // init variables
+    growlMessages.initDirective(0, 10);
     $scope.allow_bidding = true;
     $scope.alerts = [];
     $scope.db = new PouchDB(AuctionConfig.remote_db);
-    // 
-
     $scope.lang = AuctionConfig.default_lang;
     $scope.format_date = AuctionUtils.format_date;
     $scope.bidder_id = AuctionUtils.get_bidder_id();
@@ -125,14 +124,7 @@ angular.module('auction').controller('AuctionController', [
     $scope.edit_bid = function() {
       $scope.allow_bidding = true;
     }
-    $scope.get_auction_data = function() {
-      db.get(AuctionConfig.auction_doc_id, function(err, doc) {
-        $log.debug("Get doc", doc);
-        $rootScope.$apply(function(argument) {
-          $scope.auction_doc = doc;
-        });
-      });
-    }
+
     $scope.max_bid_amount = function() {
       if ((angular.isString($scope.bidder_id)) && (angular.isObject($scope.auction_doc))) {
         return $scope.auction_doc.stages[$scope.auction_doc.current_stage].amount - $scope.auction_doc.minimalStep.amount
@@ -168,12 +160,14 @@ angular.module('auction').controller('AuctionController', [
         }
       }).on('error', function(err) {
         $log.error('Changes error: ', err);
+        growl.warning('Internet connection is lost. Attempt to restart after 1 sec', {ttl: 1000});
         $scope.restart_retries -= 1;
         if ($scope.restart_retries) {
           $log.debug('Start restart feed pooling...')
           $scope.restart_changes()
         } else {
-          $log.error('Restart synchronization not allowed. Try restart times:', AuctionConfig.restart_retries);
+          growl.error('Synchronization failed');
+          $log.error('Restart synchronization not allowed.', AuctionConfig.restart_retries);
         }
       })
     };
