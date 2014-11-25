@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def hook(watcher, arbiter, hook_name, **kwargs):
-    logger.info("remove watcer {}".format(watcher.name))
+    logger.info("remove watcher {}".format(watcher.name))
     watcher = arbiter._watchers_names.pop(watcher.name)
     del arbiter.watchers[arbiter.watchers.index(watcher)]
     return True
