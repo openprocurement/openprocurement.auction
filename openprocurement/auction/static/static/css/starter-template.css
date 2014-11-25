@@ -160,14 +160,14 @@ body {
   }
 
 /* Bids stage forecast*/
-.future-stage .stage-amount {
+.future-stage {
   color: #999;
   }
 /*.bids-stage-forecast .default-amount {
   background-color: #f5f5f5;
   }*/
 .future-stage .minimal-amount {
-  background-color: #fce5e5;
+  background-color: transparent;
   }
 .future-stage .label-minimum {
   color: #fb8484;
@@ -246,7 +246,6 @@ body {
     width: 896px;
     }
 }
-
 
 .growl-container.growl-fixed.top-center {
   top: 73px;
