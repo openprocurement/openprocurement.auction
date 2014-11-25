@@ -1,0 +1,5 @@
+recursive-include openprocurement *
+recursive-include docs *
+include *
+global-exclude *.pyc
+prune openprocurement/auction/node_modules
