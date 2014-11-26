@@ -6,12 +6,14 @@ import iso8601
 import couchdb
 import json
 import sys
+import os
 
 from copy import deepcopy
 from datetime import timedelta, datetime
 from pytz import timezone
 from gevent.event import Event
 from gevent.coros import BoundedSemaphore
+from gevent.subprocess import call
 from apscheduler.schedulers.gevent import GeventScheduler
 from .server import run_server
 from .utils import (
@@ -26,7 +28,8 @@ from .templates import (
     BIDS_TEMPLATE,
     ANNOUNCEMENT_TEMPLATE,
     generate_resuls,
-    generate_bids_stage
+    generate_bids_stage,
+    get_template
 )
 from gevent import monkey
 
@@ -43,6 +46,7 @@ BIDS_KEYS_FOR_COPY = (
     "time"
 )
 
+SYSTEMD_RELATIVE_PATH = '.config/systemd/user/auction_{0}.{1}'
 SCHEDULER = GeventScheduler()
 SCHEDULER.timezone = timezone('Europe/Kiev')
 
@@ -95,17 +99,17 @@ class Auction(object):
             bid_info["bidder_name"] = self.mapping[bid_info['bidder_id']]
             filtered_bids_data.append(bid_info)
         return filtered_bids_data
-        
+
     @property
     def startDate(self):
-        date = iso8601.parse_date(
-            self._auction_data['data']['auctionPeriod']['startDate']
-        )
-        date = date.astimezone(SCHEDULER.timezone)
+        date = self.convert_datetime(self._auction_data['data']['auctionPeriod']['startDate'])
         if datetime.now(timezone('Europe/Kiev')) > date:
             date = datetime.now(timezone('Europe/Kiev')) + timedelta(seconds=20)
             self._auction_data['data']['auctionPeriod']['startDate'] = date.isoformat()
         return date
+
+    def convert_datetime(self, datetime_stamp):
+        return iso8601.parse_date(datetime_stamp).astimezone(SCHEDULER.timezone)
 
     def get_auction_info(self):
         logging.info("Get data from {}".format(self.tender_url))
@@ -122,12 +126,12 @@ class Auction(object):
         # self._auction_data = {"data":
         #     {"minimalStep":
         #         {"currency": "UAH", "amount": 35000.0, "valueAddedTaxIncluded": True},
-        #      "auctionPeriod": {"startDate": "2014-11-19T11:21:00+00:00", "endDate": None},
+        #      "auctionPeriod": {"startDate": "2014-11-26T11:30:00+02:00", "endDate": None},
         #      "bids": [{"date": "2014-11-19T08:22:21.726234+00:00", "id": "d3ba84c66c9e4f34bfb33cc3c686f137",
         #                "value": {"currency": None, "amount": 475000.0, "valueAddedTaxIncluded": True}},
         #               {"date": "2014-11-19T08:22:24.038426+00:00", "id": "5675acc9232942e8940a034994ad883e",
         #                "value": {"currency": None, "amount": 480000.0, "valueAddedTaxIncluded": True}}],
-        #      "tenderID": "UA-9146e92e23c64627bfbbfcdc3ef72eef", "dateModified": "2014-11-19T08:22:24.866669+00:00"}
+        #      "tenderID": "UA-11111", "dateModified": "2014-11-19T08:22:24.866669+00:00"}
         #     }
         self.bidders_count = len(self._auction_data["data"]["bids"])
         self.rounds_stages = []
@@ -139,48 +143,40 @@ class Auction(object):
         for index, uid in enumerate(self.bidders):
             self.mapping[uid] = str(index + 1)
 
-    def schedule_auction(self):
+    ###########################################################################
+    #                       Planing methods
+    ###########################################################################
+
+    def prepare_auction_document(self):
         self.get_auction_info()
-        # Schedule Auction Workflow
         self.get_auction_document()
-        if self.auction_document:
-            self.db.delete(self.auction_document)
-        auction_document = {"_id": self.auction_doc_id, "stages": [],
-                            "tenderID": self._auction_data["data"].get("tenderID", ""),
-                            "initial_bids": [], "current_stage": -1,
-                            "results": [],
-                            "minimalStep": self._auction_data["data"]["minimalStep"]}
+        self.auction_document.update(
+            {"_id": self.auction_doc_id, "stages": [],
+             "tenderID": self._auction_data["data"].get("tenderID", ""),
+             "initial_bids": [], "current_stage": -1, "results": [],
+             "minimalStep": self._auction_data["data"]["minimalStep"]}
+        )
         # Initital Bids
         for bid_info in self._auction_data["data"]["bids"]:
-
-            auction_document["initial_bids"].append(json.loads(INITIAL_BIDS_TEMPLATE.render(
-                time="",
-                bidder_id=bid_info["id"],
-                bidder_name=self.mapping[bid_info["id"]],
-                amount="null"
-            )))
-
-        SCHEDULER.add_job(self.start_auction, 'date', run_date=self.startDate)
-        # Schedule Bids Rounds
+            self.auction_document["initial_bids"].append(
+                json.loads(INITIAL_BIDS_TEMPLATE.render(
+                    time="",
+                    bidder_id=bid_info["id"],
+                    bidder_name=self.mapping[bid_info["id"]],
+                    amount="null"
+                ))
+            )
         next_stage_timedelta = self.startDate
         for round_id in xrange(ROUNDS):
             # Schedule PAUSE Stage
             pause_stage = json.loads(PAUSE_TEMPLATE.render(
                 start=next_stage_timedelta.isoformat()
             ))
-            auction_document['stages'].append(pause_stage)
+            self.auction_document['stages'].append(pause_stage)
             if round_id == 0:
                 next_stage_timedelta += timedelta(seconds=FIRST_PAUSE_SECONDS)
-                SCHEDULER.add_job(
-                    self.end_first_pause, 'date',
-                    run_date=next_stage_timedelta,
-                )
             else:
                 next_stage_timedelta += timedelta(seconds=PAUSE_SECONDS)
-                SCHEDULER.add_job(
-                    self.next_stage, 'date',
-                    run_date=next_stage_timedelta,
-                )
 
             # Schedule BIDS Stages
             for index in xrange(self.bidders_count):
@@ -191,24 +187,77 @@ class Auction(object):
                     amount="null",
                     time=""
                 ))
-                auction_document['stages'].append(bid_stage)
+                self.auction_document['stages'].append(bid_stage)
                 next_stage_timedelta += timedelta(seconds=BIDS_SECONDS)
-                SCHEDULER.add_job(
-                    self.end_bids_stage, 'date',
-                    run_date=next_stage_timedelta,
-                )
 
         announcement = json.loads(ANNOUNCEMENT_TEMPLATE.render(
             start=next_stage_timedelta.isoformat()
         ))
-        auction_document['stages'].append(announcement)
-        auction_document['endDate'] = next_stage_timedelta.isoformat()
-        self.db.save(auction_document)
-        self.server = run_server(self)
+        self.auction_document['stages'].append(announcement)
+        self.auction_document['endDate'] = next_stage_timedelta.isoformat()
+        self.save_auction_document()
+
+    def prepare_tasks(self):
+        cmd = deepcopy(sys.argv)
+        cmd[0] = os.path.abspath(cmd[0])
+        cmd[1] = 'run'
+        home_dir = os.path.expanduser('~')
+        logging.info("Get data from {}".format(self.tender_url))
+        with open(os.path.join(home_dir, SYSTEMD_RELATIVE_PATH.format(self.auction_doc_id, 'service')), 'w') as service_file:
+            template = get_template('systemd.service')
+            logging.info("Write configuration to {}".format(service_file.name))
+            service_file.write(
+                template.render(cmd=' '.join(cmd),
+                                description='Auction ' + self._auction_data["data"]['tenderID'],
+                                id='auction_' + self.auction_doc_id + '.service'),
+            )
+
+        start_time = self.startDate - timedelta(minutes=15)
+        with open(os.path.join(home_dir, SYSTEMD_RELATIVE_PATH.format(self.auction_doc_id, 'timer')), 'w') as timer_file:
+            template = get_template('systemd.timer')
+            logging.info("Write configuration to {}".format(timer_file.name))
+            timer_file.write(template.render(
+                timestamp=start_time.strftime("%Y-%m-%d %H:%M:%S"),
+                description='Auction ' + self._auction_data["data"]['tenderID'])
+            )
+        logging.info("Reload Systemd")
+        response = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
+        logging.info("Systemctl return code: {}".format(response))
+        logging.info("Start timer")
+        response = call(['/usr/bin/systemctl', '--user',
+                         'start', 'auction_' + '.'.join([self.auction_doc_id, 'timer'])])
+        logging.info("Systemctl return code: {}".format(response))
+
+    ###########################################################################
+    #                       Runtime methods
+    ###########################################################################
+
+    def schedule_auction(self):
+        self.get_auction_info()
+        self.get_auction_document()
         SCHEDULER.add_job(
-            self.end_auction, 'date',
-            run_date=next_stage_timedelta + timedelta(seconds=5)
+            self.start_auction, 'date',
+            run_date=self.convert_datetime(self.auction_document['stages'][0]['start'])
         )
+
+        SCHEDULER.add_job(
+            self.end_first_pause, 'date',
+            run_date=self.convert_datetime(self.auction_document['stages'][1]['start'])
+        )
+
+        for index in xrange(2, len(self.auction_document['stages'])):
+            if self.auction_document['stages'][index - 1]['type'] == 'bids':
+                SCHEDULER.add_job(
+                    self.end_bids_stage, 'date',
+                    run_date=self.convert_datetime(self.auction_document['stages'][index]['start'])
+                )
+            elif self.auction_document['stages'][index - 1]['type'] == 'pause':
+                SCHEDULER.add_job(
+                    self.next_stage, 'date',
+                    run_date=self.convert_datetime(self.auction_document['stages'][index]['start'])
+                )
+
+        self.server = run_server(self)
 
     def wait_to_end(self):
         self._end_auction_event.wait()
@@ -259,11 +308,14 @@ class Auction(object):
             minimal_bids = self.filter_bids_keys(sorting_by_amount(minimal_bids))
             self.update_future_bidding_orders(minimal_bids)
         self.auction_document["current_stage"] += 1
+            
         logging.info('---------------- Start stage {0} ----------------'.format(
             self.auction_document["current_stage"])
         )
         self.save_auction_document()
         self.bids_actions.release()
+        if self.auction_document["current_stage"] == (len(self.auction_document["stages"]) - 1):
+            self.end_auction()
 
     def next_stage(self):
         self.bids_actions.acquire()
@@ -340,17 +392,9 @@ class Auction(object):
             logging.warn('Error while submit auction data: {}'.format(response.text))
 
 
-def auction_run(auction_doc_id, port, database_url, auction_data={}):
-    auction = Auction(auction_doc_id, port=port, database_url=database_url,
-                      auction_data=auction_data)
-    SCHEDULER.start()
-    auction.schedule_auction()
-    auction.wait_to_end()
-    SCHEDULER.shutdown()
-
-
 def main():
     parser = argparse.ArgumentParser(description='---- Auction ----')
+    parser.add_argument('cmd', type=str, help='')
     parser.add_argument('auction_doc_id', type=str, help='auction_doc_id')
     parser.add_argument('port', type=int, help='Port')
     parser.add_argument('database_url', type=str, help='Database Url')
@@ -360,8 +404,17 @@ def main():
         auction_data = json.load(open(args.auction_info))
     else:
         auction_data = None
-    auction_run(args.auction_doc_id, args.port, args.database_url, auction_data)
-
+    auction = Auction(args.auction_doc_id, port=args.port,
+                      database_url=args.database_url,
+                      auction_data=auction_data)
+    if args.cmd == 'run':
+        SCHEDULER.start()
+        auction.schedule_auction()
+        auction.wait_to_end()
+        SCHEDULER.shutdown()
+    elif args.cmd == 'planning':
+        auction.prepare_auction_document()
+        # auction.prepare_tasks()
 
 ##############################################################
 if __name__ == "__main__":
