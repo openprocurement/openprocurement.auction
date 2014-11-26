@@ -3,3 +3,9 @@ recursive-include docs *
 include *
 global-exclude *.pyc
 prune openprocurement/auction/node_modules
+prune openprocurement/auction/static/vendor/pouchdb/docs
+prune openprocurement/auction/static/vendor/pouchdb/libs
+prune openprocurement/auction/static/vendor/pouchdb/scripts
+prune openprocurement/auction/static/vendor/pouchdb/bin
+prune openprocurement/auction/static/vendor/angular-timer/bower_components
+
