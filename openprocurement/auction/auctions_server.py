@@ -45,7 +45,7 @@ def archive_tenders_list_index():
         var current_time = new Date();
         var end = new Date(doc.endDate);
         if (current_time<end){
-            emit(start, doc);
+            emit(doc.stages[0].start, doc);
         }
     }'''
     return render_template(
@@ -59,8 +59,8 @@ def auction_list_index():
     map_fun = '''function(doc) {
         var current_time = new Date();
         var end = new Date(doc.endDate);
-        if (current_time>end){
-            emit(start, doc);
+        if ((doc.endDate)&&(current_time>end)){
+            emit(doc.stages[0].start, doc);
         }
     }'''
     return render_template(

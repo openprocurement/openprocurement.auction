@@ -414,7 +414,7 @@ def main():
         SCHEDULER.shutdown()
     elif args.cmd == 'planning':
         auction.prepare_auction_document()
-        # auction.prepare_tasks()
+        auction.prepare_tasks()
 
 ##############################################################
 if __name__ == "__main__":
