@@ -1,0 +1,10 @@
+[Unit]
+Description=Auction Worker {{ description }}
+
+[Service]
+Type=oneshot
+ExecStart={{ cmd }}
+SyslogIdentifier={{ id }}
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,8 @@
+[Unit]
+Description=Auction Timer for Auction {{ description }}
+
+[Timer]
+OnCalendar={{ timestamp }}
+ 
+[Install]
+WantedBy=timers.target
