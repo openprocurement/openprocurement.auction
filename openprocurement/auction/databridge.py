@@ -119,7 +119,7 @@ class AuctionsDataBridge(object):
                 self.start_auction_worker(tender_item)
                 sleep(3)
             logger.info('Wait...')
-            sleep(300)
+            sleep(100)
 
 
 def main():
