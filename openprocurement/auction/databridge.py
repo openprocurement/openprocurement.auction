@@ -85,9 +85,9 @@ class AuctionsDataBridge(object):
                 "command": "add",
                 "properties": {
                     "cmd": self.config_get('auction_worker'),
-                    "args": '{} {} {}'.format(tender_item['id'],
-                                              self.current_worker_port,
-                                              self.couch_url),
+                    "args": 'planning {} {} {}'.format(tender_item['id'],
+                                                       self.current_worker_port,
+                                                       self.couch_url),
                     "name": "auction_worker_{}".format(tender_item['id']),
                     "start": True,
                     "options": {
