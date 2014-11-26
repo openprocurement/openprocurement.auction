@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from jinja2 import Template
+from jinja2 import Template, Environment, PackageLoader
 from json import loads
+
+JINJA_ENV = Environment(loader=PackageLoader('openprocurement.auction', 'templates'))
 
 INITIAL_BIDS_TEMPLATE = Template(u'''{
     "bidder_id": "{{ bidder_id }}",
@@ -58,3 +60,7 @@ def generate_bids_stage(exist_stage_params, params):
 
 def generate_resuls(params):
     return loads(RESULTS_TEMPLATE.render(**params))
+
+
+def get_template(name):
+    return JINJA_ENV.get_template(name)
