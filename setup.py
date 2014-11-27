@@ -32,6 +32,7 @@ setup(name='openprocurement.auction',
           'WTForms',
           'WTForms-JSON',
           'Flask-Redis',
+          'WSGIProxy2',
           'gevent'
           # -*- Extra requirements: -*-
       ],
