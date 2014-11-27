@@ -20,7 +20,7 @@ app.filter('formatnumber', ['$filter',
 
 app.config(['$logProvider', 'AuctionConfig', 'growlProvider', function($logProvider, AuctionConfig, growlProvider) {  
    $logProvider.debugEnabled(AuctionConfig.debug); // default is true
-   growlProvider.globalTimeToLive({success: 4000, error: 10000, warning: 80000, info: 4000});
+   growlProvider.globalTimeToLive({success: 4000, error: 10000, warning: 10000, info: 4000});
    growlProvider.globalPosition('top-center');
    growlProvider.onlyUniqueMessages(false);
 }]);
