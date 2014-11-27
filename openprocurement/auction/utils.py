@@ -48,3 +48,33 @@ def get_latest_bid_for_bidder(bids, bidder_id):
 def get_latest_start_bid_for_bidder(bids, bidder):
     return sorted(filter_start_bids_by_bidder_id(bids, bidder),
                   key=get_time, reverse=True)[0]
+
+
+def parse_text(text, encoding):
+    # parse text if is list, tuple or set instance
+    if isinstance(text, (list, tuple, set)):
+        for item in text:
+            if isinstance(item, bytes):
+                item = item.decode(encoding)
+
+            for subitem in item.splitlines():
+                yield subitem
+
+    else:
+        if isinstance(text, bytes):
+            text = text.decode(encoding)
+
+        for item in text.splitlines():
+            yield item
+
+
+def prepare_sse_msg(event, text, encoding='utf-8'):
+
+        buffer = []
+        # buffer.append("event: {0}\n".format(event))
+
+        for text_item in parse_text(text, encoding):
+            buffer.append("data: {0}\n".format(text_item))
+
+        buffer.append("\n")
+        return "".join(buffer)
