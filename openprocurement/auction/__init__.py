@@ -126,7 +126,7 @@ class Auction(object):
         # self._auction_data = {"data":
         #     {"minimalStep":
         #         {"currency": "UAH", "amount": 35000.0, "valueAddedTaxIncluded": True},
-        #      "auctionPeriod": {"startDate": "2014-11-27T11:30:00+00:00", "endDate": None},
+        #      "auctionPeriod": {"startDate": "2014-11-27T18:15:00+02:00", "endDate": None},
         #      "bids": [{"date": "2014-11-19T08:22:21.726234+00:00", "id": "d3ba84c66c9e4f34bfb33cc3c686f137",
         #                "value": {"currency": None, "amount": 475000.0, "valueAddedTaxIncluded": True}},
         #               {"date": "2014-11-19T08:22:24.038426+00:00", "id": "5675acc9232942e8940a034994ad883e",
@@ -336,6 +336,7 @@ class Auction(object):
         start_stage, end_stage = self.get_round_stages(ROUNDS)
         minimal_bids = deepcopy(self.auction_document["stages"][start_stage:end_stage])
         minimal_bids = self.filter_bids_keys(sorting_by_amount(minimal_bids))
+        self.auction_document["results"] = []
         for item in minimal_bids:
             self.auction_document["results"].append(generate_resuls(item))
         self.save_auction_document()
@@ -373,6 +374,10 @@ class Auction(object):
                     self.auction_document["stages"][stage],
                     bids[index]
                 )
+        bids.reverse()
+        self.auction_document["results"] = []
+        for item in bids:
+            self.auction_document["results"].append(generate_resuls(item))
 
     def put_auction_data(self):
         all_bids = self.auction_document["results"]
