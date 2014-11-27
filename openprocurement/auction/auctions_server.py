@@ -1,12 +1,13 @@
 from flask_redis import Redis
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, abort, Response
 
 import couchdb
 from datetime import datetime
 from pytz import timezone as tz
 from paste.proxy import make_proxy
 from urlparse import urljoin
-from gevent import monkey
+from gevent import monkey, sleep
+from wsgiproxy import HostProxy
 
 monkey.patch_all()
 
@@ -69,14 +70,14 @@ def auction_list_index():
     )
 
 
-@auctions_server.route('/tenders/<auction_doc_id>/postbid', methods=['POST'])
-def auctions_server_postBid(auction_doc_id):
+@auctions_server.route('/tenders/<auction_doc_id>/<path:path>')
+def auctions_proxy(auction_doc_id, path):
+    print "---------------- auth", request.authorization
     proxy_path = auctions_server.redis.get(auction_doc_id)
+    auctions_server.logger.debug('Proxy path: {}'.format(proxy_path))
     if proxy_path:
-        request.environ['PATH_INFO'] = '/postbid'
-        return make_proxy(
-            {}, proxy_path,
-            allowed_request_methods="POST")
+        request.environ['PATH_INFO'] = '/' + path
+        return HostProxy(proxy_path, client='requests', chunk_size=1)
     else:
         return abort(404)
 
