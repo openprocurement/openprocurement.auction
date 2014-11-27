@@ -150,6 +150,8 @@ class Auction(object):
     def prepare_auction_document(self):
         self.get_auction_info()
         self.get_auction_document()
+        if not self.auction_document:
+            self.auction_document = {}
         self.auction_document.update(
             {"_id": self.auction_doc_id, "stages": [],
              "tenderID": self._auction_data["data"].get("tenderID", ""),
