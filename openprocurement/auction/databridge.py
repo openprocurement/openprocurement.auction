@@ -10,6 +10,7 @@ from redis import Redis
 from circus.client import CircusClient
 from datetime import datetime
 from pytz import timezone
+import subprocess
 
 import iso8601
 
@@ -80,33 +81,15 @@ class AuctionsDataBridge(object):
 
     def start_auction_worker(self, tender_item):
         self.mapings.set(tender_item['id'], "http://localhost:{}/".format(self.current_worker_port))
-        logger.info(self.circus_client.call(
-            {
-                "command": "add",
-                "properties": {
-                    "cmd": self.config_get('auction_worker'),
-                    "args": 'planning {} {} {}'.format(tender_item['id'],
-                                                       self.current_worker_port,
-                                                       self.couch_url),
-                    "name": "auction_worker_{}".format(tender_item['id']),
-                    "start": True,
-                    "options": {
-                        "shell": True,
-                        "hooks": {
-                            "after_stop": ("openprocurement.auction.databridge.hook",
-                                           True)
-                        },
-                        "respawn": False,
-                        "stdout_stream": {
-                            "class": "StdoutStream"
-                        },
-                        "stderr_stream": {
-                            "class": "StdoutStream"
-                        }
-                    }
-                }
-            }
-        ))
+        logger.info(
+            subprocess.check_output(
+                [self.config_get('auction_worker'),
+                 'planning', str(tender_item['id']),
+                 str(self.current_worker_port),
+                 str(self.couch_url)
+                 ]
+            )
+        )
         self.current_worker_port += 1
 
     def run(self):
