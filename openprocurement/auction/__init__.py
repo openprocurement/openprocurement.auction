@@ -7,7 +7,7 @@ import couchdb
 import json
 import sys
 import os
-
+from dateutil.tz import tzlocal
 from copy import deepcopy
 from datetime import timedelta, datetime
 from pytz import timezone
@@ -126,7 +126,7 @@ class Auction(object):
         # self._auction_data = {"data":
         #     {"minimalStep":
         #         {"currency": "UAH", "amount": 35000.0, "valueAddedTaxIncluded": True},
-        #      "auctionPeriod": {"startDate": "2014-11-26T11:30:00+02:00", "endDate": None},
+        #      "auctionPeriod": {"startDate": "2014-11-27T11:30:00+00:00", "endDate": None},
         #      "bids": [{"date": "2014-11-19T08:22:21.726234+00:00", "id": "d3ba84c66c9e4f34bfb33cc3c686f137",
         #                "value": {"currency": None, "amount": 475000.0, "valueAddedTaxIncluded": True}},
         #               {"date": "2014-11-19T08:22:24.038426+00:00", "id": "5675acc9232942e8940a034994ad883e",
@@ -214,7 +214,7 @@ class Auction(object):
                                 id='auction_' + self.auction_doc_id + '.service'),
             )
 
-        start_time = self.startDate - timedelta(minutes=15)
+        start_time = (self.startDate - timedelta(minutes=15)).astimezone(tzlocal())
         with open(os.path.join(home_dir, SYSTEMD_RELATIVE_PATH.format(self.auction_doc_id, 'timer')), 'w') as timer_file:
             template = get_template('systemd.timer')
             logging.info("Write configuration to {}".format(timer_file.name))
