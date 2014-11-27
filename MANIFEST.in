@@ -1,11 +1,13 @@
 recursive-include openprocurement *
 recursive-include docs *
+recursive-exclude openprocurement/auction/static/vendor *
+recursive-exclude openprocurement/auction/node_modules *
 include *
 global-exclude *.pyc
-prune openprocurement/auction/node_modules
-prune openprocurement/auction/static/vendor/pouchdb/docs
-prune openprocurement/auction/static/vendor/pouchdb/libs
-prune openprocurement/auction/static/vendor/pouchdb/scripts
-prune openprocurement/auction/static/vendor/pouchdb/bin
-prune openprocurement/auction/static/vendor/angular-timer/bower_components
-
+graft openprocurement/auction/static/vendor/pouchdb/dist
+graft openprocurement/auction/static/vendor/angular
+graft openprocurement/auction/static/vendor/angular-bootstrap
+graft openprocurement/auction/static/vendor/angular-growl-2/build
+graft openprocurement/auction/static/vendor/angular-timer/dist
+graft openprocurement/auction/static/vendor/angular-translate
+graft openprocurement/auction/static/vendor/bootstrap/dist
