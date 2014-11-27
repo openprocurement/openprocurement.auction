@@ -42,7 +42,8 @@ angular.module('auction')
       'after the auction was completed': 'after the auction was completed',
       'until the round starts': 'until the round starts',
       'Internet connection is lost. Attempt to restart after 1 sec': 'Internet connection is lost. Attempt to restart after 1 sec',
-      'Synchronization failed': 'Synchronization failed'
+      'Synchronization failed': 'Synchronization failed',
+      'Possible results': 'Possible results'
     });
 
     $translateProvider.translations('uk', {
@@ -87,7 +88,8 @@ angular.module('auction')
       'after the auction was completed': 'після завершення аукціону',
       'until the round starts': 'до початку наступного раунду',
       'Internet connection is lost. Attempt to restart after 1 sec': 'З\'єднання з інтернетом втрачено. спроба перезавантаження через 1 сек',
-      'Synchronization failed': 'Помилка синхронізації'
+      'Synchronization failed': 'Помилка синхронізації',
+      'Possible results': 'Можливі результати'
     });
 
     $translateProvider.translations('ru', {
@@ -132,7 +134,8 @@ angular.module('auction')
       'after the auction was completed': 'после окончания аукциона',
       'until the round starts': 'до начала раунда',
       'Internet connection is lost. Attempt to restart after 1 sec': 'Cоединения с интернетом потеряно. попытка перезагрузки через 1 сек',
-      'Synchronization failed': 'Ошибка синхронизации'
+      'Synchronization failed': 'Ошибка синхронизации',
+      'Possible results': 'Возможные результаты'
     });
     $translateProvider.preferredLanguage('uk');
   }])
