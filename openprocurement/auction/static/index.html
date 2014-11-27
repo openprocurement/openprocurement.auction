@@ -192,13 +192,17 @@
                     <div class="stage-item-lining">
                         <div class="stage-info">
                             <div class="stage-info-lining">
-                                <span class="stage-info-item stage-label" translate>Announcement</span>
+                                <span ng-if="auction_doc.current_stage == (auction_doc.stages.length - 1)" class="stage-info-item stage-label" translate>Announcement</span>
+                                <span ng-if="auction_doc.current_stage < (auction_doc.stages.length - 1)" class="stage-info-item stage-label" translate>Possible results</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div> 
-            <div id="results-{{ $index + 1 }}" class="row auction-stage stage-item stage-bids past-stage" 
+            <div id="results-{{ $index + 1 }}"
+                 class="row auction-stage stage-item stage-bids past-stage"
+                 ng-class="{'current-stage': auction_doc.current_stage == (auction_doc.stages.length - 1),
+                            'future-stage': auction_doc.current_stage < (auction_doc.stages.length - 1)}"
                  ng-repeat="bid_info in auction_doc.results">
                 <div class="stage-item-lining">
                     <i class="stage-icon"></i>
