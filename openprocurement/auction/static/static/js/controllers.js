@@ -1,3 +1,5 @@
+var evtSrc = {}
+
 angular.module('auction').controller('AuctionController', [
   '$scope', 'AuctionConfig', 'AuctionUtils',
   '$timeout', '$http', '$log',
@@ -14,7 +16,19 @@ angular.module('auction').controller('AuctionController', [
     $scope.db = new PouchDB(AuctionConfig.remote_db);
     $scope.lang = AuctionConfig.default_lang;
     $scope.format_date = AuctionUtils.format_date;
-    $scope.bidder_id = AuctionUtils.get_bidder_id();
+    $scope.client_hash = Math.random().toString(36).substring(3);
+    $scope.bidder_id = AuctionUtils.get_bidder_id($scope.client_hash);
+    $scope.start_subscribe = function (argument) {
+        evtSrc = new EventSource(window.location.href.replace(window.location.search, '') + '/event_source?' + 'hash=' + $scope.client_hash + '&' + window.location.search.substring(1));
+        evtSrc.onmessage = function(e) {
+            var event = angular.fromJson(e.data);
+            $scope.$apply(function () {
+              growl.warning('New user from IP:' + event.ip, {ttl: 10000});
+            })
+
+        };
+    }
+    $scope.start_subscribe()
     $scope.changeLanguage = function(langKey) {
       $translate.use(langKey);
       $scope.lang = langKey;
@@ -126,7 +140,7 @@ angular.module('auction').controller('AuctionController', [
     }
 
     $scope.max_bid_amount = function() {
-      if ((angular.isString($scope.bidder_id)) && (angular.isObject($scope.auction_doc))) {
+      if ((angular.isString($scope.bidder_id)) && (angular.isObject($scope.auction_doc)) && (angular.isObject($scope.auction_doc.stages[$scope.auction_doc.current_stage]))) {
         return $scope.auction_doc.stages[$scope.auction_doc.current_stage].amount - $scope.auction_doc.minimalStep.amount
       }
       return 0
