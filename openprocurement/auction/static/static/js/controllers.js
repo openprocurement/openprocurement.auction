@@ -23,7 +23,7 @@ angular.module('auction').controller('AuctionController', [
         evtSrc.onmessage = function(e) {
             var event = angular.fromJson(e.data);
             $scope.$apply(function () {
-              growl.warning('New user from IP:' + event.ip, {ttl: 10000});
+              growl.warning($filter('translate')('In the room came a new user') + ' (IP:' + event.ip + ')', {ttl: 10000});
             })
 
         };
