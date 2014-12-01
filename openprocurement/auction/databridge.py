@@ -68,7 +68,7 @@ class AuctionsDataBridge(object):
                     if 'auctionPeriod' in item \
                             and 'startDate' in item['auctionPeriod'] \
                             and 'endDate' not in item['auctionPeriod'] \
-                            and item['status'] == "auction":
+                            and item['status'] == "active.auction":
                         
                         date = iso8601.parse_date(item['auctionPeriod']['startDate'])
                         date = date.astimezone(self.tz)
