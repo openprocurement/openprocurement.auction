@@ -63,7 +63,7 @@ class Auction(object):
         self.host = host
         self.port = port
         self.auction_doc_id = auction_doc_id
-        self.tender_url = 'http://api-sandbox.openprocurement.org/api/0.3/tenders/{0}/auction'.format(auction_doc_id)
+        self.tender_url = 'http://api-sandbox.openprocurement.org/api/0.4/tenders/{0}/auction'.format(auction_doc_id)
         self._auction_data = auction_data
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
@@ -386,8 +386,10 @@ class Auction(object):
             auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
             self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
             self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
-        self._auction_data["data"]["auctionPeriod"]["endDate"] = self.auction_document['endDate']
-        self._auction_data["data"]["status"] = "qualification"
+        del self._auction_data["data"]["auctionPeriod"]["endDate"]
+        del self._auction_data["data"]["status"]
+        del self._auction_data["data"]["minimalStep"]
+        del self._auction_data["data"]["auctionPeriod"]
         response = requests.patch(
             self.tender_url,
             headers={'content-type': 'application/json'},
@@ -395,6 +397,17 @@ class Auction(object):
         )
         if response.ok:
             logging.info('Auction data submitted')
+            bidders = dict([(bid["id"], bid["tenderers"][0]["name"])
+                            for bid in response.json()["data"]["bids"]])
+            self.get_auction_document()
+            for section in ['initial_bids', 'stages', 'results']:
+                for index, stage in enumerate(self.auction_document[section]):
+                    if 'bidder_id' in stage and stage['bidder_id'] in bidders:
+                        self.auction_document[section][index]["label"]["uk"] = bidders[stage['bidder_id']]
+                        self.auction_document[section][index]["label"]["ru"] = bidders[stage['bidder_id']]
+                        self.auction_document[section][index]["label"]["en"] = bidders[stage['bidder_id']]
+            self.save_auction_document()
+
         else:
             logging.warn('Error while submit auction data: {}'.format(response.text))
 
