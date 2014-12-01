@@ -386,7 +386,6 @@ class Auction(object):
             auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
             self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
             self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
-        del self._auction_data["data"]["auctionPeriod"]["endDate"]
         del self._auction_data["data"]["status"]
         del self._auction_data["data"]["minimalStep"]
         del self._auction_data["data"]["auctionPeriod"]
