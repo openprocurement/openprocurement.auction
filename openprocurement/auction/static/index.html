@@ -33,7 +33,24 @@
                 </div>
                 <div class="header-auction-item navbar-brand pull-left round-info timer-text">
                     <span>
-                        <timer countdown="Countdown" end-time="TimerEnd" max-time-unit="second" interval="1000">
+                        <timer ng-if="Countdown" countdown="Countdown" max-time-unit="second" interval="1000">
+                            <span ng-show="days">
+                                <span class="timer-item">{{days}}</span>{{'days'|translate}}
+                            </span>
+                            <span ng-show="hours">
+                                <span class="timer-item">{{hours}}</span>{{'hours'|translate}}
+                            </span>
+                            <span ng-show="minutes&&!(days)">
+                                <span class="timer-item">{{minutes}}</span>{{'minutes'|translate}}
+                            </span>
+                            <span ng-show="seconds&&!((days)||(hours))">
+                                <span class="timer-item">{{seconds}}</span>{{'seconds'|translate}}
+                            </span>
+                            <span ng-if="$parent.timer_message" translate>
+                                {{ timer_message }}
+                            </span>
+                        </timer>
+                        <timer ng-if="!Countdown" start-time="TimerStart" max-time-unit="minute" interval="1000">
                             <span ng-show="days">
                                 <span class="timer-item">{{days}}</span>{{'days'|translate}}
                             </span>
@@ -258,7 +275,7 @@ var auction_doc_id = '{{ auction_doc_id }}';
 <script src="/vendor/angular/angular.min.js"></script>
 <script src="/vendor/pouchdb/dist/pouchdb.js"></script>
 <script src="/vendor/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
-<script src="/vendor/angular-timer/dist/angular-timer.min.js"></script>
+<script src="/vendor/angular-timer/dist/angular-timer.js"></script>
 <!-- <script src="//cdn.jsdelivr.net/pouchdb/3.0.6/pouchdb.min.js"></script> -->
 <script src="/vendor/angular-translate/angular-translate.min.js"></script>
 <script src="/vendor/angular-growl-2/build/angular-growl.js"></script>

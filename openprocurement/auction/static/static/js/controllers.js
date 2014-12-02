@@ -27,6 +27,10 @@ angular.module('auction').controller('AuctionController', [
             })
 
         };
+        evtSrc.onerror = function(e){
+          $log.debug("EventSource failed.");
+        }
+
     }
     $scope.start_subscribe()
     $scope.changeLanguage = function(langKey) {
@@ -60,20 +64,14 @@ angular.module('auction').controller('AuctionController', [
       // $scope.$broadcast('timer-stop')
       if ($scope.interval > 0) {
         $log.debug('Setup countdown');
-        $scope.TimerStart = undefined;
-        $scope.$broadcast('timer-set-countdown', $scope.interval);
+        $scope.TimerStart = false;
         $scope.Countdown = $scope.interval;
         $log.debug('countdown:', $scope.interval)
 
       }else{
         $log.debug('Setup timer');
-        // main = document.getElementById('main-timer');
-        // if (main){
-        //   main.setAttribute('start-time', end_date.getTime());
-        // }
         $scope.TimerStart = end_date.getTime();
-        $scope.TimerEnd = null;
-        $scope.Countdown = null;
+        $scope.Countdown = false;
       };
       // $scope.$broadcast('timer-start');
     }
@@ -164,7 +162,7 @@ angular.module('auction').controller('AuctionController', [
         style: 'main_only',
         continuous: true,
         include_docs: true,
-        doc_ids: AuctionConfig.auction_doc_id,
+        doc_ids: [AuctionConfig.auction_doc_id],
         since: 0
       }).on('change', function(resp) {
         $log.debug('Change: ', resp);
@@ -222,8 +220,8 @@ angular.module('auction').controller('AuctionController', [
           } else {
             var end = new Date(new_doc.endDate)
           }
-          $scope.update_countdown_time(start, end)
           $scope.auction_doc = new_doc;
+          $scope.update_countdown_time(start, end)
         }
         $scope.calculate_rounds();
         $scope.calculate_minimal_bid_amount();
