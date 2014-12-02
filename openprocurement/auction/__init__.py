@@ -374,7 +374,6 @@ class Auction(object):
                     self.auction_document["stages"][stage],
                     bids[index]
                 )
-        bids.reverse()
         self.auction_document["results"] = []
         for item in bids:
             self.auction_document["results"].append(generate_resuls(item))
