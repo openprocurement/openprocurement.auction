@@ -386,9 +386,12 @@ class Auction(object):
             auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
             self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
             self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
-        del self._auction_data["data"]["status"]
-        del self._auction_data["data"]["minimalStep"]
-        del self._auction_data["data"]["auctionPeriod"]
+
+        # clear data
+        for key in ["status", "minimalStep", "auctionPeriod"]:
+            if key in self._auction_data["data"]:
+                del self._auction_data["data"][key]
+
         response = requests.patch(
             self.tender_url,
             headers={'content-type': 'application/json'},
