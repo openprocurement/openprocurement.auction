@@ -133,7 +133,6 @@ class Auction(object):
         return iso8601.parse_date(datetime_stamp).astimezone(SCHEDULER.timezone)
 
     def get_auction_info(self):
-        logging.info("Get data from {}".format())
         self._auction_data = get_tender_data(self.tender_url)
         self.bidders_count = len(self._auction_data["data"]["bids"])
         self.rounds_stages = []
