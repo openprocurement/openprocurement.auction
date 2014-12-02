@@ -137,7 +137,7 @@
 
         <div class="auction-round" 
              ng-class="{'past-round':  (auction_doc.current_stage > (stage + auction_doc.initial_bids.length)),
-                        'current-round': ((auction_doc.current_stage > stage)&&(auction_doc.current_stage <= (stage + auction_doc.initial_bids.length))),
+                        'current-round': ((auction_doc.current_stage >= stage)&&(auction_doc.current_stage <= (stage + auction_doc.initial_bids.length))),
                         'future-round': auction_doc.current_stage < (stage + auction_doc.initial_bids.length)}"
              ng-repeat="stage in Rounds">
             <div class="row">
