@@ -248,7 +248,7 @@
                 <div class="row">
                     <div class="col-xs-12">
                         <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert(alert.msg_id)">{{ alert.msg | translate }}</alert>
-                        <form id="BidsForm" name="BidsForm" role="form">
+                        <form id="BidsForm" ng-controller="AuctionController" name="BidsForm" role="form">
                             <label for="bid" translate>Your proposal :</label>
                             <div class="input-group">
                                 <input type="number" ng-disabled="!allow_bidding" class="form-control" id="bid" name="bid" ng-model="bid" placeholder="{{ max_bid_amount() }} {{'or lower'|translate}}">
