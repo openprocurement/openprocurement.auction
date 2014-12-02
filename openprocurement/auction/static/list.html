@@ -15,18 +15,26 @@
     <link href="/static/css/starter-template.css" rel="stylesheet">
 
 </head>
+
 <body>
     <div class="container">
         <div class="list-group">
             {% for auction in documents | reverse %}
-                <a href="/tenders/{{ auction._id }}" class="list-group-item text-center" >
-                <h4 class="list-group-item-heading">
+            <div class="list-group-item text-center">
+                <a href="/tenders/{{ auction._id }}">
+                    <h4 class="list-group-item-heading">
                     Тендер {{ auction.tenderID }}
                 </h4>
-                <p class="list-group-item-text">
-                   Час проведення: {{ auction.stages[0].start }} - {{ auction.endDate }}
-                </p>
                 </a>
+                <p class="list-group-item-text">
+                    Час проведення: {{ auction.stages[0].start }} - {{ auction.endDate }}
+                </p>
+                <div class="btn-group">
+                    {% for bidder in auction["initial_bids"] %}
+                    <a type="button" class="btn btn-default" href="/tenders/{{ auction._id }}?bidder_id={{ bidder['bidder_id'] }}">{{ bidder['label']['uk'] }}</a>
+                    {% endfor %}
+                </div>
+            </div>
             {% endfor %}
         </div>
     </div>
