@@ -47,7 +47,7 @@ BIDS_KEYS_FOR_COPY = (
 )
 
 SYSTEMD_RELATIVE_PATH = '.config/systemd/user/auction_{0}.{1}'
-SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 120})
+SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100})
 SCHEDULER.timezone = timezone('Europe/Kiev')
 
 logging.basicConfig(level=logging.INFO,
