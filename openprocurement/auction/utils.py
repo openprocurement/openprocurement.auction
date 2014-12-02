@@ -1,6 +1,11 @@
 import iso8601
 from datetime import MINYEAR, datetime
 from pytz import timezone
+from gevent import sleep
+import logging
+import json
+import requests
+import sys
 
 
 def filter_by_bidder_id(bids, bidder_id):
@@ -48,6 +53,53 @@ def get_latest_bid_for_bidder(bids, bidder_id):
 def get_latest_start_bid_for_bidder(bids, bidder):
     return sorted(filter_start_bids_by_bidder_id(bids, bidder),
                   key=get_time, reverse=True)[0]
+
+
+def get_tender_data(tender_url, retry_count=10):
+    for iteration in xrange(retry_count):
+        try:
+            logging.info("Get data from {}".format(tender_url))
+            response = requests.get(tender_url)
+            logging.info("Response from {}: {}".format(tender_url, response.ok))
+            if response.ok:
+                return response.json()
+        except requests.exceptions.RequestException, e:
+            logging.error("Request error {} error: {}".format(
+                tender_url,
+                e)
+            )
+        except Exception, e:
+            logging.error("Unhandled error {} error: {}".format(
+                tender_url,
+                e)
+            )
+        logging.info("Wait before retry...")
+        sleep(1)
+    sys.exit(1)
+
+
+def patch_tender_data(tender_url, data, retry_count=10):
+    for iteration in xrange(retry_count):
+        try:
+            response = requests.patch(
+                tender_url,
+                headers={'content-type': 'application/json'},
+                data=json.dumps(data)
+            )
+            if response.ok:
+                return response.json()
+        except requests.exceptions.RequestException, e:
+            logging.error("Request error {} error: {}".format(
+                tender_url,
+                e)
+            )
+        except Exception, e:
+            logging.error("Unhandled error {} error: {}".format(
+                tender_url,
+                e)
+            )
+        logging.info("Wait before retry...")
+        sleep(1)
 
 
 def parse_text(text, encoding):
