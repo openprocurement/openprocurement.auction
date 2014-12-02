@@ -47,15 +47,23 @@ angular.module('auction')
             'type': 'round',
             'data': parseInt(i)
           }
-        } else if ((pause_index == Rounds[i]) && (pause_index != auction_doc.stages.length - 1)) {
+        } else if (pause_index == Rounds[i]) {
           return {
             'type': 'pause',
             'data': [(parseInt(i)).toString(), (parseInt(i)+1).toString(), ]
           }
         }
       };
-      return {
-        'type': 'finish'
+
+      if (pause_index < (auction_doc.stages.length - 1)) {
+        return {
+          'type': 'round',
+          'data': Rounds.length
+        }
+      } else {
+        return {
+          'type': 'finish'
+        }
       }
     }
     // Scroll functionality
