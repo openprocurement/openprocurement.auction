@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import argparse
 import logging
-import requests
 import iso8601
 import couchdb
 import json
@@ -19,7 +18,9 @@ from .server import run_server
 from .utils import (
     sorting_by_amount,
     get_latest_bid_for_bidder,
-    sorting_start_bids_by_amount
+    sorting_start_bids_by_amount,
+    get_tender_data,
+    patch_tender_data
 )
 
 from .templates import (
@@ -70,12 +71,32 @@ class Auction(object):
         self.database_url = database_url
         self._bids_data = {}
         self.db = couchdb.client.Database(self.database_url)
+        self.retries = 10
 
     def get_auction_document(self):
-        self.auction_document = self.db.get(self.auction_doc_id)
+        retries = self.retries
+        while retries:
+            try:
+                self.auction_document = self.db.get(self.auction_doc_id)
+                return
+            except couchdb.http.HTTPError, e:
+                logging.error("Error while get document: {}".format(e))
+            retries -= 1
 
     def save_auction_document(self):
-        self.db.save(self.auction_document)
+        retries = 10
+        while retries:
+            try:
+                return self.db.save(self.auction_document)
+            except couchdb.http.HTTPError, e:
+                logging.error("Error while save document: {}".format(e))
+            new_doc = self.auction_document
+            if "_rev" in new_doc:
+                del new_doc["_rev"]
+            self.get_auction_document()
+            self.auction_document.update(new_doc)
+            logging.debug("Retry save document changes")
+            retries -= 1
 
     def add_bid(self, round_id, bid):
         if round_id not in self._bids_data:
@@ -112,27 +133,8 @@ class Auction(object):
         return iso8601.parse_date(datetime_stamp).astimezone(SCHEDULER.timezone)
 
     def get_auction_info(self):
-        logging.info("Get data from {}".format(self.tender_url))
-        response = requests.get(self.tender_url)
-        logging.info("Response from {}: {}".format(self.tender_url, response.ok))
-        if response.ok:
-            self._auction_data = response.json()
-        else:
-            logging.error("Bad response from {} text {}".format(
-                self.tender_url,
-                response.text)
-            )
-            sys.exit(1)
-        # self._auction_data = {"data":
-        #     {"minimalStep":
-        #         {"currency": "UAH", "amount": 35000.0, "valueAddedTaxIncluded": True},
-        #      "auctionPeriod": {"startDate": "2014-12-02T10:01:00+02:00", "endDate": None},
-        #      "bids": [{"date": "2014-11-19T08:22:21.726234+00:00", "id": "d3ba84c66c9e4f34bfb33cc3c686f137",
-        #                "value": {"currency": None, "amount": 475000.0, "valueAddedTaxIncluded": True}},
-        #               {"date": "2014-11-19T08:22:24.038426+00:00", "id": "5675acc9232942e8940a034994ad883e",
-        #                "value": {"currency": None, "amount": 480000.0, "valueAddedTaxIncluded": True}}],
-        #      "tenderID": "UA-11111", "dateModified": "2014-11-19T08:22:24.866669+00:00"}
-        #     }
+        logging.info("Get data from {}".format())
+        self._auction_data = get_tender_data(self.tender_url)
         self.bidders_count = len(self._auction_data["data"]["bids"])
         self.rounds_stages = []
         for stage in range((self.bidders_count + 1) * ROUNDS + 1):
@@ -391,26 +393,17 @@ class Auction(object):
             if key in self._auction_data["data"]:
                 del self._auction_data["data"][key]
 
-        response = requests.patch(
-            self.tender_url,
-            headers={'content-type': 'application/json'},
-            data=json.dumps(self._auction_data)
-        )
-        if response.ok:
-            logging.info('Auction data submitted')
-            bidders = dict([(bid["id"], bid["tenderers"][0]["name"])
-                            for bid in response.json()["data"]["bids"]])
-            self.get_auction_document()
-            for section in ['initial_bids', 'stages', 'results']:
-                for index, stage in enumerate(self.auction_document[section]):
-                    if 'bidder_id' in stage and stage['bidder_id'] in bidders:
-                        self.auction_document[section][index]["label"]["uk"] = bidders[stage['bidder_id']]
-                        self.auction_document[section][index]["label"]["ru"] = bidders[stage['bidder_id']]
-                        self.auction_document[section][index]["label"]["en"] = bidders[stage['bidder_id']]
-            self.save_auction_document()
-
-        else:
-            logging.warn('Error while submit auction data: {}'.format(response.text))
+        results = patch_tender_data(self.tender_url, self._auction_data)
+        bidders = dict([(bid["id"], bid["tenderers"][0]["name"])
+                        for bid in results["data"]["bids"]])
+        self.get_auction_document()
+        for section in ['initial_bids', 'stages', 'results']:
+            for index, stage in enumerate(self.auction_document[section]):
+                if 'bidder_id' in stage and stage['bidder_id'] in bidders:
+                    self.auction_document[section][index]["label"]["uk"] = bidders[stage['bidder_id']]
+                    self.auction_document[section][index]["label"]["ru"] = bidders[stage['bidder_id']]
+                    self.auction_document[section][index]["label"]["en"] = bidders[stage['bidder_id']]
+        self.save_auction_document()
 
 
 def main():
