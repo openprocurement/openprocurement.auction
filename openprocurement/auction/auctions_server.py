@@ -1,13 +1,15 @@
 from flask_redis import Redis
-from flask import Flask, render_template, request, abort, Response
+from flask import Flask, render_template, request, abort
 
 import couchdb
+import time
 from datetime import datetime
 from pytz import timezone as tz
 from paste.proxy import make_proxy
 from urlparse import urljoin
-from gevent import monkey, sleep
+from gevent import monkey
 from wsgiproxy import HostProxy
+from design import sync_design, endDate_view
 
 monkey.patch_all()
 
@@ -42,31 +44,25 @@ def auction_url(auction_doc_id):
 
 @auctions_server.route('/')
 def archive_tenders_list_index():
-    map_fun = '''function(doc) {
-        var current_time = new Date();
-        var end = new Date(doc.endDate);
-        if (current_time<end){
-            emit(doc.stages[0].start, doc);
-        }
-    }'''
     return render_template(
         'list.html',
-        documents=[auction.value for auction in auctions_server.db.query(map_fun)]
+        documents=[auction.doc
+                   for auction in endDate_view(auctions_server.db,
+                                               startkey=time.time() * 1000,
+                                               include_docs=True)
+                   ]
     )
 
 
 @auctions_server.route('/archive')
 def auction_list_index():
-    map_fun = '''function(doc) {
-        var current_time = new Date();
-        var end = new Date(doc.endDate);
-        if ((doc.endDate)&&(current_time>end)){
-            emit(doc.stages[0].start, doc);
-        }
-    }'''
     return render_template(
         'list.html',
-        documents=[auction.value for auction in auctions_server.db.query(map_fun)]
+        documents=[auction.doc
+                   for auction in endDate_view(auctions_server.db,
+                                               endkey=time.time() * 1000,
+                                               include_docs=True)
+                   ]
     )
 
 
@@ -132,4 +128,6 @@ def make_auctions_app(global_conf,
         urljoin(auctions_server.config.get('INT_COUCH_URL'),
                 auctions_server.config['COUCH_DB'])
     )
+
+    sync_design(auctions_server.db)
     return auctions_server
