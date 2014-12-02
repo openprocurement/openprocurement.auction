@@ -47,7 +47,7 @@ BIDS_KEYS_FOR_COPY = (
 )
 
 SYSTEMD_RELATIVE_PATH = '.config/systemd/user/auction_{0}.{1}'
-SCHEDULER = GeventScheduler()
+SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 120})
 SCHEDULER.timezone = timezone('Europe/Kiev')
 
 logging.basicConfig(level=logging.INFO,
@@ -126,7 +126,7 @@ class Auction(object):
         # self._auction_data = {"data":
         #     {"minimalStep":
         #         {"currency": "UAH", "amount": 35000.0, "valueAddedTaxIncluded": True},
-        #      "auctionPeriod": {"startDate": "2014-11-27T18:15:00+02:00", "endDate": None},
+        #      "auctionPeriod": {"startDate": "2014-12-02T10:01:00+02:00", "endDate": None},
         #      "bids": [{"date": "2014-11-19T08:22:21.726234+00:00", "id": "d3ba84c66c9e4f34bfb33cc3c686f137",
         #                "value": {"currency": None, "amount": 475000.0, "valueAddedTaxIncluded": True}},
         #               {"date": "2014-11-19T08:22:24.038426+00:00", "id": "5675acc9232942e8940a034994ad883e",
