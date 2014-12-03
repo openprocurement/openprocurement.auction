@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, Response, abort
-from gevent.wsgi import WSGIServer
+from gevent.pywsgi import WSGIServer
 from datetime import datetime
 from pytz import timezone
 from openprocurement.auction.forms import BidsForm
