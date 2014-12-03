@@ -66,13 +66,13 @@ def auction_list_index():
     )
 
 
-@auctions_server.route('/tenders/<auction_doc_id>/<path:path>')
+@auctions_server.route('/tenders/<auction_doc_id>/<path:path>', methods=['GET', 'POST'])
 def auctions_proxy(auction_doc_id, path):
-    print "---------------- auth", request.authorization
     proxy_path = auctions_server.redis.get(auction_doc_id)
-    auctions_server.logger.debug('Proxy path: {}'.format(proxy_path))
+    auctions_server.logger.info('Proxy path: {}'.format(proxy_path))
     if proxy_path:
         request.environ['PATH_INFO'] = '/' + path
+        auctions_server.logger.info('Start proxy to path: {}'.format(path))
         return HostProxy(proxy_path, client='requests', chunk_size=1)
     else:
         return abort(404)
