@@ -63,7 +63,7 @@ angular.module('auction').controller('AuctionController', [
       $log.debug('Update countdown time options: start= ', start_date, ' end= ', end_date);
 
       $scope.interval = (end_date - start_date) / 1000;
-      // $scope.$broadcast('timer-stop')
+      $scope.$broadcast('timer-stop');
       if ($scope.interval > 0) {
         $log.debug('Setup countdown');
         $scope.TimerStart = false;
@@ -72,9 +72,15 @@ angular.module('auction').controller('AuctionController', [
 
       }else{
         $log.debug('Setup timer');
-        $scope.TimerStart = end_date.getTime();
+        var temp_date = new Date();
+        if (temp_date < end_date){
+          $scope.TimerStart = temp_date;
+        } else {
+          $scope.TimerStart = end_date.getTime();
+        }
         $scope.Countdown = false;
       };
+      $scope.$broadcast('timer-start');
     }
     $scope.get_round_number = function(pause_index) {
       return AuctionUtils.get_round_data(pause_index, $scope.auction_doc, $scope.Rounds);

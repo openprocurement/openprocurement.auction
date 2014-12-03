@@ -33,7 +33,7 @@
                 </div>
                 <div class="header-auction-item navbar-brand pull-left round-info timer-text">
                     <span>
-                        <timer ng-if="Countdown" countdown="Countdown" max-time-unit="second" interval="1000">
+                        <timer ng-if="!TimerStart" countdown="Countdown" max-time-unit="second" interval="1000">
                             <span ng-show="days">
                                 <span class="timer-item">{{days}}</span>{{'days'|translate}}
                             </span>
