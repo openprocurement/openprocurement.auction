@@ -46,7 +46,8 @@ BIDS_KEYS_FOR_COPY = (
     "amount",
     "time"
 )
-
+TENDER_API_VERSION = '0.4'
+TENDER_URL = 'http://api-sandbox.openprocurement.org/api/{0}/tenders/{1}/auction'
 SYSTEMD_RELATIVE_PATH = '.config/systemd/user/auction_{0}.{1}'
 SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100})
 SCHEDULER.timezone = timezone('Europe/Kiev')
@@ -64,7 +65,7 @@ class Auction(object):
         self.host = host
         self.port = port
         self.auction_doc_id = auction_doc_id
-        self.tender_url = 'http://api-sandbox.openprocurement.org/api/0.4/tenders/{0}/auction'.format(auction_doc_id)
+        self.tender_url = TENDER_URL.format(TENDER_API_VERSION, auction_doc_id)
         self._auction_data = auction_data
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
@@ -123,7 +124,9 @@ class Auction(object):
 
     @property
     def startDate(self):
-        date = self.convert_datetime(self._auction_data['data']['auctionPeriod']['startDate'])
+        date = self.convert_datetime(
+            self._auction_data['data']['auctionPeriod']['startDate']
+        )
         if datetime.now(timezone('Europe/Kiev')) > date:
             date = datetime.now(timezone('Europe/Kiev')) + timedelta(seconds=20)
             self._auction_data['data']['auctionPeriod']['startDate'] = date.isoformat()
@@ -206,7 +209,9 @@ class Auction(object):
         cmd[1] = 'run'
         home_dir = os.path.expanduser('~')
         logging.info("Get data from {}".format(self.tender_url))
-        with open(os.path.join(home_dir, SYSTEMD_RELATIVE_PATH.format(self.auction_doc_id, 'service')), 'w') as service_file:
+        with open(os.path.join(home_dir,
+                  SYSTEMD_RELATIVE_PATH.format(self.auction_doc_id, 'service')),
+                  'w') as service_file:
             template = get_template('systemd.service')
             logging.info("Write configuration to {}".format(service_file.name))
             service_file.write(
@@ -238,34 +243,49 @@ class Auction(object):
     def schedule_auction(self):
         self.get_auction_info()
         self.get_auction_document()
+        round_number = 0
         SCHEDULER.add_job(
             self.start_auction, 'date',
-            run_date=self.convert_datetime(self.auction_document['stages'][0]['start'])
+            kwargs={"switch_to_round": round_number},
+            run_date=self.convert_datetime(
+                self.auction_document['stages'][0]['start']
+            )
         )
+        round_number += 1
 
         SCHEDULER.add_job(
-            self.end_first_pause, 'date',
-            run_date=self.convert_datetime(self.auction_document['stages'][1]['start'])
+            self.end_first_pause, 'date', kwargs={"switch_to_round": round_number},
+            run_date=self.convert_datetime(
+                self.auction_document['stages'][1]['start']
+            )
         )
+        round_number += 1
 
         for index in xrange(2, len(self.auction_document['stages'])):
             if self.auction_document['stages'][index - 1]['type'] == 'bids':
                 SCHEDULER.add_job(
                     self.end_bids_stage, 'date',
-                    run_date=self.convert_datetime(self.auction_document['stages'][index]['start'])
+                    kwargs={"switch_to_round": round_number},
+                    run_date=self.convert_datetime(
+                        self.auction_document['stages'][index]['start']
+                    )
                 )
             elif self.auction_document['stages'][index - 1]['type'] == 'pause':
                 SCHEDULER.add_job(
                     self.next_stage, 'date',
-                    run_date=self.convert_datetime(self.auction_document['stages'][index]['start'])
+                    kwargs={"switch_to_round": round_number},
+                    run_date=self.convert_datetime(
+                        self.auction_document['stages'][index]['start']
+                    )
                 )
+            round_number += 1
 
         self.server = run_server(self)
 
     def wait_to_end(self):
         self._end_auction_event.wait()
-    
-    def start_auction(self):
+
+    def start_auction(self, switch_to_round=None):
         logging.info('---------------- Start auction ----------------')
         self.get_auction_info()
         self.get_auction_document()
@@ -274,56 +294,86 @@ class Auction(object):
         self.auction_document["initial_bids"] = []
         bids_info = sorting_start_bids_by_amount(bids)
         for index, bid in enumerate(bids_info):
-            self.auction_document["initial_bids"].append(json.loads(INITIAL_BIDS_TEMPLATE.render(
-                time=bid["date"] if "date" in bid else self.startDate,
-                bidder_id=bid["id"],
-                bidder_name=self.mapping[bid["id"]],
-                amount=bid["value"]["amount"]
-            )))
-        self.auction_document["current_stage"] = 0
+            self.auction_document["initial_bids"].append(
+                json.loads(INITIAL_BIDS_TEMPLATE.render(
+                    time=bid["date"] if "date" in bid else self.startDate,
+                    bidder_id=bid["id"],
+                    bidder_name=self.mapping[bid["id"]],
+                    amount=bid["value"]["amount"]
+                ))
+            )
+
+        if isinstance(switch_to_round, int):
+            self.auction_document["current_stage"] = switch_to_round
+        else:
+            self.auction_document["current_stage"] = 0
+
         all_bids = deepcopy(self.auction_document["initial_bids"])
         minimal_bids = []
         for bidder in self.bidders:
-            minimal_bids.append(get_latest_bid_for_bidder(all_bids, str(bidder)))
+            minimal_bids.append(get_latest_bid_for_bidder(
+                all_bids, str(bidder)
+            ))
         minimal_bids = self.filter_bids_keys(sorting_by_amount(minimal_bids))
         self.update_future_bidding_orders(minimal_bids)
         self.save_auction_document()
 
-    def end_first_pause(self):
+    def end_first_pause(self, switch_to_round=None):
         logging.info('---------------- End First Pause ----------------')
         self.bids_actions.acquire()
         self.get_auction_document()
-        self.auction_document["current_stage"] += 1
+
+        if isinstance(switch_to_round, int):
+            self.auction_document["current_stage"] = switch_to_round
+        else:
+            self.auction_document["current_stage"] += 1
+
         self.save_auction_document()
         self.bids_actions.release()
 
-    def end_bids_stage(self):
+    def end_bids_stage(self, switch_to_round=None):
         self.bids_actions.acquire()
         self.get_auction_document()
         logging.info('---------------- End Bids Stage ----------------')
         if self.approve_bids_information():
-            current_round = self.get_round_number(self.auction_document["current_stage"])
+            current_round = self.get_round_number(
+                self.auction_document["current_stage"]
+            )
             start_stage, end_stage = self.get_round_stages(current_round)
-            all_bids = deepcopy(self.auction_document["stages"][start_stage:end_stage])
+            all_bids = deepcopy(
+                self.auction_document["stages"][start_stage:end_stage]
+            )
             minimal_bids = []
             for bidder_id in self.bidders:
-                minimal_bids.append(get_latest_bid_for_bidder(all_bids, bidder_id))
-            minimal_bids = self.filter_bids_keys(sorting_by_amount(minimal_bids))
+                minimal_bids.append(
+                    get_latest_bid_for_bidder(all_bids, bidder_id)
+                )
+            minimal_bids = self.filter_bids_keys(
+                sorting_by_amount(minimal_bids)
+            )
             self.update_future_bidding_orders(minimal_bids)
-        self.auction_document["current_stage"] += 1
+
+        if isinstance(switch_to_round, int):
+            self.auction_document["current_stage"] = switch_to_round
+        else:
+            self.auction_document["current_stage"] += 1
             
         logging.info('---------------- Start stage {0} ----------------'.format(
             self.auction_document["current_stage"])
         )
-        self.save_auction_document()
-        self.bids_actions.release()
         if self.auction_document["current_stage"] == (len(self.auction_document["stages"]) - 1):
             self.end_auction()
+        self.save_auction_document()
+        self.bids_actions.release()
 
-    def next_stage(self):
+    def next_stage(self, switch_to_round=None):
         self.bids_actions.acquire()
         self.get_auction_document()
-        self.auction_document["current_stage"] += 1
+
+        if isinstance(switch_to_round, int):
+            self.auction_document["current_stage"] = switch_to_round
+        else:
+            self.auction_document["current_stage"] += 1
         self.save_auction_document()
         self.bids_actions.release()
         logging.info('---------------- Start stage {0} ----------------'.format(
@@ -333,14 +383,14 @@ class Auction(object):
     def end_auction(self):
         logging.info('---------------- End auction ----------------')
         self.server.stop()
-        self.get_auction_document()
         start_stage, end_stage = self.get_round_stages(ROUNDS)
-        minimal_bids = deepcopy(self.auction_document["stages"][start_stage:end_stage])
+        minimal_bids = deepcopy(
+            self.auction_document["stages"][start_stage:end_stage]
+        )
         minimal_bids = self.filter_bids_keys(sorting_by_amount(minimal_bids))
         self.auction_document["results"] = []
         for item in minimal_bids:
             self.auction_document["results"].append(generate_resuls(item))
-        self.save_auction_document()
         self.put_auction_data()
         self._end_auction_event.set()
 
@@ -348,7 +398,9 @@ class Auction(object):
         current_stage = self.auction_document["current_stage"]
         all_bids = []
         if current_stage in self._bids_data:
-            logging.debug("Current stage bids {}".format(self._bids_data[current_stage]))
+            logging.debug(
+                "Current stage bids {}".format(self._bids_data[current_stage])
+            )
             all_bids += self._bids_data[current_stage]
         if all_bids:
             bid_info = get_latest_bid_for_bidder(
@@ -368,13 +420,18 @@ class Auction(object):
             return False
 
     def update_future_bidding_orders(self, bids):
-        current_round = self.get_round_number(self.auction_document["current_stage"])
+        current_round = self.get_round_number(
+            self.auction_document["current_stage"]
+        )
         for round_number in range(current_round + 1, ROUNDS + 1):
-            for index, stage in enumerate(range(*self.get_round_stages(round_number))):
+            for index, stage in enumerate(
+                    range(*self.get_round_stages(round_number))):
+
                 self.auction_document["stages"][stage] = generate_bids_stage(
                     self.auction_document["stages"][stage],
                     bids[index]
                 )
+
         self.auction_document["results"] = []
         for item in bids:
             self.auction_document["results"].append(generate_resuls(item))
