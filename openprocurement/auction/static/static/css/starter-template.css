@@ -1,6 +1,6 @@
 body {
   padding-top: 73px;
-  padding-bottom: 91px;
+  padding-bottom: 96px;
   }
 .col-xs-1, .col-xs-2, .col-xs-3, .col-xs-4, 
 .col-xs-5, .col-xs-6, .col-xs-7, .col-xs-8, 
@@ -120,6 +120,9 @@ body {
 .current-round .current-stage .stage-icon {
   background-image: url(../img/current_stage.png);
   }
+.current-round .current-stage .stage-amount {
+  color: #999;
+  }
 .stage-info {
   display: table-cell;
   padding: 0 0 0 5px;
@@ -175,6 +178,12 @@ body {
 .future-stage .label-minimum {
   color: #fb8484;
   }
+.current-round .current-stage .minimal-amount {
+  background-color: #FFDFDF;
+  }
+.current-round .current-stage .label-minimum {
+  color: #fb8484;
+  }
 
 /* Current stage*/
 .my-bid-stage {
@@ -189,8 +198,19 @@ body {
   margin: 0;
   position: fixed;
   width: 100%;
+  border-radius: 0;
+  }
+.fixed-bottom .panel-body {
+  padding: 15px 15px 20px;
   }
 
+/*Mobile view */
+@media (max-width: 768px) {
+.fixed-bottom .container {
+  padding-right: 5px;
+  padding-left: 5px; 
+  }
+}
 
 /*Desctop view */
 @media (min-width: 768px) {
