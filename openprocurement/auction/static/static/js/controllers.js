@@ -57,30 +57,35 @@ angular.module('auction').controller('AuctionController', [
       // 
 
 
-    $scope.update_countdown_time = function(start_date, end_date) {
-      $rootScope.timer_message = AuctionUtils.timer_message($scope.auction_doc, $scope.bidder_id);
-      $log.debug('Timer msg:', $scope.timer_message)
-      $log.debug('Update countdown time options: start= ', start_date, ' end= ', end_date);
+    $scope.update_countdown_time = function(current_time) {
 
-      $scope.interval = (end_date - start_date) / 1000;
-      $scope.$broadcast('timer-stop');
-      if ($scope.interval > 0) {
-        $log.debug('Setup countdown');
-        $scope.TimerStart = false;
-        $scope.Countdown = $scope.interval;
-        $log.debug('countdown:', $scope.interval)
+      $rootScope.info_timer = AuctionUtils.prepare_info_timer_data(current_time, $scope.auction_doc, $scope.bidder_id, $scope.Rounds);
+      $log.debug("Info timer data:", $rootScope.info_timer);
+      $rootScope.progres_timer = AuctionUtils.prepare_progress_timer_data(current_time, $scope.auction_doc);
+      $log.debug("Progres timer data:", $rootScope.progres_timer);
+      // $log.debug('Timer msg:', $scope.timer_message)
+      // $log.debug('Update countdown time options: start= ', start_date, ' end= ', end_date);
 
-      }else{
-        $log.debug('Setup timer');
-        var temp_date = new Date();
-        if (temp_date < end_date){
-          $scope.TimerStart = temp_date;
-        } else {
-          $scope.TimerStart = end_date.getTime();
-        }
-        $scope.Countdown = false;
-      };
-      $scope.$broadcast('timer-start');
+      // $scope.interval = (end_date - start_date) / 1000;
+      // $scope.$broadcast('timer-stop');
+      // if ($scope.interval > 0) {
+      //   $log.debug('Setup countdown');
+      //   $scope.TimerStart = false;
+      //   $scope.Countdown = $scope.interval;
+      //   $scope.InfoCountdown = 
+      //   $log.debug('countdown:', $scope.interval)
+
+      // }else{
+      //   $log.debug('Setup timer');
+      //   var temp_date = new Date();
+      //   if (temp_date < end_date){
+      //     $scope.TimerStart = temp_date;
+      //   } else {
+      //     $scope.TimerStart = end_date.getTime();
+      //   }
+      //   $scope.Countdown = false;
+      // };
+      // $scope.$broadcast('timer-start');
     }
     $scope.get_round_number = function(pause_index) {
       return AuctionUtils.get_round_data(pause_index, $scope.auction_doc, $scope.Rounds);
@@ -95,17 +100,10 @@ angular.module('auction').controller('AuctionController', [
       return false;
     }
 
-    $scope.sync_countdown_time_with_server = function(start) {
+    $scope.sync_times_with_server = function(start) {
       $http.get('/get_current_server_time').success(function(data) {
         $scope.last_sync = new Date(data);
-        if (($scope.auction_doc) && ($scope.auction_doc.stages[$scope.auction_doc.current_stage + 1])) {
-          var end = new Date($scope.auction_doc.stages[$scope.auction_doc.current_stage + 1]["start"]);
-        } else if ($scope.auction_doc) {
-          var end = new Date($scope.auction_doc.endDate);
-        } else {
-          var end = new Date();
-        }
-        $scope.update_countdown_time($scope.last_sync, end)
+        $scope.update_countdown_time($scope.last_sync)
       });
     }
     $scope.post_bid = function() {
@@ -219,23 +217,12 @@ angular.module('auction').controller('AuctionController', [
       $rootScope.$apply(function(argument) {
         if ((angular.isUndefined($scope.auction_doc)) || (new_doc.current_stage - $scope.auction_doc.current_stage == 0) || (new_doc.current_stage == -1)) {
           $scope.auction_doc = new_doc;
-          $scope.sync_countdown_time_with_server();
         } else {
           $rootScope.form.bid = null;
           $scope.allow_bidding = true;
-          if (new_doc.stages[new_doc.current_stage]["start"]) {
-            var start = new Date(new_doc.stages[new_doc.current_stage]["start"]);
-          } else {
-            var start = new Date();
-          }
-          if (new_doc.stages[new_doc.current_stage + 1]) {
-            var end = new Date(new_doc.stages[new_doc.current_stage + 1]["start"]);
-          } else {
-            var end = new Date(new_doc.endDate)
-          }
           $scope.auction_doc = new_doc;
-          $scope.update_countdown_time(start, end)
         }
+        $scope.sync_times_with_server();
         $scope.calculate_rounds();
         $scope.calculate_minimal_bid_amount();
         $scope.scroll_to_stage();
