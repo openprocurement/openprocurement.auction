@@ -363,7 +363,8 @@ class Auction(object):
         )
         if self.auction_document["current_stage"] == (len(self.auction_document["stages"]) - 1):
             self.end_auction()
-        self.save_auction_document()
+        else:
+            self.save_auction_document()
         self.bids_actions.release()
 
     def next_stage(self, switch_to_round=None):
@@ -391,6 +392,8 @@ class Auction(object):
         self.auction_document["results"] = []
         for item in minimal_bids:
             self.auction_document["results"].append(generate_resuls(item))
+        self.auction_document["current_stage"] = (len(self.auction_document["stages"]) - 1)
+        logging.info('Document in end_stage', repr(self.auction_document))
         self.put_auction_data()
         self._end_auction_event.set()
 
@@ -452,7 +455,6 @@ class Auction(object):
         results = patch_tender_data(self.tender_url, self._auction_data)
         bidders = dict([(bid["id"], bid["tenderers"][0]["name"])
                         for bid in results["data"]["bids"]])
-        self.get_auction_document()
         for section in ['initial_bids', 'stages', 'results']:
             for index, stage in enumerate(self.auction_document[section]):
                 if 'bidder_id' in stage and stage['bidder_id'] in bidders:
