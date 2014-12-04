@@ -9,6 +9,11 @@
     <meta name="author" content="">
 
     <title>Auction Software</title>
+    <style type="text/css">
+        [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+          display: none !important;
+        }
+    </style>
     <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"> -->
     <link rel="stylesheet" href="/vendor/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/vendor/angular-growl-2/build/angular-growl.min.css">
@@ -31,9 +36,10 @@
                         <span class="icon-bar"></span>
                     </button>
                 </div>
+
                 <div class="header-auction-item navbar-brand pull-left round-info timer-text">
                     <span>
-                        <timer ng-if="!TimerStart" countdown="Countdown" max-time-unit="second" interval="1000">
+                        <timer ng-if="!info_timer.start_time" countdown="info_timer.countdown" max-time-unit="second" interval="1000">
                             <span ng-show="days">
                                 <span class="timer-item">{{days}}</span>{{'days'|translate}}
                             </span>
@@ -43,28 +49,28 @@
                             <span ng-show="minutes&&!(days)">
                                 <span class="timer-item">{{minutes}}</span>{{'minutes'|translate}}
                             </span>
-                            <span ng-show="seconds&&!((days)||(hours))">
+                            <span ng-show="(!((days)||(hours)))">
                                 <span class="timer-item">{{seconds}}</span>{{'seconds'|translate}}
                             </span>
-                            <span ng-if="$parent.timer_message" translate>
-                                {{ timer_message }}
+                            <span ng-if="$parent.info_timer.msg">
+                                {{ info_timer.msg }}
                             </span>
                         </timer>
-                        <timer ng-if="!Countdown" start-time="TimerStart" max-time-unit="minute" interval="1000">
+                        <timer ng-if="!info_timer.countdown" start-time="info_timer.start_time" max-time-unit="minute" interval="1000">
                             <span ng-show="days">
                                 <span class="timer-item">{{days}}</span>{{'days'|translate}}
                             </span>
-                            <span ng-show="hours">
+                            <span ng-hide="(days > 0)||(hours == 0)">
                                 <span class="timer-item">{{hours}}</span>{{'hours'|translate}}
                             </span>
-                            <span ng-show="minutes&&!(days)">
+                            <span ng-hide="((days)||(hours)||(minutes == 0))">
                                 <span class="timer-item">{{minutes}}</span>{{'minutes'|translate}}
                             </span>
-                            <span ng-show="seconds&&!((days)||(hours))">
+                            <span ng-hide="((days)||(hours)||(minutes))">
                                 <span class="timer-item">{{seconds}}</span>{{'seconds'|translate}}
                             </span>
-                            <span ng-if="$parent.timer_message" translate>
-                                {{ timer_message }}
+                            <span ng-if="$parent.info_timer.msg">
+                                {{ info_timer.msg }}
                             </span>
                         </timer>
                     </span>
@@ -104,9 +110,9 @@
             </div>
             <!--/.nav-collapse -->
         </div>
-        <timer countdown="Countdown" interval="1000">
+        <timer ng-if="progres_timer.countdown_seconds" countdown="progres_timer.countdown_seconds" interval="1000">
             <div class="progress progress-fixed-top">
-                <div class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="{{($parent.Countdown - countdown)/$parent.Countdown*100}}" aria-valuemin="0" aria-valuemax="100" style="width: {{($parent.Countdown - countdown)/$parent.Countdown*100}}%">
+                <div class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="{{($parent.progres_timer.rounds_seconds - countdown)/$parent.progres_timer.rounds_seconds*100}}" aria-valuemin="0" aria-valuemax="100" style="width: {{($parent.progres_timer.rounds_seconds - countdown)/$parent.progres_timer.rounds_seconds*100}}%">
                 </div>
             </div>
         </timer>
@@ -247,17 +253,19 @@
             <div class="panel-body bg-warning">
                 <div class="row">
                     <div class="col-xs-12">
-                        <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert(alert.msg_id)">{{ alert.msg | translate }}</alert>
-                        <form id="BidsForm" name="form.BidsForm" role="form">
-                            <label for="bid" translate>Your proposal :</label>
-                            <div class="input-group">
-                                <input type="number" ng-disabled="!allow_bidding" class="form-control" id="bid" name="bid" ng-model="form.bid" placeholder="{{ max_bid_amount() }} {{'or lower'|translate}}">
-                                <div class="input-group-btn">
-                                    <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" translate>Place a bid</button>
-                                    <button type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-link" translate>Edit</button>
+                        <div class="container">
+                            <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert(alert.msg_id)">{{ alert.msg | translate }}</alert>
+                            <form id="BidsForm" name="form.BidsForm" role="form">
+                                <label for="bid" translate>Your proposal :</label>
+                                <div class="input-group">
+                                    <input type="number" ng-disabled="!allow_bidding" class="form-control" id="bid" name="bid" ng-model="form.bid" placeholder="{{ max_bid_amount() }} {{'or lower'|translate}}">
+                                    <div class="input-group-btn">
+                                        <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" translate>Place a bid</button>
+                                        <button type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-link" translate>Edit</button>
+                                    </div>
                                 </div>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
