@@ -38,13 +38,16 @@ angular.module('auction')
       'minutes': 'min',
       'seconds': 'sec',
       'minimum': 'minimum',
-      'until the auction starts': 'until the auction starts',
-      'after the auction was completed': 'after the auction was completed',
-      'until the round starts': 'until the round starts',
       'Internet connection is lost. Attempt to restart after 1 sec': 'Internet connection is lost. Attempt to restart after 1 sec',
       'Synchronization failed': 'Synchronization failed',
       'Possible results': 'Possible results',
-      'In the room came a new user': 'In the room came a new user'
+      'In the room came a new user': 'In the room came a new user',
+      'until the auction starts': 'until the auction starts',
+      'until your turn': 'until your turn',
+      'until your turn ends': 'until your turn ends',
+      'until the round ends': 'until the round ends',
+      'until the results announcement': 'until the results announcement',
+      'after the auction was completed': 'after the auction was completed',
     });
 
     $translateProvider.translations('uk', {
@@ -85,13 +88,16 @@ angular.module('auction')
       'minutes': 'хв',
       'seconds': 'сек',
       'minimum': 'мінімум',
-      'until the auction starts': 'до початку аукціону',
-      'after the auction was completed': 'після завершення аукціону',
-      'until the round starts': 'до початку наступного раунду',
       'Internet connection is lost. Attempt to restart after 1 sec': 'З\'єднання з інтернетом втрачено. спроба перезавантаження через 1 сек',
       'Synchronization failed': 'Помилка синхронізації',
       'Possible results': 'Можливі результати',
-      'In the room came a new user': 'В кабінет зайшов новий користувач'
+      'In the room came a new user': 'В кабінет зайшов новий користувач',
+      'until the auction starts': 'до початку аукціону',
+      'until your turn': 'до вашої черги',
+      'until your turn ends': 'до закінчення вашої черги',
+      'until the round ends': 'до закінчення раунду',
+      'until the results announcement': 'до оголошення результатів',
+      'after the auction was completed': 'після завершення аукціону'
     });
 
     $translateProvider.translations('ru', {
@@ -132,13 +138,16 @@ angular.module('auction')
       'minutes': 'мин',
       'seconds': 'сек',
       'minimum': 'минимум',
-      'until the auction starts': 'до начала аукциона',
-      'after the auction was completed': 'после окончания аукциона',
-      'until the round starts': 'до начала раунда',
       'Internet connection is lost. Attempt to restart after 1 sec': 'Cоединения с интернетом потеряно. попытка перезагрузки через 1 сек',
       'Synchronization failed': 'Ошибка синхронизации',
       'Possible results': 'Возможные результаты',
-      'In the room came a new user': 'В кабинет зашел новый пользователь'
+      'In the room came a new user': 'В кабинет зашел новый пользователь',
+      'until the auction starts': 'до начала аукциона',
+      'until your turn': 'до вашей очереди',
+      'until your turn ends': 'до завершения вашей очереди',
+      'until the round ends': ' до окончания раунда',
+      'until the results announcement': 'до объявления результатов',
+      'after the auction was completed': 'после окончания аукциона'
     });
     $translateProvider.preferredLanguage('uk');
-  }])
+  }]);
