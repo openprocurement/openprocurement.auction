@@ -66,7 +66,13 @@ class Auction(object):
         self.port = port
         self.auction_doc_id = auction_doc_id
         self.tender_url = TENDER_URL.format(TENDER_API_VERSION, auction_doc_id)
-        self._auction_data = auction_data
+        if auction_data:
+            self.debug = True
+            logging.basicConfig(
+                level=logging.DEBUG,
+                format='%(levelname)s-[%(asctime)s]: %(message)s'
+            )
+            self._auction_data = auction_data
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
         self.database_url = database_url
@@ -136,7 +142,8 @@ class Auction(object):
         return iso8601.parse_date(datetime_stamp).astimezone(SCHEDULER.timezone)
 
     def get_auction_info(self):
-        self._auction_data = get_tender_data(self.tender_url)
+        if not self.debug:
+            self._auction_data = get_tender_data(self.tender_url)
         self.bidders_count = len(self._auction_data["data"]["bids"])
         self.rounds_stages = []
         for stage in range((self.bidders_count + 1) * ROUNDS + 1):
@@ -363,8 +370,7 @@ class Auction(object):
         )
         if self.auction_document["current_stage"] == (len(self.auction_document["stages"]) - 1):
             self.end_auction()
-        else:
-            self.save_auction_document()
+        self.save_auction_document()
         self.bids_actions.release()
 
     def next_stage(self, switch_to_round=None):
@@ -393,8 +399,13 @@ class Auction(object):
         for item in minimal_bids:
             self.auction_document["results"].append(generate_resuls(item))
         self.auction_document["current_stage"] = (len(self.auction_document["stages"]) - 1)
-        logging.info('Document in end_stage', repr(self.auction_document))
-        self.put_auction_data()
+        logging.info(' '.join((
+            'Document in end_stage:', repr(self.auction_document)
+        )))
+        if self.debug:
+            logging.info('Debug: put_auction_data disabled !!!')
+        else:
+            self.put_auction_data()
         self._end_auction_event.set()
 
     def approve_bids_information(self):
@@ -461,7 +472,6 @@ class Auction(object):
                     self.auction_document[section][index]["label"]["uk"] = bidders[stage['bidder_id']]
                     self.auction_document[section][index]["label"]["ru"] = bidders[stage['bidder_id']]
                     self.auction_document[section][index]["label"]["en"] = bidders[stage['bidder_id']]
-        self.save_auction_document()
 
 
 def main():
