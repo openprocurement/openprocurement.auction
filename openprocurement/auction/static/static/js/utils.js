@@ -1,5 +1,5 @@
 angular.module('auction')
-  .factory('AuctionUtils', ['$filter', '$timeout', function ($filter, $timeout) {
+  .factory('AuctionUtils', ['$filter', '$timeout', '$log', function ($filter, $timeout, $log) {
     // Format msg for timer
     'use strict';
 
@@ -139,10 +139,11 @@ angular.module('auction')
       $timeout(function () {
         var stage_el = document.getElementById('stage-' + stage.toString());
         if (stage_el) {
+          $log.debug('Scroll to:', stage_el);
           window.scrollBy(0, stage_el.getBoundingClientRect().top);
-          window.scrollBy(0, -100);
+          window.scrollBy(0, -200);
         }
-      }, 500);
+      }, 1000);
     }
     return {
       'prepare_info_timer_data': prepare_info_timer_data,
