@@ -224,7 +224,7 @@
             </div> 
             <div id="results-{{ $index + 1 }}"
                  class="row auction-stage stage-item stage-bids past-stage"
-                 ng-class="{'current-stage': auction_doc.current_stage == (auction_doc.stages.length - 1),
+                 ng-class="{'past-stage': auction_doc.current_stage == (auction_doc.stages.length - 1),
                             'future-stage': auction_doc.current_stage < (auction_doc.stages.length - 1)}"
                  ng-repeat="bid_info in auction_doc.results">
                 <div class="stage-item-lining">
