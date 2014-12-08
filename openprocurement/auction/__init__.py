@@ -73,6 +73,8 @@ class Auction(object):
                 format='%(levelname)s-[%(asctime)s]: %(message)s'
             )
             self._auction_data = auction_data
+        else:
+            self.debug = False
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
         self.database_url = database_url
