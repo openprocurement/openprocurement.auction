@@ -46,7 +46,7 @@ BIDS_KEYS_FOR_COPY = (
     "amount",
     "time"
 )
-TENDER_API_VERSION = '0.4'
+TENDER_API_VERSION = '0.5'
 TENDER_URL = 'http://api-sandbox.openprocurement.org/api/{0}/tenders/{1}/auction'
 SYSTEMD_RELATIVE_PATH = '.config/systemd/user/auction_{0}.{1}'
 SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100})
@@ -73,6 +73,8 @@ class Auction(object):
                 format='%(levelname)s-[%(asctime)s]: %(message)s'
             )
             self._auction_data = auction_data
+        else:
+            self.debug = False
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
         self.worker_defaults = worker_defaults
