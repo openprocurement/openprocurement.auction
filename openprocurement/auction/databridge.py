@@ -86,7 +86,7 @@ class AuctionsDataBridge(object):
                 [self.config_get('auction_worker'),
                  'planning', str(tender_item['id']),
                  str(self.current_worker_port),
-                 str(self.couch_url)
+                 self.config_get('auction_worker_config')
                  ]
             )
         )

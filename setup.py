@@ -34,7 +34,8 @@ setup(name='openprocurement.auction',
           'Flask-Redis',
           'WSGIProxy2',
           'gevent',
-          'sse'
+          'sse',
+          'flask_oauthlib'
           # -*- Extra requirements: -*-
       ],
       entry_points={

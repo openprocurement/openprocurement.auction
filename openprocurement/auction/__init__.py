@@ -59,7 +59,7 @@ logging.basicConfig(level=logging.INFO,
 class Auction(object):
     """docstring for Auction"""
     def __init__(self, auction_doc_id, host='', port=8888,
-                 database_url='http://localhost:9000/auction',
+                 worker_defaults={},
                  auction_data={}):
         super(Auction, self).__init__()
         self.host = host
@@ -75,9 +75,11 @@ class Auction(object):
             self._auction_data = auction_data
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
-        self.database_url = database_url
+        self.worker_defaults = worker_defaults
         self._bids_data = {}
-        self.db = couchdb.client.Database(self.database_url)
+        self.db = couchdb.client.Database(
+            str(self.worker_defaults["COUCH_DATABASE"])
+        )
         self.retries = 10
 
     def get_auction_document(self):
@@ -479,15 +481,23 @@ def main():
     parser.add_argument('cmd', type=str, help='')
     parser.add_argument('auction_doc_id', type=str, help='auction_doc_id')
     parser.add_argument('port', type=int, help='Port')
-    parser.add_argument('database_url', type=str, help='Database Url')
+    parser.add_argument('auction_worker_config', type=str,
+                        help='Auction Worker Configuration File')
     parser.add_argument('--auction_info', type=str, help='Auction File')
     args = parser.parse_args()
     if args.auction_info:
         auction_data = json.load(open(args.auction_info))
     else:
         auction_data = None
+
+    if os.path.isfile(args.auction_worker_config):
+        worker_defaults = json.load(open(args.auction_worker_config))
+    else:
+        print "Auction worker defaults config not exists!!!"
+        sys.exit(1)
+
     auction = Auction(args.auction_doc_id, port=args.port,
-                      database_url=args.database_url,
+                      worker_defaults=worker_defaults,
                       auction_data=auction_data)
     if args.cmd == 'run':
         SCHEDULER.start()
