@@ -46,7 +46,7 @@ BIDS_KEYS_FOR_COPY = (
     "amount",
     "time"
 )
-TENDER_API_VERSION = '0.4'
+TENDER_API_VERSION = '0.5'
 TENDER_URL = 'http://api-sandbox.openprocurement.org/api/{0}/tenders/{1}/auction'
 SYSTEMD_RELATIVE_PATH = '.config/systemd/user/auction_{0}.{1}'
 SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100})
