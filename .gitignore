@@ -54,3 +54,5 @@ docs/_build/
 target/
 openprocurement/auction/node_modules/
 openprocurement/auction/static/vendor/
+openprocurement/auction/static/.webassets-cache/
+openprocurement/auction/static/min/
