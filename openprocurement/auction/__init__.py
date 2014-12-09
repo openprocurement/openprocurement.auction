@@ -58,7 +58,7 @@ logging.basicConfig(level=logging.INFO,
 
 class Auction(object):
     """docstring for Auction"""
-    def __init__(self, auction_doc_id, host='', port=8888,
+    def __init__(self, auction_doc_id, host='0.0.0.0', port=8888,
                  worker_defaults={},
                  auction_data={}):
         super(Auction, self).__init__()
@@ -290,7 +290,7 @@ class Auction(object):
                     )
                 )
             round_number += 1
-
+        logging.info("Start serve...")
         self.server = run_server(self)
 
     def wait_to_end(self):
