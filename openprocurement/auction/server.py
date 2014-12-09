@@ -1,6 +1,9 @@
 from flask_oauthlib.client import OAuth
-from flask import Flask, request, jsonify, url_for, session
+import logging
+from flask import Flask, request, jsonify, url_for, session, abort, redirect
 import os
+from urlparse import urljoin
+
 from gevent.pywsgi import WSGIServer
 from datetime import datetime
 from pytz import timezone
@@ -19,15 +22,27 @@ app.secret_key = os.urandom(24)
 @app.route('/login')
 def login():
     if 'remote_oauth' in session:
-        resp = app.remote_oauth.get('allow_bid')
-        return jsonify(resp.data)
-    if 'bidder_id' in request.args:
+        resp = app.remote_oauth.get('me')
+        if resp.status == 200:
+            return redirect(
+                urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
+            )
+    if 'bidder_id' in request.args and 'hash' in request.args:
         next_url = request.args.get('next') or request.referrer or None
+        if 'X-Forwarded-Path' in request.headers:
+            callback_url = urljoin(
+                request.headers['X-Forwarded-Path'],
+                'authorized'
+            )
+        else:
+            callback_url = url_for('authorized', next=next_url, _external=True)
         return app.remote_oauth.authorize(
-            callback=url_for('authorized', next=next_url, _external=True),
-            bidder_id=request.args['bidder_id']
+            callback=callback_url,
+            bidder_id=request.args['bidder_id'],
+            hash=request.args['hash']
+
         )
-    return jsonify({"msg": "without bidder id"})
+    return abort(401)
 
 
 @app.route('/postbid', methods=['POST'])
@@ -53,13 +68,15 @@ def postBid():
 def authorized():
     resp = app.remote_oauth.authorized_response()
     if resp is None:
-        return 'Access denied: reason=%s error=%s' % (
+        return abort(401, 'Access denied: reason=%s error=%s' % (
             request.args['error_reason'],
             request.args['error_description']
-        )
-    print resp
+        ))
     session['remote_oauth'] = (resp['access_token'], '')
-    return jsonify(oauth_token=resp['access_token'])
+    session['client_id'] = os.urandom(16).encode('hex')
+    return redirect(
+        urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
+    )
 
 
 def push_timestamps_events(app):
@@ -114,6 +131,7 @@ def run_server(auction, timezone='Europe/Kiev'):
     def get_oauth_token():
         return session.get('remote_oauth')
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = 'true'
+    logging.info("Start server on " + str(auction.host) + str(auction.port))
     server = WSGIServer((auction.host, auction.port, ), app)
     server.start()
     spawn(push_timestamps_events, app,)
