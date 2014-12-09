@@ -1,23 +1,55 @@
-from flask_redis import Redis
+from datetime import datetime
+from design import sync_design, endDate_view
 from flask import Flask, render_template, request, abort
-
+from flask.ext.assets import Environment, Bundle
+from flask_redis import Redis
+from gevent import monkey
+from paste.proxy import make_proxy
+from pytz import timezone as tz
+from urlparse import urljoin
+from wsgiproxy import HostProxy
 import couchdb
 import time
-from datetime import datetime
-from pytz import timezone as tz
-from paste.proxy import make_proxy
-from urlparse import urljoin
-from gevent import monkey
-from wsgiproxy import HostProxy
-from design import sync_design, endDate_view
 
 monkey.patch_all()
+
+
+class AuctionsHostProxy(HostProxy):
+
+    def process_request(self, uri, method, headers, environ):
+        headers["X-Forwarded-Path"] = request.url
+        return super(AuctionsHostProxy, self).process_request(
+            uri, method, headers, environ
+        )
 
 auctions_server = Flask(
     __name__,
     static_url_path='',
     template_folder='static'
 )
+
+################################################################################
+assets = Environment(auctions_server)
+css = Bundle("vendor/bootstrap/dist/css/bootstrap.min.css",
+             "vendor/angular-growl-2/build/angular-growl.min.css",
+             "static/css/starter-template.css",
+             filters='cssmin,datauri', output='min/styles_%(version)s.css')
+assets.register('all_css', css)
+
+js = Bundle("vendor/angular/angular.min.js",
+            "vendor/pouchdb/dist/pouchdb.js",
+            "vendor/angular-bootstrap/ui-bootstrap-tpls.min.js",
+            "vendor/angular-timer/dist/angular-timer.min.js",
+            "vendor/angular-translate/angular-translate.min.js",
+            "vendor/angular-growl-2/build/angular-growl.js",
+            "static/js/app.js",
+            "static/js/utils.js",
+            "static/js/translations.js",
+            "static/js/controllers.js",
+            filters='rjsmin', output='min/all_js_%(version)s.js')
+assets.register('all_js', js)
+
+################################################################################
 
 
 @auctions_server.before_request
@@ -75,7 +107,7 @@ def auctions_proxy(auction_doc_id, path):
     if proxy_path:
         request.environ['PATH_INFO'] = '/' + path
         auctions_server.logger.info('Start proxy to path: {}'.format(path))
-        return HostProxy(proxy_path, client='requests', chunk_size=1)
+        return AuctionsHostProxy(proxy_path, client='requests', chunk_size=1)
     else:
         return abort(404)
 
