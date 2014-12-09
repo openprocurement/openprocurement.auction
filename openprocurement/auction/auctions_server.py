@@ -10,6 +10,7 @@ from urlparse import urljoin
 from wsgiproxy import HostProxy
 import couchdb
 import time
+from hashlib import sha1
 
 monkey.patch_all()
 
@@ -123,11 +124,21 @@ def couch_server_proxy(path):
         suppress_http_headers="")
 
 
+@auctions_server.context_processor
+def utility_processor():
+    def format_hash(bidder_id):
+        digest = sha1(auctions_server.config['HASH_SECRET_KEY'])
+        digest.update(bidder_id)
+        return digest.hexdigest()
+    return dict(format_hash=format_hash)
+
+
 def make_auctions_app(global_conf,
                       redis_url='redis://localhost:7777/0',
                       external_couch_url='http://localhost:5000/auction',
                       internal_couch_url='http://localhost:9000/',
                       auctions_db='auctions',
+                      hash_secret_key='',
                       timezone='Europe/Kiev'):
     """
     [app:main]
@@ -162,6 +173,6 @@ def make_auctions_app(global_conf,
         urljoin(auctions_server.config.get('INT_COUCH_URL'),
                 auctions_server.config['COUCH_DB'])
     )
-
+    auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
     return auctions_server
