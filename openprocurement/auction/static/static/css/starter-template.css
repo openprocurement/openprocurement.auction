@@ -103,7 +103,7 @@ body {
   width: 100%;
   }
 .stage-icon {
-  background-image: url(../img/future_stage.png);
+  background-image: url(../../static/img/future_stage.png);
   background-repeat: no-repeat;
   background-position: 50% 50%;
   background-size: 36px 36px;
@@ -113,13 +113,13 @@ body {
   width: 37px;
   }
 .past-round .past-stage .stage-icon {
-  background-image: url(../img/past_round_stage.png);
+  background-image: url(../../static/img/past_round_stage.png);
   }
 .current-round .past-stage .stage-icon {
-  background-image: url(../img/past_stage.png);
+  background-image: url(../../static/img/past_stage.png);
   }
 .current-round .current-stage .stage-icon {
-  background-image: url(../img/current_stage.png);
+  background-image: url(../../static/img/current_stage.png);
   }
 .current-round .current-stage .stage-amount {
   color: #999;
