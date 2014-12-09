@@ -45,6 +45,14 @@ def login():
     return abort(401)
 
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(
+        urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
+    )
+
+
 @app.route('/postbid', methods=['POST'])
 def postBid():
     auction = app.config['auction']

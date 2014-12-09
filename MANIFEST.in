@@ -1,6 +1,8 @@
 recursive-include openprocurement *
 recursive-include docs *
 recursive-exclude openprocurement/auction/static/vendor *
+recursive-exclude openprocurement/auction/static/.webassets-cache *
+recursive-exclude openprocurement/auction/static/min *
 recursive-exclude openprocurement/auction/node_modules *
 include *
 global-exclude *.pyc
