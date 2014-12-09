@@ -35,8 +35,9 @@ setup(name='openprocurement.auction',
           'WSGIProxy2',
           'gevent',
           'sse',
-          'flask_oauthlib'
-          # -*- Extra requirements: -*-
+          'flask_oauthlib',
+          'Flask-Assets',
+          'cssmin'
       ],
       entry_points={
           'console_scripts': [
