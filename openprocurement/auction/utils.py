@@ -105,31 +105,15 @@ def patch_tender_data(tender_url, data, retry_count=10):
         sleep(1)
 
 
-def parse_text(text, encoding):
-    # parse text if is list, tuple or set instance
-    if isinstance(text, (list, tuple, set)):
-        for item in text:
-            if isinstance(item, bytes):
-                item = item.decode(encoding)
-
-            for subitem in item.splitlines():
-                yield subitem
-
-    else:
-        if isinstance(text, bytes):
-            text = text.decode(encoding)
-
-        for item in text.splitlines():
-            yield item
-
-
-def prepare_sse_msg(event, text, encoding='utf-8'):
-
-        buffer = []
-        # buffer.append("event: {0}\n".format(event))
-
-        for text_item in parse_text(text, encoding):
-            buffer.append("data: {0}\n".format(text_item))
-
-        buffer.append("\n")
-        return "".join(buffer)
+def do_until_success(func, args=(), kw={}, repeat=10, sleep=10):
+    while True:
+        try:
+            return func(*args, **kw)
+        except Exception, e:
+            logging.error("Error {} while call {} with args: {}, kw: {}".format(
+                e, func, args, kw
+            ))
+        repeat -= 1
+        if repeat == 0:
+            break
+        sleep(1)
