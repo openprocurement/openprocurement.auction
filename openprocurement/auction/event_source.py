@@ -50,11 +50,10 @@ def event_source():
                     'User-Agent': request.headers.get('User-Agent'),
                 }
                 current_app.auction_bidders[bidder]["channels"][client_hash] = Queue()
-
-            current_app.auction_bidders[bidder]["channels"][client_hash].put({
-                "event": "Identification",
-                "data": {"bidder_id": bidder}
-            })
+            current_app.logger.debug('Send identificcation')
+            send_event_to_client(bidder, client_hash, {"bidder_id": bidder},
+                                 "Identification")
+            current_app.logger.debug('Send ClientsList')
             send_event(
                 bidder,
                 current_app.auction_bidders[bidder]["clients"],
@@ -73,10 +72,23 @@ def event_source():
     return abort(401)
 
 
-def send_event(bidder, data, event=""):
-    for key in current_app.auction_bidders[bidder]["channels"]:
-        current_app.auction_bidders[bidder]["channels"][key].put({
+def send_event_to_client(bidder, client, data, event=""):
+    if bidder in current_app.auction_bidders and client in current_app.auction_bidders[bidder]["channels"]:
+        return current_app.auction_bidders[bidder]["channels"][client].put({
             "event": event,
             "data": data
         })
+
+
+def send_event(bidder, data, event=""):
+    for client in current_app.auction_bidders[bidder]["channels"]:
+        send_event_to_client(bidder, client, data, event)
     return True
+
+
+def remove_client(bidder_id, client):
+    if bidder_id in current_app.auction_bidders:
+        if client in current_app.auction_bidders[bidder_id]["channels"]:
+            del current_app.auction_bidders[bidder_id]["channels"][client]
+        if client in current_app.auction_bidders[bidder_id]["clients"]:
+            del current_app.auction_bidders[bidder_id]["clients"][client]
