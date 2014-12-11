@@ -8,7 +8,9 @@ from gevent.pywsgi import WSGIServer
 from datetime import datetime
 from pytz import timezone
 from openprocurement.auction.forms import BidsForm
-from openprocurement.auction.event_source import sse, send_event
+from openprocurement.auction.event_source import (
+    sse, send_event, send_event_to_client, remove_client
+)
 from pytz import timezone as tz
 from gevent import spawn, sleep
 
@@ -47,6 +49,15 @@ def login():
 
 @app.route('/logout')
 def logout():
+    if 'remote_oauth' in session and 'client_id' in session:
+        resp = app.remote_oauth.get('me')
+        if resp.status == 200:
+            remove_client(resp.data['bidder_id'], session['client_id'])
+            send_event(
+                resp.data['bidder_id'],
+                app.auction_bidders[resp.data['bidder_id']]["clients"],
+                "ClientsList"
+            )
     session.clear()
     return redirect(
         urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
@@ -70,6 +81,27 @@ def postBid():
         else:
             response = {'status': 'failed', 'errors': form.errors}
         return jsonify(response)
+    abort(401)
+
+
+@app.route('/kickclient', methods=['POST'])
+def kickclient():
+    if 'remote_oauth' in session and 'client_id' in session:
+        auction = app.config['auction']
+        with auction.bids_actions:
+            data = request.json
+            resp = app.remote_oauth.get('me')
+            if resp.status == 200:
+
+                data['bidder_id'] = resp.data['bidder_id']
+                if 'client_id' in data:
+                    send_event_to_client(
+                        data['bidder_id'], data['client_id'], {
+                            "from": session['client_id']
+                        }, "KickClient"
+                    )
+                    return jsonify({"status": "ok"})
+    abort(401)
 
 
 @app.route('/authorized')
@@ -108,8 +140,7 @@ def check_clients(app):
                         removed_clients.append(client)
                 if removed_clients:
                     for client in removed_clients:
-                        del app.auction_bidders[bidder_id]["channels"][client]
-                        del app.auction_bidders[bidder_id]["clients"][client]
+                        remove_client(bidder_id, client)
                     send_event(
                         bidder_id,
                         app.auction_bidders[bidder_id]["clients"],
