@@ -38,7 +38,9 @@ class AuctionsDataBridge(object):
             )
         )
         self.tz = timezone('Europe/Kiev')
-        self.couch_url = urljoin(self.config_get('couch_url'), self.config_get('auctions_db'))
+        self.couch_url = urljoin(
+            self.config_get('couch_url'), self.config_get('auctions_db')
+        )
         self.current_worker_port = int(self.config_get('starts_port'))
         self.mapings = Redis.from_url(self.config_get('redis_url'))
         self.circus_client = CircusClient(endpoint=self.config_get('circus_endpoint'))
