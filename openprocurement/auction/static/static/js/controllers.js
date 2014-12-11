@@ -10,6 +10,7 @@ angular.module('auction').controller('AuctionController', [
     $rootScope, $location, $translate, $filter, growl, growlMessages
   ) {
     // init variables
+    $scope.growlMessages = growlMessages;
     growlMessages.initDirective(0, 10);
     $scope.allow_bidding = true;
     $scope.bid = null;
@@ -19,6 +20,14 @@ angular.module('auction').controller('AuctionController', [
     $scope.lang = AuctionConfig.default_lang;
     $scope.format_date = AuctionUtils.format_date;
     $scope.bidder_id = null;
+    $scope.$on('kick_client', function(event, client_id, msg) {
+      $log.debug('Kick client connection', client_id, msg);
+      $scope.growlMessages.deleteMessage(msg);
+      $http.post(AuctionConfig.auction_doc_id + '/kickclient', {'client_id': client_id}).success(
+        function (data) {
+          $log.debug('disable connection', client_id, msg);
+      })
+    });
     $scope.start_subscribe = function (argument) {
       evtSrc = new EventSource(window.location.href.replace(window.location.search, '') + '/event_source');
       evtSrc.addEventListener('ClientsList', function (e) {
@@ -29,8 +38,8 @@ angular.module('auction').controller('AuctionController', [
           if (angular.isObject($scope.clients)) {
             for (i in data) {
               if (!(i in $scope.clients)) {
-                growl.warning($filter('translate')('In the room came a new user') + ' (IP:' + data[i].ip + ')', {
-                  ttl: 20000
+                growl.warning($filter('translate')('In the room came a new user') + ' (IP:' + data[i].ip + ')' +'<button type="button" ng-click="$emit(\'kick_client\', + \''+i+'\', message )" class="btn btn-link">' + $filter('translate')('prohibit connection') + '</button>', {
+                  ttl: 30000
                 });
               }
             }
@@ -48,6 +57,12 @@ angular.module('auction').controller('AuctionController', [
         $scope.$apply(function () {
           $scope.bidder_id = data.bidder_id;
         })
+      }, false);
+
+      evtSrc.addEventListener('KickClient', function (e) {
+        var data = angular.fromJson(e.data);
+        $log.debug("You are must logout: ", data);
+        window.location.replace(window.location.href + '/logout');
       }, false);
       evtSrc.onerror = function (e) {
         $log.debug("EventSource failed.", e);
@@ -234,3 +249,16 @@ angular.module('auction').controller('AuctionController', [
     };
   }
 ]);
+
+
+angular.module('auction').directive('nghReplace', function($compile, $parse, $rootScope) {
+    return {
+      replace: true,
+      link: function(scope, element, attr) {
+        scope.$watch(attr.content, function() {
+          element.html($parse(attr.content)(scope));
+          $compile(element.contents())(scope);
+        }, true);
+      }
+    }
+  })
