@@ -48,6 +48,7 @@ angular.module('auction')
       'until the round ends': 'until the round ends',
       'until the results announcement': 'until the results announcement',
       'after the auction was completed': 'after the auction was completed',
+      'prohibit connection': 'prohibit connection'
     });
 
     $translateProvider.translations('uk', {
@@ -97,7 +98,8 @@ angular.module('auction')
       'until your turn ends': 'до закінчення вашої черги',
       'until the round ends': 'до закінчення раунду',
       'until the results announcement': 'до оголошення результатів',
-      'after the auction was completed': 'після завершення аукціону'
+      'after the auction was completed': 'після завершення аукціону',
+      'prohibit connection': 'заборонити підключення'
     });
 
     $translateProvider.translations('ru', {
@@ -147,7 +149,8 @@ angular.module('auction')
       'until your turn ends': 'до завершения вашей очереди',
       'until the round ends': ' до окончания раунда',
       'until the results announcement': 'до объявления результатов',
-      'after the auction was completed': 'после окончания аукциона'
+      'after the auction was completed': 'после окончания аукциона',
+      'prohibit connection': 'запретить подключение'
     });
     $translateProvider.preferredLanguage('uk');
   }]);
