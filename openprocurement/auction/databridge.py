@@ -10,7 +10,8 @@ from redis import Redis
 from circus.client import CircusClient
 from datetime import datetime
 from pytz import timezone
-import subprocess
+from .utils import do_until_success
+from subprocess import check_output
 
 import iso8601
 
@@ -81,15 +82,15 @@ class AuctionsDataBridge(object):
 
     def start_auction_worker(self, tender_item):
         self.mapings.set(tender_item['id'], "http://localhost:{}/".format(self.current_worker_port))
-        logger.info(
-            subprocess.check_output(
-                [self.config_get('auction_worker'),
-                 'planning', str(tender_item['id']),
-                 str(self.current_worker_port),
-                 self.config_get('auction_worker_config')
-                 ]
-            )
+        result = do_until_success(
+            check_output,
+            args=([self.config_get('auction_worker'),
+                   'planning', str(tender_item['id']),
+                   str(self.current_worker_port),
+                   self.config_get('auction_worker_config')],),
+            sleep=30
         )
+        logger.info("Auction planning: {}".format(result))
         self.current_worker_port += 1
 
     def run(self):
