@@ -7,6 +7,7 @@ recursive-exclude openprocurement/auction/node_modules *
 include *
 global-exclude *.pyc
 graft openprocurement/auction/static/vendor/pouchdb/dist
+graft openprocurement/auction/static/vendor/event-source-polyfill/
 graft openprocurement/auction/static/vendor/angular
 graft openprocurement/auction/static/vendor/angular-bootstrap
 graft openprocurement/auction/static/vendor/angular-growl-2/build
