@@ -9,7 +9,7 @@ angular.module('auction')
         return {
           'countdown': ((new Date(auction.stages[0].start) - current_time) / 1000),
           'start_time': false,
-          'msg': $filter('translate')('until the auction starts')
+          'msg': 'until the auction starts'
         };
       }
       if (auction.current_stage === (auction.stages.length - 1)) {
@@ -21,15 +21,24 @@ angular.module('auction')
         return {
           'countdown': false,
           'start_time': ends_time,
-          'msg': $filter('translate')('after the auction was completed')
+          'msg': 'after the auction was completed'
         };
+      }
+      for (i in Rounds) {
+        if (auction.current_stage == Rounds[i]) {
+          return {
+            'countdown': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
+            'start_time': false,
+            'msg': 'until the round starts'
+          };
+        }
       }
       if (bidder_id) {
         if (auction.stages[auction.current_stage].bidder_id === bidder_id) {
           return {
             'countdown': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
             'start_time': false,
-            'msg': $filter('translate')('until your turn ends')
+            'msg': 'until your turn ends'
           };
         }
         var all_rounds = Rounds.concat(auction.stages.length - 1);
@@ -40,7 +49,7 @@ angular.module('auction')
                 return {
                   'countdown': ((new Date(auction.stages[index].start) - current_time) / 1000),
                   'start_time': false,
-                  'msg': $filter('translate')('until your turn')
+                  'msg': 'until your turn'
                 };
               }
             }
@@ -53,7 +62,7 @@ angular.module('auction')
           return {
             'countdown': ((new Date(auction.stages[Rounds[i]].start) - current_time) / 1000),
             'start_time': false,
-            'msg': $filter('translate')('until the round ends')
+            'msg': 'until the round ends'
           };
         }
       }
@@ -61,7 +70,7 @@ angular.module('auction')
         return {
           'countdown': ((new Date(auction.stages[auction.stages.length - 1].start) - current_time) / 1000),
           'start_time': false,
-          'msg': $filter('translate')('until the results announcement')
+          'msg': 'until the results announcement'
         };
       }
     }
@@ -73,15 +82,15 @@ angular.module('auction')
             'rounds_seconds': 0,
           };
         }
-        if (auction.current_stage === -1){
+        if (auction.current_stage === -1) {
           return {
             'countdown_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000),
             'rounds_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000),
           };
         }
         return {
-            'countdown_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
-            'rounds_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - new Date(auction.stages[auction.current_stage].start)) / 1000),
+          'countdown_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
+          'rounds_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - new Date(auction.stages[auction.current_stage].start)) / 1000),
         };
 
       }
@@ -103,6 +112,11 @@ angular.module('auction')
 
     // Get round data
     function get_round_data(pause_index, auction_doc, Rounds) {
+        if (pause_index == -1){
+          return {
+            'type': 'waiting'
+          };
+        }
         if (pause_index <= Rounds[0]) {
           return {
             'type': 'pause',
@@ -153,4 +167,22 @@ angular.module('auction')
       'get_round_data': get_round_data,
       'scroll_to_stage': scroll_to_stage
     };
+  }]);
+
+
+
+angular.module('auction')
+  .factory('aside', ['$modal', function ($modal) {
+
+    var asideFactory = {
+      open: function (config) {
+        var options = angular.extend({}, config);
+        // check placement is set correct
+        // set aside classes
+        options.windowClass = 'ng-aside horizontal left' + (options.windowClass ? ' ' + options.windowClass : '');
+        delete options.placement
+        return $modal.open(options);
+      }
+    };
+    return angular.extend({}, $modal, asideFactory);
   }]);
