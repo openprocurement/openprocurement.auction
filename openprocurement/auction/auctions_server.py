@@ -37,7 +37,8 @@ css = Bundle("vendor/bootstrap/dist/css/bootstrap.min.css",
              filters='cssmin,datauri', output='min/styles_%(version)s.css')
 assets.register('all_css', css)
 
-js = Bundle("vendor/angular/angular.min.js",
+js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
+            "vendor/angular/angular.min.js",
             "vendor/pouchdb/dist/pouchdb.js",
             "vendor/angular-bootstrap/ui-bootstrap-tpls.min.js",
             "vendor/angular-timer/dist/angular-timer.min.js",
@@ -175,4 +176,5 @@ def make_auctions_app(global_conf,
     )
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
+    # auctions_server.config['ASSETS_DEBUG'] = True
     return auctions_server
