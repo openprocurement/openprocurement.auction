@@ -278,3 +278,59 @@ body {
   margin-left: 0;
   max-width: 100%;
 }
+
+
+
+.ng-aside {
+  overflow: hidden;
+}
+
+.ng-aside.horizontal {
+  transition: none;
+  -webkit-transition: none;
+  transform: none;
+  -webkit-transform: none;
+  height: 100%;
+}
+
+.ng-aside.horizontal.left.in {
+  animation: fadeInLeft 150ms;
+  -webkit-animation: fadeInLeft 150ms;
+}
+
+.ng-aside.horizontal .modal-dialog {
+  position: fixed;
+  top: 70px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  transition: none;
+  -webkit-transition: none;
+  transform: none;
+  -webkit-transform: none;
+}
+
+.ng-aside.horizontal.left .modal-dialog {
+  left: 0;
+}
+
+.ng-aside.horizontal .modal-dialog .modal-content {
+  height: 100%;
+  border: none;
+  border-radius: 0;
+}
+
+.modal-backdrop{
+  background-color: transparent;
+}
+
+.modal-dialog {
+  width: 91.66666667%;
+}
+
+@media (min-width: 500px) { 
+  .modal-dialog {
+    width: 458px;
+  }
+
+}
