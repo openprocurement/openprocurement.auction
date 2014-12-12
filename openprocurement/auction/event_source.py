@@ -1,6 +1,7 @@
 from sse import Sse as PySse
-from flask import json, current_app, Blueprint, request, abort, session
+from flask import json, current_app, Blueprint, request, abort, session, Response
 from gevent.queue import Queue
+from gevent import sleep
 import logging
 
 LOGGER = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ def event_source():
                 current_app.auction_bidders[bidder]["clients"],
                 "ClientsList"
             )
-            return current_app.response_class(
+            return Response(
                 SseStream(
                     current_app.auction_bidders[bidder]["channels"][client_hash],
                     bidder_id=bidder,
@@ -67,9 +68,19 @@ def event_source():
                 ),
                 direct_passthrough=True,
                 mimetype='text/event-stream',
+                content_type='text/event-stream'
             )
+
     current_app.logger.debug('Disable event_source for anonimous.')
-    return abort(401)
+    events_close = PySse()
+    events_close.add_message("Close", "Disable")
+
+    return Response(
+        iter([bytearray(''.join([x for x in events_close]), 'UTF-8')]),
+        direct_passthrough=True,
+        mimetype='text/event-stream',
+        content_type='text/event-stream'
+    )
 
 
 def send_event_to_client(bidder, client, data, event=""):
