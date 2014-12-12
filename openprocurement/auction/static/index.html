@@ -26,7 +26,7 @@
         <div class="header-auction navbar navbar-fixed-top" role="navigation">
             <div class="navbar-header header-auction-lining">
                 <div class="header-auction-item header-auction-nav">
-                    <button type="button" class="navbar-toggle collapsed" ng-init="navbarCollapsed=true" ng-click="navbarCollapsed = !navbarCollapsed">
+                    <button type="button" class="navbar-toggle collapsed" ng-init="navbarCollapsed=true" ng-click="open_menu()">
                         <span class="sr-only">Toggle navigation</span>
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
@@ -50,7 +50,7 @@
                                 <span class="timer-item">{{seconds}}</span>{{'seconds'|translate}}
                             </span>
                             <span ng-if="$parent.info_timer.msg">
-                                {{ info_timer.msg }}
+                                {{ info_timer.msg|translate}}
                             </span>
                         </timer>
                         <timer ng-if="!info_timer.countdown" start-time="info_timer.start_time" max-time-unit="minute" interval="1000">
@@ -67,10 +67,13 @@
                                 <span class="timer-item">{{seconds}}</span>{{'seconds'|translate}}
                             </span>
                             <span ng-if="$parent.info_timer.msg">
-                                {{ info_timer.msg }}
+                                {{ info_timer.msg|translate}}
                             </span>
                         </timer>
                     </span>
+                </div>
+                <div class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'waiting'">
+                    <p class="round-number" translate>Waiting</p>
                 </div>
                 <div class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'pause'">
                     <span class="round-number">
@@ -87,23 +90,7 @@
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1" collapse="navbarCollapsed">
 
-                <ul class="nav navbar-nav">
-                    <li><a href="#" translate>Info</a>
-                    </li>
-                    <li class="active"><a href="#" translate>Bidding</a>
-                    </li>
-                    <li><a href="#" translate>Settings</a>
-                    </li>
-                    <li><a ng-click="restart_changes()" translate>Restart sync</a>
-                    </li>
-                    <div class="navbar-left">
-                        <div class="btn-group btn-group-sm">
-                            <button type="button" ng-click="changeLanguage('en')" class="btn btn-default navbar-btn">English</button>
-                            <button type="button" ng-click="changeLanguage('uk')" class="btn btn-default navbar-btn">Українська</button>
-                            <button type="button" ng-click="changeLanguage('ru')" class="btn btn-default navbar-btn">Русский</button>
-                        </div>
-                    </div>
-                </ul>
+
             </div>
             <!--/.nav-collapse -->
         </div>
@@ -123,7 +110,8 @@
                     <div class="stage-item-lining">
                         <div class="stage-info">
                             <div class="stage-info-lining">
-                                <span class="stage-info-item stage-label" translate>Initial bids</span>
+                                <span class="stage-info-item stage-label" ng-if="auction_doc.current_stage >= 0" translate>Initial bids</span>
+                                <span class="stage-info-item stage-label" ng-if="auction_doc.current_stage == -1" translate>Bidders</span>
                             </div>
                         </div>
                     </div>
@@ -155,7 +143,8 @@
             </div>
         </div>
 
-        <div class="auction-round" 
+        <div ng-if="auction_doc.current_stage >= 0" 
+             class="auction-round" 
              ng-class="{'past-round':  (auction_doc.current_stage > (stage + auction_doc.initial_bids.length)),
                         'current-round': ((auction_doc.current_stage >= stage)&&(auction_doc.current_stage <= (stage + auction_doc.initial_bids.length))),
                         'future-round': auction_doc.current_stage < (stage + auction_doc.initial_bids.length)}"
@@ -205,6 +194,7 @@
         </div>
 
         <div class="auction-round"
+            ng-if="auction_doc.current_stage >= 0" 
             ng-class="{'current-round': auction_doc.current_stage == (auction_doc.stages.length - 1),
                        'future-round': auction_doc.current_stage < (auction_doc.stages.length - 1)}">
             <div class="row">
@@ -278,6 +268,25 @@
                 <div class="growl-message"><span ngh-replace id="dir" content="message.text"></span></div>
             </div>
         </div>
+    </script>
+    <script type="text/ng-template" id="templates/menu.html">
+        <ul class="list-group">
+              <li class="list-group-item"><a href="#"><h4 class="list-group-item-heading" translate>Info</h4></a></li>
+              <li class="list-group-item"><a href="#"><h4 class="list-group-item-heading" translate>Bidding</h4></a></li>
+              <li class="list-group-item"><a href="#"><h4 class="list-group-item-heading" translate>Settings</h4></a></li>
+              <li class="list-group-item"><a ng-click="restart_changes()"><h4 class="list-group-item-heading" translate>Restart sync</h4></a></li>
+              <li class="list-group-item">
+                <h4 class="list-group-item-heading" translate>Language</h4>
+                <div class="list-group-item-text">
+                <div class="btn-group">
+                  <button type="button" ng-click="changeLanguage('en')" class="btn btn-default navbar-btn" ng-class="{'active': lang == 'en'}">English</button>
+                  <button type="button" ng-click="changeLanguage('uk')" class="btn btn-default navbar-btn" ng-class="{'active': lang == 'uk'}">Українська</button>
+                  <button type="button" ng-click="changeLanguage('ru')" class="btn btn-default navbar-btn" ng-class="{'active': lang == 'ru'}">Русский</button>
+                </div>
+                </div>
+              </li>
+        </ul>
+
     </script>
 </body>
 {% endraw %}
