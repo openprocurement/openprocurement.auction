@@ -1,13 +1,15 @@
 var evtSrc = {};
 
+
+
 angular.module('auction').controller('AuctionController', [
   '$scope', 'AuctionConfig', 'AuctionUtils',
   '$timeout', '$http', '$log',
-  '$rootScope', '$location', '$translate', '$filter', 'growl', 'growlMessages',
+  '$rootScope', '$location', '$translate', '$filter', 'growl', 'growlMessages', 'aside',
   function (
     $scope, AuctionConfig, AuctionUtils,
     $timeout, $http, $log,
-    $rootScope, $location, $translate, $filter, growl, growlMessages
+    $rootScope, $location, $translate, $filter, growl, growlMessages, $aside
   ) {
     // init variables
     $scope.growlMessages = growlMessages;
@@ -63,6 +65,10 @@ angular.module('auction').controller('AuctionController', [
         var data = angular.fromJson(e.data);
         $log.debug("You are must logout: ", data);
         window.location.replace(window.location.href + '/logout');
+      }, false);
+      evtSrc.addEventListener('Close', function (e) {
+        $log.debug("You are must logout ");
+        evtSrc.close();
       }, false);
       evtSrc.onerror = function (e) {
         $log.debug("EventSource failed.", e);
@@ -247,6 +253,30 @@ angular.module('auction').controller('AuctionController', [
     $scope.array = function (int) {
       return new Array(int);
     };
+    $scope.open_menu = function () {
+      var modalInstance = $aside.open({
+        templateUrl: 'templates/menu.html',
+        controller: 'OffCanvasController',
+        scope: $scope,
+        size: 'lg'
+      });
+    };
+  }
+]);
+
+
+angular.module('auction').controller('OffCanvasController', ['$scope', '$modalInstance', 
+  function($scope, $modalInstance){
+    $scope.allert = function () {
+      console.log($scope);
+      // body...
+    }
+    $scope.ok = function () {
+      $modalInstance.close($scope.selected.item);
+    };
+    $scope.cancel = function () {
+      $modalInstance.dismiss('cancel');
+    };
   }
 ]);
 
@@ -262,3 +292,4 @@ angular.module('auction').directive('nghReplace', function($compile, $parse, $ro
       }
     }
   })
+
