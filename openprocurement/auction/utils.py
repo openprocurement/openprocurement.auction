@@ -84,14 +84,15 @@ def get_tender_data(tender_url, user="", password="", retry_count=10):
     sys.exit(1)
 
 
-def patch_tender_data(tender_url, data, user="", password="", retry_count=10):
+def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
+                      method='patch'):
     if user or password:
         auth = (user, password)
     else:
         auth = None
     for iteration in xrange(retry_count):
         try:
-            response = requests.patch(
+            response = getattr(requests, method)(
                 tender_url,
                 auth=auth,
                 headers={'content-type': 'application/json'},
