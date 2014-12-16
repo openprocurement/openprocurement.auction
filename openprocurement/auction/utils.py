@@ -6,6 +6,7 @@ import logging
 import json
 import requests
 import sys
+from hashlib import sha1
 
 
 def filter_by_bidder_id(bids, bidder_id):
@@ -55,11 +56,16 @@ def get_latest_start_bid_for_bidder(bids, bidder):
                   key=get_time, reverse=True)[0]
 
 
-def get_tender_data(tender_url, retry_count=10):
+def get_tender_data(tender_url, user="", password="", retry_count=10):
+    if user or password:
+        auth = (user, password)
+    else:
+        auth = None
     for iteration in xrange(retry_count):
         try:
             logging.info("Get data from {}".format(tender_url))
-            response = requests.get(tender_url, timeout=300)
+            response = requests.get(tender_url, auth=auth,
+                                    timeout=300)
             logging.info("Response from {}: {}".format(tender_url, response.ok))
             if response.ok:
                 return response.json()
@@ -78,11 +84,16 @@ def get_tender_data(tender_url, retry_count=10):
     sys.exit(1)
 
 
-def patch_tender_data(tender_url, data, retry_count=10):
+def patch_tender_data(tender_url, data, user="", password="", retry_count=10):
+    if user or password:
+        auth = (user, password)
+    else:
+        auth = None
     for iteration in xrange(retry_count):
         try:
             response = requests.patch(
                 tender_url,
+                auth=auth,
                 headers={'content-type': 'application/json'},
                 data=json.dumps(data),
                 timeout=300
@@ -117,3 +128,9 @@ def do_until_success(func, args=(), kw={}, repeat=10, sleep=10):
         if repeat == 0:
             break
         sleep(1)
+
+
+def calculate_hash(bidder_id, hash_secret):
+    digest = sha1(hash_secret)
+    digest.update(bidder_id)
+    return digest.hexdigest()

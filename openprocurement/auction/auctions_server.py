@@ -10,6 +10,7 @@ from urlparse import urljoin
 from wsgiproxy import HostProxy
 import couchdb
 import time
+from .utils import calculate_hash
 from hashlib import sha1
 
 monkey.patch_all()
@@ -128,9 +129,9 @@ def couch_server_proxy(path):
 @auctions_server.context_processor
 def utility_processor():
     def format_hash(bidder_id):
-        digest = sha1(auctions_server.config['HASH_SECRET_KEY'])
-        digest.update(bidder_id)
-        return digest.hexdigest()
+        return calculate_hash(
+            bidder_id, auctions_server.config['HASH_SECRET_KEY']
+        )
     return dict(format_hash=format_hash)
 
 
