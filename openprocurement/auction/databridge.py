@@ -30,9 +30,10 @@ def hook(watcher, arbiter, hook_name, **kwargs):
 
 class AuctionsDataBridge(object):
     """docstring for AuctionsDataBridge"""
-    def __init__(self, config):
+    def __init__(self, config, ignore_exists):
         super(AuctionsDataBridge, self).__init__()
         self.config = config
+        self.ignore_exists = ignore_exists
         self.tenders_url = urljoin(
             self.config_get('tenders_api_server'),
             '/api/{}/tenders'.format(
@@ -79,12 +80,13 @@ class AuctionsDataBridge(object):
                         date = date.astimezone(self.tz)
                         if datetime.now(self.tz) > date:
                             continue
-                        future_auctions = endDate_view(
-                            self.db, startkey=time() * 1000
-                        )
-                        if item["id"] in [i.id for i in future_auctions]:
-                            logger.warning("Tender with id {} already scheduled".format(item["id"]))
-                            continue
+                        if self.ignore_exists:
+                            future_auctions = endDate_view(
+                                self.db, startkey=time() * 1000
+                            )
+                            if item["id"] in [i.id for i in future_auctions]:
+                                logger.warning("Tender with id {} already scheduled".format(item["id"]))
+                                continue
                         yield item
                 logger.info("Change offset date to {}".format(response_json['next_page']['offset']))
                 self.offset = response_json['next_page']['offset']
@@ -117,12 +119,15 @@ class AuctionsDataBridge(object):
 def main():
     parser = argparse.ArgumentParser(description='---- Auctions Bridge ----')
     parser.add_argument('config', type=str, help='Path to configuration file')
+    parser.add_argument(
+        '--ignore-exists', action='store_false', default=True,
+        help='Not ignore auctions which already scheduled')
     params = parser.parse_args()
     if os.path.isfile(params.config):
         logging.config.fileConfig(params.config)
         config = ConfigParser.ConfigParser()
         config.read(params.config)
-        AuctionsDataBridge(config).run()
+        AuctionsDataBridge(config, params.ignore_exists).run()
 
 
 ##############################################################
