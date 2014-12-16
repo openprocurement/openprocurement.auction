@@ -30,6 +30,12 @@ body {
   padding: 0;
   vertical-align: middle;
   }
+.header-auction-item-visual {
+  display: block;
+  max-height: 61px;
+  line-height: 1.1em;
+  overflow: hidden;
+  }
 
 /* Navigation button */
 .header-auction-nav {
