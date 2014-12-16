@@ -90,7 +90,6 @@ class AuctionsDataBridge(object):
                    'planning', str(tender_item['id']),
                    str(self.current_worker_port),
                    self.config_get('auction_worker_config')],),
-            sleep=30
         )
         logger.info("Auction planning: {}".format(result))
         self.current_worker_port += 1

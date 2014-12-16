@@ -126,6 +126,9 @@ def do_until_success(func, args=(), kw={}, repeat=10, sleep_seconds=10):
             ))
         repeat -= 1
         if repeat == 0:
+            logging.error("Stop running {} with args: {}, kw: {}".format(
+                func, args, kw
+            ))
             break
         sleep(sleep_seconds)
 
