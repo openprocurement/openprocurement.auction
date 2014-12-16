@@ -80,11 +80,12 @@ def auction_url(auction_doc_id):
 def archive_tenders_list_index():
     return render_template(
         'list.html',
-        documents=[auction.doc
-                   for auction in endDate_view(auctions_server.db,
-                                               startkey=time.time() * 1000,
-                                               include_docs=True)
-                   ]
+        documents=reversed(
+            [auction.doc
+             for auction in endDate_view(auctions_server.db,
+                                         startkey=time.time() * 1000,
+                                         include_docs=True)
+             ])
     )
 
 
