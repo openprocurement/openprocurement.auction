@@ -530,11 +530,14 @@ class Auction(object):
         for key in ["status", "minimalStep", "auctionPeriod"]:
             if key in self._auction_data["data"]:
                 del self._auction_data["data"][key]
-
+        if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.6'):
+            results_submit_method = 'patch'
+        else:
+            results_submit_method = 'post'
         results = patch_tender_data(
             self.tender_url + '/auction', self._auction_data,
             user=self.worker_defaults["TENDERS_API_TOKEN"],
-            method='post'
+            method=results_submit_method
         )
         bidders = dict([(bid["id"], bid["tenderers"][0]["name"])
                         for bid in results["data"]["bids"]])
