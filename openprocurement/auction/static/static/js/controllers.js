@@ -32,6 +32,7 @@ angular.module('auction').controller('AuctionController', [
     });
     $scope.start_subscribe = function (argument) {
       evtSrc = new EventSource(window.location.href.replace(window.location.search, '') + '/event_source');
+      $scope.restart_retries_events = 5;
       evtSrc.addEventListener('ClientsList', function (e) {
         var data = angular.fromJson(e.data);
         $log.debug("New ClientsList: ", data);
@@ -50,6 +51,7 @@ angular.module('auction').controller('AuctionController', [
         });
       }, false);
       evtSrc.addEventListener('Tick', function (e) {
+        $scope.restart_retries_events = 5;
         var data = angular.fromJson(e.data);
         $log.debug("Tick: ", data);
       }, false);
@@ -71,7 +73,12 @@ angular.module('auction').controller('AuctionController', [
         evtSrc.close();
       }, false);
       evtSrc.onerror = function (e) {
+        $scope.restart_retries_events = $scope.restart_retries_events - 1;
         $log.debug("EventSource failed.", e);
+        if($scope.restart_retries_events == 0){
+          evtSrc.close();
+          $log.debug("EventSource Stoped.", e);
+        }
       };
     };
     $scope.changeLanguage = function (langKey) {

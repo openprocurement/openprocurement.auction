@@ -155,7 +155,9 @@ angular.module('auction')
         if (stage_el) {
           $log.debug('Scroll to:', stage_el);
           window.scrollBy(0, stage_el.getBoundingClientRect().top);
-          window.scrollBy(0, -200);
+          if (document.getElementById('stage-' + stage.toString()).getBoundingClientRect().top == 0){
+            window.scrollBy(0, -200);
+          }
         }
       }, 1000);
     }

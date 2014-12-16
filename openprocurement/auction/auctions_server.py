@@ -11,7 +11,6 @@ from wsgiproxy import HostProxy
 import couchdb
 import time
 from .utils import calculate_hash
-from hashlib import sha1
 
 monkey.patch_all()
 

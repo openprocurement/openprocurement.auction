@@ -116,7 +116,7 @@ def patch_tender_data(tender_url, data, user="", password="", retry_count=10):
         sleep(1)
 
 
-def do_until_success(func, args=(), kw={}, repeat=10, sleep=10):
+def do_until_success(func, args=(), kw={}, repeat=10, sleep_seconds=10):
     while True:
         try:
             return func(*args, **kw)
@@ -127,7 +127,7 @@ def do_until_success(func, args=(), kw={}, repeat=10, sleep=10):
         repeat -= 1
         if repeat == 0:
             break
-        sleep(1)
+        sleep(sleep_seconds)
 
 
 def calculate_hash(bidder_id, hash_secret):
