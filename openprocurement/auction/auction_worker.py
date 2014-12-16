@@ -2,25 +2,29 @@
 import argparse
 import logging
 import iso8601
-import couchdb
 import json
 import sys
 import os
+from urlparse import urljoin
 from dateutil.tz import tzlocal
 from copy import deepcopy
 from datetime import timedelta, datetime
 from pytz import timezone
+from couchdb.client import Database
+from couchdb.http import HTTPError
 from gevent.event import Event
 from gevent.coros import BoundedSemaphore
 from gevent.subprocess import call
 from apscheduler.schedulers.gevent import GeventScheduler
+from pkg_resources import parse_version
 from .server import run_server
 from .utils import (
     sorting_by_amount,
     get_latest_bid_for_bidder,
     sorting_start_bids_by_amount,
     get_tender_data,
-    patch_tender_data
+    patch_tender_data,
+    calculate_hash
 )
 
 from .templates import (
@@ -46,8 +50,7 @@ BIDS_KEYS_FOR_COPY = (
     "amount",
     "time"
 )
-TENDER_API_VERSION = '0.5'
-TENDER_URL = 'http://api-sandbox.openprocurement.org/api/{0}/tenders/{1}/auction'
+
 SYSTEMD_RELATIVE_PATH = '.config/systemd/user/auction_{0}.{1}'
 SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100})
 SCHEDULER.timezone = timezone('Europe/Kiev')
@@ -65,7 +68,12 @@ class Auction(object):
         self.host = host
         self.port = port
         self.auction_doc_id = auction_doc_id
-        self.tender_url = TENDER_URL.format(TENDER_API_VERSION, auction_doc_id)
+        self.tender_url = urljoin(
+            worker_defaults["TENDERS_API_URL"],
+            '/api/{0}/tenders/{1}'.format(
+                worker_defaults["TENDERS_API_VERSION"], auction_doc_id
+            )
+        )
         if auction_data:
             self.debug = True
             logging.basicConfig(
@@ -79,9 +87,7 @@ class Auction(object):
         self.bids_actions = BoundedSemaphore()
         self.worker_defaults = worker_defaults
         self._bids_data = {}
-        self.db = couchdb.client.Database(
-            str(self.worker_defaults["COUCH_DATABASE"])
-        )
+        self.db = Database(str(self.worker_defaults["COUCH_DATABASE"]))
         self.retries = 10
 
     def get_auction_document(self):
@@ -90,7 +96,7 @@ class Auction(object):
             try:
                 self.auction_document = self.db.get(self.auction_doc_id)
                 return
-            except couchdb.http.HTTPError, e:
+            except HTTPError, e:
                 logging.error("Error while get document: {}".format(e))
             retries -= 1
 
@@ -99,7 +105,7 @@ class Auction(object):
         while retries:
             try:
                 return self.db.save(self.auction_document)
-            except couchdb.http.HTTPError, e:
+            except HTTPError, e:
                 logging.error("Error while save document: {}".format(e))
             new_doc = self.auction_document
             if "_rev" in new_doc:
@@ -145,9 +151,16 @@ class Auction(object):
     def convert_datetime(self, datetime_stamp):
         return iso8601.parse_date(datetime_stamp).astimezone(SCHEDULER.timezone)
 
-    def get_auction_info(self):
+    def get_auction_info(self, prepare=False):
         if not self.debug:
-            self._auction_data = get_tender_data(self.tender_url)
+            if prepare:
+                self._auction_data = get_tender_data(
+                    self.tender_url
+                )
+            self._auction_data.update(
+                get_tender_data(self.tender_url + '/auction',
+                                user=self.worker_defaults["TENDERS_API_TOKEN"])
+            )
         self.bidders_count = len(self._auction_data["data"]["bids"])
         self.rounds_stages = []
         for stage in range((self.bidders_count + 1) * ROUNDS + 1):
@@ -163,15 +176,20 @@ class Auction(object):
     ###########################################################################
 
     def prepare_auction_document(self):
-        self.get_auction_info()
+        self.get_auction_info(prepare=True)
         self.get_auction_document()
         if not self.auction_document:
             self.auction_document = {}
         self.auction_document.update(
-            {"_id": self.auction_doc_id, "stages": [],
+            {"_id": self.auction_doc_id,
+             "stages": [],
              "tenderID": self._auction_data["data"].get("tenderID", ""),
-             "initial_bids": [], "current_stage": -1, "results": [],
-             "minimalStep": self._auction_data["data"]["minimalStep"]}
+             "initial_bids": [],
+             "current_stage": -1,
+             "results": [],
+             "minimalStep": self._auction_data["data"]["minimalStep"],
+             "procuringEntity": self._auction_data["data"]["procuringEntity"],
+             "items": self._auction_data["data"]["items"]}
         )
         # Initital Bids
         for bid_info in self._auction_data["data"]["bids"]:
@@ -213,6 +231,21 @@ class Auction(object):
         self.auction_document['stages'].append(announcement)
         self.auction_document['endDate'] = next_stage_timedelta.isoformat()
         self.save_auction_document()
+        self.set_auction_url()
+
+    def set_auction_url(self):
+        if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.5'):
+            logging.info("Version of API not support setup participation url.")
+            return None
+        auctionUrl = self.worker_defaults["AUCTIONS_URL"].format(
+            auction_id=self.auction_doc_id
+        )
+        logging.info("Set auctionUrl in {} to {}".format(
+            self.tender_url, auctionUrl)
+        )
+
+        patch_tender_data(self.tender_url, {"data": {"auctionUrl": auctionUrl}},
+                          user=self.worker_defaults["TENDERS_API_TOKEN"])
 
     def prepare_tasks(self):
         cmd = deepcopy(sys.argv)
@@ -292,6 +325,7 @@ class Auction(object):
             round_number += 1
         logging.info("Start serve...")
         self.server = run_server(self)
+        self.set_participation_url()
 
     def wait_to_end(self):
         self._end_auction_event.wait()
@@ -454,6 +488,30 @@ class Auction(object):
         for item in bids:
             self.auction_document["results"].append(generate_resuls(item))
 
+    def set_participation_url(self):
+        if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.5'):
+            logging.info("Version of API not support setup participation url.")
+            return None
+
+        auctionUrl = self.worker_defaults["AUCTIONS_URL"].format(
+            auction_id=self.auction_doc_id
+        )
+        logging.info("Set set_participationUrl in {} to ".format(
+            self.tender_url)
+        )
+        patch_data = {"data": {"bids": []}}
+        for bid in self._auction_data["data"]["bids"]:
+            participationUrl = self.worker_defaults["AUCTIONS_URL"].fomat(
+                auction_id=self.auction_doc_id
+            )
+            participationUrl += '/login?bidder_id={}&hash={}'.format(
+                bid["id"],
+                calculate_hash(bid["id"], self.worker_defaults["HASH_SECRET"])
+            )
+            patch_data.append({"participationUrl": participationUrl})
+        patch_tender_data(self.tender_url, {"data": {"auctionUrl": auctionUrl}},
+                          user=self.worker_defaults["TENDERS_API_TOKEN"])
+
     def put_auction_data(self):
         all_bids = self.auction_document["results"]
         logging.info("Approved data: {}".format(all_bids))
@@ -467,7 +525,10 @@ class Auction(object):
             if key in self._auction_data["data"]:
                 del self._auction_data["data"][key]
 
-        results = patch_tender_data(self.tender_url, self._auction_data)
+        results = patch_tender_data(
+            self.tender_url + '/auction', self._auction_data,
+            user=self.worker_defaults["TENDERS_API_TOKEN"]
+        )
         bidders = dict([(bid["id"], bid["tenderers"][0]["name"])
                         for bid in results["data"]["bids"]])
         for section in ['initial_bids', 'stages', 'results']:
