@@ -66,7 +66,9 @@ def get_tender_data(tender_url, user="", password="", retry_count=10):
             logging.info("Get data from {}".format(tender_url))
             response = requests.get(tender_url, auth=auth,
                                     timeout=300)
-            logging.info("Response from {}: {}".format(tender_url, response.ok))
+            logging.info("Response from {}: status: {} text: ".format(
+                tender_url, response.status_code, response.text)
+            )
             if response.ok:
                 return response.json()
         except requests.exceptions.RequestException, e:
@@ -99,7 +101,9 @@ def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
                 data=json.dumps(data),
                 timeout=300
             )
-            logging.debug("Response: " + repr(response))
+            logging.info("Response from {}: status: {} text: ".format(
+                tender_url, response.status_code, response.text)
+            )
             if response.ok:
                 return response.json()
 
