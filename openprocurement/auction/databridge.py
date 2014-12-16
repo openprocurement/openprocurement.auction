@@ -7,13 +7,15 @@ import os
 from time import sleep
 from urlparse import urljoin
 from redis import Redis
-from circus.client import CircusClient
+
 from datetime import datetime
 from pytz import timezone
-from .utils import do_until_success
 from subprocess import check_output
-
+from couchdb.client import Database
+from time import time
 import iso8601
+from .design import endDate_view
+from .utils import do_until_success
 
 
 logger = logging.getLogger(__name__)
@@ -41,9 +43,9 @@ class AuctionsDataBridge(object):
         self.couch_url = urljoin(
             self.config_get('couch_url'), self.config_get('auctions_db')
         )
+        self.db = Database(self.couch_url)
         self.current_worker_port = int(self.config_get('starts_port'))
         self.mapings = Redis.from_url(self.config_get('redis_url'))
-        self.circus_client = CircusClient(endpoint=self.config_get('circus_endpoint'))
         self.url = self.tenders_url
 
     def config_get(self, name):
@@ -77,7 +79,12 @@ class AuctionsDataBridge(object):
                         date = date.astimezone(self.tz)
                         if datetime.now(self.tz) > date:
                             continue
-
+                        future_auctions = endDate_view(
+                            self.db, startkey=time() * 1000
+                        )
+                        if item["id"] in [i.id for i in future_auctions]:
+                            logger.warning("Tender with id {} already scheduled".format(item["id"]))
+                            continue
                         yield item
                 logger.info("Change offset date to {}".format(response_json['next_page']['offset']))
                 self.offset = response_json['next_page']['offset']
