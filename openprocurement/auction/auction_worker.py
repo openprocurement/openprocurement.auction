@@ -504,14 +504,16 @@ class Auction(object):
         )
         patch_data = {"data": {"bids": []}}
         for bid in self._auction_data["data"]["bids"]:
-            participationUrl = self.worker_defaults["AUCTIONS_URL"].fomat(
+            participationUrl = self.worker_defaults["AUCTIONS_URL"].format(
                 auction_id=self.auction_doc_id
             )
             participationUrl += '/login?bidder_id={}&hash={}'.format(
                 bid["id"],
                 calculate_hash(bid["id"], self.worker_defaults["HASH_SECRET"])
             )
-            patch_data.append({"participationUrl": participationUrl})
+            patch_data['data']['bids'].append(
+                {"participationUrl": participationUrl}
+            )
         patch_tender_data(self.tender_url, {"data": {"auctionUrl": auctionUrl}},
                           user=self.worker_defaults["TENDERS_API_TOKEN"])
 
