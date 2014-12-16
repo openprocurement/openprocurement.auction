@@ -234,35 +234,19 @@ class Auction(object):
         self.auction_document['stages'].append(announcement)
         self.auction_document['endDate'] = next_stage_timedelta.isoformat()
         self.save_auction_document()
-        self.set_auction_url()
-        self.set_participation_url()
+        self.set_auction_and_participation_urls()
 
-    def set_auction_url(self):
-        if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.5'):
+    def set_auction_and_participation_urls(self):
+        if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.6'):
             logging.info("Version of API not support setup auction url.")
             return None
         auctionUrl = self.worker_defaults["AUCTIONS_URL"].format(
             auction_id=self.auction_doc_id
         )
-        logging.info("Set auctionUrl in {} to {}".format(
+        logging.info("Set auction and participation urls in {} to {}".format(
             self.tender_url, auctionUrl)
         )
-
-        patch_tender_data(self.tender_url + '/auction', {"data": {"auctionUrl": auctionUrl}},
-                          user=self.worker_defaults["TENDERS_API_TOKEN"])
-
-    def set_participation_url(self):
-        if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.5'):
-            logging.info("Version of API not support setup participation url.")
-            return None
-
-        auctionUrl = self.worker_defaults["AUCTIONS_URL"].format(
-            auction_id=self.auction_doc_id
-        )
-        logging.info("Set participationUrl in {} to ".format(
-            self.tender_url)
-        )
-        patch_data = {"data": {"bids": []}}
+        patch_data = {"data": {"auctionUrl": auctionUrl, "bids": []}}
         for bid in self._auction_data["data"]["bids"]:
             participationUrl = self.worker_defaults["AUCTIONS_URL"].format(
                 auction_id=self.auction_doc_id
@@ -274,7 +258,7 @@ class Auction(object):
             patch_data['data']['bids'].append(
                 {"participationUrl": participationUrl}
             )
-        patch_tender_data(self.tender_url + '/auction', {"data": {"auctionUrl": auctionUrl}},
+        patch_tender_data(self.tender_url + '/auction', patch_data,
                           user=self.worker_defaults["TENDERS_API_TOKEN"])
 
     def prepare_tasks(self):
