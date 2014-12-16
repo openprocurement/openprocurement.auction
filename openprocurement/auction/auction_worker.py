@@ -259,7 +259,7 @@ class Auction(object):
         auctionUrl = self.worker_defaults["AUCTIONS_URL"].format(
             auction_id=self.auction_doc_id
         )
-        logging.info("Set set_participationUrl in {} to ".format(
+        logging.info("Set participationUrl in {} to ".format(
             self.tender_url)
         )
         patch_data = {"data": {"bids": []}}
@@ -355,7 +355,6 @@ class Auction(object):
             round_number += 1
         logging.info("Start serve...")
         self.server = run_server(self)
-        self.set_participation_url()
 
     def wait_to_end(self):
         self._end_auction_event.wait()
