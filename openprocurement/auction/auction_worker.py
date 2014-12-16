@@ -157,9 +157,12 @@ class Auction(object):
                 self._auction_data = get_tender_data(
                     self.tender_url
                 )
-            self._auction_data.update(
-                get_tender_data(self.tender_url + '/auction',
-                                user=self.worker_defaults["TENDERS_API_TOKEN"])
+            else:
+                self._auction_data = {'data': {}}
+            self._auction_data['data'].update(
+                get_tender_data(
+                    self.tender_url + '/auction',
+                    user=self.worker_defaults["TENDERS_API_TOKEN"])['data']
             )
         self.bidders_count = len(self._auction_data["data"]["bids"])
         self.rounds_stages = []
@@ -235,7 +238,7 @@ class Auction(object):
 
     def set_auction_url(self):
         if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.5'):
-            logging.info("Version of API not support setup participation url.")
+            logging.info("Version of API not support setup auction url.")
             return None
         auctionUrl = self.worker_defaults["AUCTIONS_URL"].format(
             auction_id=self.auction_doc_id
