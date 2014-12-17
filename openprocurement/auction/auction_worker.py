@@ -510,8 +510,8 @@ class Auction(object):
             self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
 
         # clear data
-        for key in ["status", "minimalStep", "auctionPeriod"]:
-            if key in self._auction_data["data"]:
+        for key in self._auction_data["data"]:
+            if key != 'bids':
                 del self._auction_data["data"][key]
         if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.6'):
             results_submit_method = 'patch'
