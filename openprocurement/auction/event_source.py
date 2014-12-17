@@ -46,8 +46,12 @@ def event_source():
                 }
 
             if client_hash not in current_app.auction_bidders[bidder]:
+
                 current_app.auction_bidders[bidder]["clients"][client_hash] = {
-                    'ip': request.headers.get('X-Forwarded-For'),
+                    'ip': ','.join(
+                        [request.headers.get('X-Forwarded-For', ''),
+                         request.environ.get('HTTP_X_REAL_IP', '')]
+                    ),
                     'User-Agent': request.headers.get('User-Agent'),
                 }
                 current_app.auction_bidders[bidder]["channels"][client_hash] = Queue()
