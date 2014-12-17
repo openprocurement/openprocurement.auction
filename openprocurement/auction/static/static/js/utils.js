@@ -24,15 +24,6 @@ angular.module('auction')
           'msg': 'after the auction was completed'
         };
       }
-      for (i in Rounds) {
-        if (auction.current_stage == Rounds[i]) {
-          return {
-            'countdown': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
-            'start_time': false,
-            'msg': 'until the round starts'
-          };
-        }
-      }
       if (bidder_id) {
         if (auction.stages[auction.current_stage].bidder_id === bidder_id) {
           return {
@@ -58,6 +49,13 @@ angular.module('auction')
         }
       }
       for (i in Rounds) {
+        if (auction.current_stage == Rounds[i]) {
+          return {
+            'countdown': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
+            'start_time': false,
+            'msg': 'until the round starts'
+          };
+        }
         if (auction.current_stage < Rounds[i]) {
           return {
             'countdown': ((new Date(auction.stages[Rounds[i]].start) - current_time) / 1000),
