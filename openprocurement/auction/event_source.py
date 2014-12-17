@@ -52,7 +52,9 @@ def event_source():
                 }
                 current_app.auction_bidders[bidder]["channels"][client_hash] = Queue()
             current_app.logger.debug('Send identificcation')
-            send_event_to_client(bidder, client_hash, {"bidder_id": bidder},
+            send_event_to_client(bidder, client_hash,
+                                 {"bidder_id": bidder,
+                                  "client_id": client_hash},
                                  "Identification")
             current_app.logger.debug('Send ClientsList')
             send_event(
