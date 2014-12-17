@@ -25,7 +25,7 @@ angular.module('auction').controller('AuctionController', [
     $scope.$on('kick_client', function(event, client_id, msg) {
       $log.debug('Kick client connection', client_id, msg);
       $scope.growlMessages.deleteMessage(msg);
-      $http.post(AuctionConfig.auction_doc_id + '/kickclient', {'client_id': client_id}).success(
+      $http.post('./kickclient', {'client_id': client_id}).success(
         function (data) {
           $log.debug('disable connection', client_id, msg);
       })
@@ -124,7 +124,7 @@ angular.module('auction').controller('AuctionController', [
     };
     $scope.post_bid = function () {
       if ($rootScope.form.BidsForm.$valid) {
-        $http.post(AuctionConfig.auction_doc_id + '/postbid', {
+        $http.post('./postbid', {
           'bid': $rootScope.form.bid,
           'bidder_id': $scope.bidder_id || bidder_id || "0"
         }).success(function (data) {
