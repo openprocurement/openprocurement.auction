@@ -521,14 +521,15 @@ class Auction(object):
             user=self.worker_defaults["TENDERS_API_TOKEN"],
             method=results_submit_method
         )
-        bidders = dict([(bid["id"], bid["tenderers"][0]["name"])
-                        for bid in results["data"]["bids"]])
-        for section in ['initial_bids', 'stages', 'results']:
-            for index, stage in enumerate(self.auction_document[section]):
-                if 'bidder_id' in stage and stage['bidder_id'] in bidders:
-                    self.auction_document[section][index]["label"]["uk"] = bidders[stage['bidder_id']]
-                    self.auction_document[section][index]["label"]["ru"] = bidders[stage['bidder_id']]
-                    self.auction_document[section][index]["label"]["en"] = bidders[stage['bidder_id']]
+        if results:
+            bidders = dict([(bid["id"], bid["tenderers"][0]["name"])
+                            for bid in results["data"]["bids"]])
+            for section in ['initial_bids', 'stages', 'results']:
+                for index, stage in enumerate(self.auction_document[section]):
+                    if 'bidder_id' in stage and stage['bidder_id'] in bidders:
+                        self.auction_document[section][index]["label"]["uk"] = bidders[stage['bidder_id']]
+                        self.auction_document[section][index]["label"]["ru"] = bidders[stage['bidder_id']]
+                        self.auction_document[section][index]["label"]["en"] = bidders[stage['bidder_id']]
 
 
 def main():
