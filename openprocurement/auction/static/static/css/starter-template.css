@@ -285,12 +285,6 @@ body {
   max-width: 100%;
 }
 
-
-
-.ng-aside {
-  overflow: hidden;
-}
-
 .ng-aside.horizontal {
   transition: none;
   -webkit-transition: none;
@@ -332,6 +326,13 @@ body {
 
 .modal-dialog {
   width: 91.66666667%;
+}
+
+@font-face {
+  font-family: 'Glyphicons Halflings';
+
+  src: url('/static/fonts/glyphicons-halflings-regular.eot');
+  src: url('/static/fonts/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), url('/static/fonts/glyphicons-halflings-regular.woff') format('woff'), url('/static/fonts/glyphicons-halflings-regular.ttf') format('truetype'), url('/static/fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
 }
 
 @media (min-width: 500px) { 
