@@ -7,8 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-
-    <title>Auction Software</title>
+    <base href="{{ request.url + '/'}}">
+    <title >Auction Software</title>     
     <style type="text/css">
         [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
           display: none !important;
@@ -104,6 +104,28 @@
 
     <div class="container">
         <div growl ></div>
+        <div class="row">
+            <div class="col-xs-12 hidden-xs">
+                <div class="page-header">
+                    <h2 ng-switch on="auction_doc.procuringEntity['name'+ lang] == undefined">
+                        <span ng-switch-when="false">{{ auction_doc.procuringEntity['name'+ lang]}} </span>
+                        <span ng-switch-when="true">{{ auction_doc.procuringEntity.name}}</span>
+                    </h2>
+                </div>
+                <ul>
+                    <li ng-repeat="item in auction_doc.items">
+                        <span ng-switch on="item['description'+ lang] == undefined">
+                            <span ng-switch-when="false">{{item['description'+ lang] }}</span>
+                            <span ng-switch-when="true">{{item.description}}</span>
+                        </span> - {{ item.quantity }} 
+                        <span ng-switch on="item.unit['name'+ lang] == undefined">
+                            <span ng-switch-when="false">{{item.unit['name'+ lang] }}</span>
+                            <span ng-switch-when="true">{{item.unit.name}}</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
         <div class="auction-round past-round">
             <div class="row">
                 <div class="col-xs-12 stage-item stage-round">
@@ -142,7 +164,6 @@
                 </div>
             </div>
         </div>
-
         <div ng-if="auction_doc.current_stage >= 0" 
              class="auction-round" 
              ng-class="{'past-round':  (auction_doc.current_stage > (stage + auction_doc.initial_bids.length)),
@@ -271,10 +292,34 @@
     </script>
     <script type="text/ng-template" id="templates/menu.html">
         <ul class="list-group">
-              <li class="list-group-item"><a href="#"><h4 class="list-group-item-heading" translate>Info</h4></a></li>
-              <li class="list-group-item"><a href="#"><h4 class="list-group-item-heading" translate>Bidding</h4></a></li>
-              <li class="list-group-item"><a href="#"><h4 class="list-group-item-heading" translate>Settings</h4></a></li>
-              <li class="list-group-item"><a ng-click="restart_changes()"><h4 class="list-group-item-heading" translate>Restart sync</h4></a></li>
+              <li class="list-group-item">
+                <h4  ng-switch on="auction_doc.procuringEntity['name'+ lang] == undefined" class="list-group-item-heading">
+                    <span ng-switch-when="false">{{ auction_doc.procuringEntity['name'+ lang]}} </span>
+                    <span ng-switch-when="true">{{ auction_doc.procuringEntity.name}}</span>
+                </h4>
+
+                <p ng-repeat="item in auction_doc.items">
+                    <span ng-switch on="item['description'+ lang] == undefined">
+                        <span ng-switch-when="false">{{item['description'+ lang] }}</span>
+                        <span ng-switch-when="true">{{item.description}}</span>
+                    </span> - {{ item.quantity }} 
+                    <span ng-switch on="item.unit['name'+ lang] == undefined">
+                        <span ng-switch-when="false">{{item.unit['name'+ lang] }}</span>
+                        <span ng-switch-when="true">{{item.unit.name}}</span>
+                    </span>
+                </p>
+              </li>
+              <li ng-if="clients" class="list-group-item">
+                <p ng-repeat="(id, client) in clients">
+                    <span ng-switch on="id == client_id">
+                        <span ng-switch-when="false" translate>Client</span>
+                        <span ng-switch-when="true" translate>You</span>
+                    </span> - IP: {{ client.ip }}</p>
+              </li>
+              <li ng-if="form.bid" class="list-group-item">
+                <h4 class="list-group-item-heading" translate>Your latest bid</h4>
+                <p>{{ form.bid }}<p>
+              </li>
               <li class="list-group-item">
                 <h4 class="list-group-item-heading" translate>Language</h4>
                 <div class="list-group-item-text">
@@ -285,6 +330,8 @@
                 </div>
                 </div>
               </li>
+              <li class="list-group-item"><a ng-click="restart_changes()"><h4 class="list-group-item-heading" translate>Restart sync</h4></a></li>
+              <li ng-if="bidder_id" class="list-group-item"><a ng-href="logout"><span class="glyphicon glyphicon-log-out" aria-hidden="true"></span> <span translate>Logout</span></a></li>
         </ul>
 
     </script>
