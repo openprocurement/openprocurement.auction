@@ -60,6 +60,7 @@ angular.module('auction').controller('AuctionController', [
         $log.debug("Identification: ", data);
         $scope.$apply(function () {
           $scope.bidder_id = data.bidder_id;
+          $scope.client_id = data.client_id;
         })
       }, false);
 
