@@ -252,7 +252,8 @@ class Auction(object):
                 calculate_hash(bid["id"], self.worker_defaults["HASH_SECRET"])
             )
             patch_data['data']['bids'].append(
-                {"participationUrl": participationUrl}
+                {"participationUrl": participationUrl,
+                 "id": bid["id"]}
             )
         patch_tender_data(self.tender_url + '/auction', patch_data,
                           user=self.worker_defaults["TENDERS_API_TOKEN"])
