@@ -8,6 +8,10 @@ import requests
 import sys
 from hashlib import sha1
 
+from gevent.pywsgi import WSGIServer
+from gevent.baseserver import parse_address
+from redis import Redis
+
 
 def filter_by_bidder_id(bids, bidder_id):
     return [bid for bid in bids if bid['bidder_id'] == bidder_id]
@@ -150,3 +154,25 @@ def calculate_hash(bidder_id, hash_secret):
     digest = sha1(hash_secret)
     digest.update(bidder_id)
     return digest.hexdigest()
+
+
+def get_lisener(port, host=''):
+    lisener = None
+    while lisener is None:
+        family, address = parse_address((host, port))
+        try:
+            lisener = WSGIServer.get_listener(address, family=family)
+        except Exception, e:
+            pass
+        port += 1
+    return lisener
+
+
+def create_mapping(redis_url, auction_id, auction_url):
+    mapings = Redis.from_url(redis_url)
+    return mapings.set(auction_id, auction_url)
+
+
+def delete_mapping(redis_url, auction_id):
+    mapings = Redis.from_url(redis_url)
+    return mapings.delete(auction_id)
