@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 import logging
+import logging.config
 import iso8601
 import json
 import sys
@@ -24,7 +25,8 @@ from .utils import (
     sorting_start_bids_by_amount,
     get_tender_data,
     patch_tender_data,
-    calculate_hash
+    calculate_hash,
+    delete_mapping
 )
 
 from .templates import (
@@ -55,18 +57,15 @@ SYSTEMD_RELATIVE_PATH = '.config/systemd/user/auction_{0}.{1}'
 SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100})
 SCHEDULER.timezone = timezone('Europe/Kiev')
 
-logging.basicConfig(level=logging.INFO,
-                    format='%(levelname)s-[%(asctime)s]: %(message)s')
+logger = logging.getLogger('Auction Worker')
 
 
 class Auction(object):
     """docstring for Auction"""
-    def __init__(self, auction_doc_id, host='0.0.0.0', port=8888,
+    def __init__(self, auction_doc_id,
                  worker_defaults={},
                  auction_data={}):
         super(Auction, self).__init__()
-        self.host = host
-        self.port = port
         self.auction_doc_id = auction_doc_id
         self.tender_url = urljoin(
             worker_defaults["TENDERS_API_URL"],
@@ -76,10 +75,7 @@ class Auction(object):
         )
         if auction_data:
             self.debug = True
-            logging.basicConfig(
-                level=logging.DEBUG,
-                format='%(levelname)s-[%(asctime)s]: %(message)s'
-            )
+            logger.setLevel(logging.DEBUG)
             self._auction_data = auction_data
         else:
             self.debug = False
@@ -97,7 +93,7 @@ class Auction(object):
                 self.auction_document = self.db.get(self.auction_doc_id)
                 return
             except HTTPError, e:
-                logging.error("Error while get document: {}".format(e))
+                logger.error("Error while get document: {}".format(e))
             retries -= 1
 
     def save_auction_document(self):
@@ -106,13 +102,13 @@ class Auction(object):
             try:
                 return self.db.save(self.auction_document)
             except HTTPError, e:
-                logging.error("Error while save document: {}".format(e))
+                logger.error("Error while save document: {}".format(e))
             new_doc = self.auction_document
             if "_rev" in new_doc:
                 del new_doc["_rev"]
             self.get_auction_document()
             self.auction_document.update(new_doc)
-            logging.debug("Retry save document changes")
+            logger.debug("Retry save document changes")
             retries -= 1
 
     def add_bid(self, round_id, bid):
@@ -238,12 +234,12 @@ class Auction(object):
 
     def set_auction_and_participation_urls(self):
         if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.6'):
-            logging.info("Version of API not support setup auction url.")
+            logger.info("Version of API not support setup auction url.")
             return None
         auctionUrl = self.worker_defaults["AUCTIONS_URL"].format(
             auction_id=self.auction_doc_id
         )
-        logging.info("Set auction and participation urls in {} to {}".format(
+        logger.info("Set auction and participation urls in {} to {}".format(
             self.tender_url, auctionUrl)
         )
         patch_data = {"data": {"auctionUrl": auctionUrl, "bids": []}}
@@ -266,12 +262,12 @@ class Auction(object):
         cmd[0] = os.path.abspath(cmd[0])
         cmd[1] = 'run'
         home_dir = os.path.expanduser('~')
-        logging.info("Get data from {}".format(self.tender_url))
+        logger.info("Get data from {}".format(self.tender_url))
         with open(os.path.join(home_dir,
                   SYSTEMD_RELATIVE_PATH.format(self.auction_doc_id, 'service')),
                   'w') as service_file:
             template = get_template('systemd.service')
-            logging.info("Write configuration to {}".format(service_file.name))
+            logger.info("Write configuration to {}".format(service_file.name))
             service_file.write(
                 template.render(cmd=' '.join(cmd),
                                 description='Auction ' + self._auction_data["data"]['tenderID'],
@@ -281,18 +277,18 @@ class Auction(object):
         start_time = (self.startDate - timedelta(minutes=15)).astimezone(tzlocal())
         with open(os.path.join(home_dir, SYSTEMD_RELATIVE_PATH.format(self.auction_doc_id, 'timer')), 'w') as timer_file:
             template = get_template('systemd.timer')
-            logging.info("Write configuration to {}".format(timer_file.name))
+            logger.info("Write configuration to {}".format(timer_file.name))
             timer_file.write(template.render(
                 timestamp=start_time.strftime("%Y-%m-%d %H:%M:%S"),
                 description='Auction ' + self._auction_data["data"]['tenderID'])
             )
-        logging.info("Reload Systemd")
+        logger.info("Reload Systemd")
         response = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
-        logging.info("Systemctl return code: {}".format(response))
-        logging.info("Start timer")
+        logger.info("Systemctl return code: {}".format(response))
+        logger.info("Start timer")
         response = call(['/usr/bin/systemctl', '--user',
                          'start', 'auction_' + '.'.join([self.auction_doc_id, 'timer'])])
-        logging.info("Systemctl return code: {}".format(response))
+        logger.info("Systemctl return code: {}".format(response))
 
     ###########################################################################
     #                       Runtime methods
@@ -307,7 +303,8 @@ class Auction(object):
             kwargs={"switch_to_round": round_number},
             run_date=self.convert_datetime(
                 self.auction_document['stages'][0]['start']
-            )
+            ),
+            name="Start of Auction"
         )
         round_number += 1
 
@@ -315,7 +312,9 @@ class Auction(object):
             self.end_first_pause, 'date', kwargs={"switch_to_round": round_number},
             run_date=self.convert_datetime(
                 self.auction_document['stages'][1]['start']
-            )
+            ),
+            name="End of Pause Stage: [0 -> 1]"
+
         )
         round_number += 1
 
@@ -326,7 +325,8 @@ class Auction(object):
                     kwargs={"switch_to_round": round_number},
                     run_date=self.convert_datetime(
                         self.auction_document['stages'][index]['start']
-                    )
+                    ),
+                    name="End of Bids Stage: [{} -> {}]".format(index - 1, index)
                 )
             elif self.auction_document['stages'][index - 1]['type'] == 'pause':
                 SCHEDULER.add_job(
@@ -334,17 +334,20 @@ class Auction(object):
                     kwargs={"switch_to_round": round_number},
                     run_date=self.convert_datetime(
                         self.auction_document['stages'][index]['start']
-                    )
+                    ),
+                    name="End of Pause Stage: [{} -> {}]".format(index - 1, index)
                 )
             round_number += 1
-        logging.info("Start serve...")
-        self.server = run_server(self)
+        logger.info("Prepare server ...")
+        self.server = run_server(self, self.convert_datetime(
+            self.auction_document['stages'][index]['start']
+        ), logger)
 
     def wait_to_end(self):
         self._end_auction_event.wait()
 
     def start_auction(self, switch_to_round=None):
-        logging.info('---------------- Start auction ----------------')
+        logger.info('---------------- Start auction ----------------')
         self.get_auction_info()
         self.get_auction_document()
         # Initital Bids
@@ -377,7 +380,7 @@ class Auction(object):
         self.save_auction_document()
 
     def end_first_pause(self, switch_to_round=None):
-        logging.info('---------------- End First Pause ----------------')
+        logger.info('---------------- End First Pause ----------------')
         self.bids_actions.acquire()
         self.get_auction_document()
 
@@ -392,7 +395,7 @@ class Auction(object):
     def end_bids_stage(self, switch_to_round=None):
         self.bids_actions.acquire()
         self.get_auction_document()
-        logging.info('---------------- End Bids Stage ----------------')
+        logger.info('---------------- End Bids Stage ----------------')
         if self.approve_bids_information():
             current_round = self.get_round_number(
                 self.auction_document["current_stage"]
@@ -416,7 +419,7 @@ class Auction(object):
         else:
             self.auction_document["current_stage"] += 1
             
-        logging.info('---------------- Start stage {0} ----------------'.format(
+        logger.info('---------------- Start stage {0} ----------------'.format(
             self.auction_document["current_stage"])
         )
         if self.auction_document["current_stage"] == (len(self.auction_document["stages"]) - 1):
@@ -434,13 +437,12 @@ class Auction(object):
             self.auction_document["current_stage"] += 1
         self.save_auction_document()
         self.bids_actions.release()
-        logging.info('---------------- Start stage {0} ----------------'.format(
+        logger.info('---------------- Start stage {0} ----------------'.format(
             self.auction_document["current_stage"])
         )
 
     def end_auction(self):
-        logging.info('---------------- End auction ----------------')
-        self.server.stop()
+        logger.info('---------------- End auction ----------------')
         start_stage, end_stage = self.get_round_stages(ROUNDS)
         minimal_bids = deepcopy(
             self.auction_document["stages"][start_stage:end_stage]
@@ -450,20 +452,27 @@ class Auction(object):
         for item in minimal_bids:
             self.auction_document["results"].append(generate_resuls(item))
         self.auction_document["current_stage"] = (len(self.auction_document["stages"]) - 1)
-        logging.info(' '.join((
+        logger.info(' '.join((
             'Document in end_stage:', repr(self.auction_document)
         )))
         if self.debug:
-            logging.info('Debug: put_auction_data disabled !!!')
+            logger.info('Debug: put_auction_data disabled !!!')
         else:
             self.put_auction_data()
+        logger.info("Clear mapping")
+        delete_mapping(self.worker_defaults["REDIS_URL"],
+                       self.auction_doc_id)
+        logger.info("Stop server")
+        if self.server:
+            self.server.stop()
+        logger.info("Fire 'stop auction worker' event")
         self._end_auction_event.set()
 
     def approve_bids_information(self):
         current_stage = self.auction_document["current_stage"]
         all_bids = []
         if current_stage in self._bids_data:
-            logging.debug(
+            logger.debug(
                 "Current stage bids {}".format(self._bids_data[current_stage])
             )
             all_bids += self._bids_data[current_stage]
@@ -503,7 +512,7 @@ class Auction(object):
 
     def put_auction_data(self):
         all_bids = self.auction_document["results"]
-        logging.info("Approved data: {}".format(all_bids))
+        logger.info("Approved data: {}".format(all_bids))
         for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
             auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
             self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
@@ -536,7 +545,6 @@ def main():
     parser = argparse.ArgumentParser(description='---- Auction ----')
     parser.add_argument('cmd', type=str, help='')
     parser.add_argument('auction_doc_id', type=str, help='auction_doc_id')
-    parser.add_argument('port', type=int, help='Port')
     parser.add_argument('auction_worker_config', type=str,
                         help='Auction Worker Configuration File')
     parser.add_argument('--auction_info', type=str, help='Auction File')
@@ -548,11 +556,12 @@ def main():
 
     if os.path.isfile(args.auction_worker_config):
         worker_defaults = json.load(open(args.auction_worker_config))
+        logging.config.dictConfig(worker_defaults)
     else:
         print "Auction worker defaults config not exists!!!"
         sys.exit(1)
 
-    auction = Auction(args.auction_doc_id, port=args.port,
+    auction = Auction(args.auction_doc_id,
                       worker_defaults=worker_defaults,
                       auction_data=auction_data)
     if args.cmd == 'run':
