@@ -1,5 +1,4 @@
 from flask_oauthlib.client import OAuth
-import logging
 from flask import Flask, request, jsonify, url_for, session, abort, redirect
 import os
 from urlparse import urljoin
@@ -8,6 +7,7 @@ from gevent.pywsgi import WSGIServer
 from datetime import datetime
 from pytz import timezone
 from openprocurement.auction.forms import BidsForm
+from openprocurement.auction.utils import get_lisener, create_mapping
 from openprocurement.auction.event_source import (
     sse, send_event, send_event_to_client, remove_client
 )
@@ -148,13 +148,13 @@ def check_clients(app):
                     )
 
 
-def run_server(auction, timezone='Europe/Kiev'):
+def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
     app.config.update(auction.worker_defaults)
+    app.log = logger
     app.config['auction'] = auction
     app.config['timezone'] = tz(timezone)
     app.config['SESSION_COOKIE_PATH'] = '/tenders/{}'.format(auction.auction_doc_id)
     app.oauth = OAuth(app)
-
     app.remote_oauth = app.oauth.remote_app(
         'remote',
         consumer_key=app.config['OAUTH_CLIENT_ID'],
@@ -170,9 +170,24 @@ def run_server(auction, timezone='Europe/Kiev'):
     def get_oauth_token():
         return session.get('remote_oauth')
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = 'true'
-    logging.info("Start server on " + str(auction.host) + str(auction.port))
-    server = WSGIServer((auction.host, auction.port, ), app)
+
+    # Start server on unused port
+    lisener = get_lisener(auction.worker_defaults["STARTS_PORT"])
+    logger.info("Start server on {0}:{1}".format(*lisener.getsockname()))
+    server = WSGIServer(lisener, app)
     server.start()
+    # Set mapping
+    mapping_value = "http://{0}:{1}/".format(*lisener.getsockname())
+    create_mapping(auction.worker_defaults["REDIS_URL"],
+                   auction.auction_doc_id,
+                   mapping_value)
+    logger.info("Server mapping: {} -> {}".format(
+        auction.auction_doc_id,
+        mapping_value,
+        mapping_expire_time
+    ))
+
+    # Spawn events functionality
     spawn(push_timestamps_events, app,)
     spawn(check_clients, app, )
     return server
