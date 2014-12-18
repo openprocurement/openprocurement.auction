@@ -26,7 +26,7 @@ class AuctionsHostProxy(HostProxy):
 auctions_server = Flask(
     __name__,
     static_url_path='',
-    template_folder='static'
+    template_folder='templates'
 )
 
 ################################################################################
@@ -104,15 +104,16 @@ def auction_list_index():
 @auctions_server.route('/tenders/<auction_doc_id>/<path:path>',
                        methods=['GET', 'POST'])
 def auctions_proxy(auction_doc_id, path):
-    auctions_server.logger.info('Auction_doc_id: {}'.format(auction_doc_id))
+    auctions_server.logger.debug('Auction_doc_id: {}'.format(auction_doc_id))
     proxy_path = auctions_server.redis.get(auction_doc_id)
-    auctions_server.logger.info('Proxy path: {}'.format(proxy_path))
+    auctions_server.logger.debug('Proxy path: {}'.format(proxy_path))
     if proxy_path:
         request.environ['PATH_INFO'] = '/' + path
-        auctions_server.logger.info('Start proxy to path: {}'.format(path))
+        auctions_server.logger.debug('Start proxy to path: {}'.format(path))
         return AuctionsHostProxy(proxy_path, client='requests', chunk_size=1)
-    else:
-        return abort(404)
+    elif path == 'login' and auction_doc_id in auctions_server.db:
+        return render_template('splash.html')
+    return abort(404)
 
 
 @auctions_server.route('/get_current_server_time')
