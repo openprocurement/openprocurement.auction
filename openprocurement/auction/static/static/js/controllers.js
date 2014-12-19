@@ -4,11 +4,11 @@ var evtSrc = {};
 
 angular.module('auction').controller('AuctionController', [
   '$scope', 'AuctionConfig', 'AuctionUtils',
-  '$timeout', '$http', '$log',
+  '$timeout', '$http', '$log', '$cookies', '$window',
   '$rootScope', '$location', '$translate', '$filter', 'growl', 'growlMessages', 'aside',
   function (
     $scope, AuctionConfig, AuctionUtils,
-    $timeout, $http, $log,
+    $timeout, $http, $log, $cookies, $window,
     $rootScope, $location, $translate, $filter, growl, growlMessages, $aside
   ) {
     // init variables
@@ -19,7 +19,12 @@ angular.module('auction').controller('AuctionController', [
     $rootScope.form = {};
     $rootScope.alerts = [];
     $scope.db = new PouchDB(AuctionConfig.remote_db);
-    $scope.lang = AuctionConfig.default_lang;
+    if ($translate.storage().get($translate.storageKey())){
+      $scope.lang = $translate.storage().get($translate.storageKey());
+    } else {
+      $translate.use(AuctionConfig.default_lang);
+      $scope.lang = AuctionConfig.default_lang;
+    }
     $scope.format_date = AuctionUtils.format_date;
     $scope.bidder_id = null;
     $scope.$on('kick_client', function(event, client_id, msg) {

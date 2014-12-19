@@ -39,10 +39,13 @@ assets.register('all_css', css)
 
 js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
             "vendor/angular/angular.min.js",
+            "vendor/angular-cookies/angular-cookies.min.js",
             "vendor/pouchdb/dist/pouchdb.js",
             "vendor/angular-bootstrap/ui-bootstrap-tpls.min.js",
             "vendor/angular-timer/dist/angular-timer.min.js",
             "vendor/angular-translate/angular-translate.min.js",
+            "vendor/angular-translate-storage-cookie/angular-translate-storage-cookie.min.js",
+            "vendor/angular-translate-storage-local/angular-translate-storage-local.min.js",
             "vendor/angular-growl-2/build/angular-growl.js",
             "static/js/app.js",
             "static/js/utils.js",

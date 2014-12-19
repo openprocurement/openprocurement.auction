@@ -1,5 +1,6 @@
 angular.module('auction')
   .config(['$translateProvider', function($translateProvider) {
+    $translateProvider.useLocalStorage();
     $translateProvider.translations('en', {
       'Announcement': 'Announcement',
       'Bid': 'Bid',
@@ -170,5 +171,4 @@ angular.module('auction')
       'after the auction was completed': 'после окончания аукциона',
       'prohibit connection': 'запретить подключение'
     });
-    $translateProvider.preferredLanguage('uk');
   }]);
