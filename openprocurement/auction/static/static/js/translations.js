@@ -37,7 +37,7 @@ angular.module('auction')
       'Not valid bidder': 'Not valid bidder',
       'Stage not for bidding': 'Stage not for bidding',
       'Bid placed': 'Bid placed',
-      'Your proposal': 'Your proposal :',
+      'Your proposal': 'Your proposal',
       'Finish': 'Finish',
       'days': 'days',
       'hours': 'hr',
@@ -55,7 +55,9 @@ angular.module('auction')
       'until the round ends': 'until the round ends',
       'until the results announcement': 'until the results announcement',
       'after the auction was completed': 'after the auction was completed',
-      'prohibit connection': 'prohibit connection'
+      'prohibit connection': 'prohibit connection',
+      'Step reduction of Bid': 'Step reduction of Bid',
+      'Start value': 'Start value'
     });
 
     $translateProvider.translations('uk', {
@@ -94,7 +96,7 @@ angular.module('auction')
       'Not valid bidder': 'Ви не є валідний користувачем',
       'Stage not for bidding': 'Даний етап аукціону не передбачає приймання заявок',
       'Bid placed': 'Заявку прийнято',
-      'Your proposal :': 'Ваша заявка:',
+      'Your proposal': 'Ваша заявка:',
       'Finish': 'Завершено',
       'days': 'дн',
       'hours': 'год',
@@ -112,7 +114,9 @@ angular.module('auction')
       'until the round ends': 'до закінчення раунду',
       'until the results announcement': 'до оголошення результатів',
       'after the auction was completed': 'після завершення аукціону',
-      'prohibit connection': 'заборонити підключення'
+      'prohibit connection': 'заборонити підключення',
+      'Step reduction of Bid': 'Крок зменшення торгів',
+      'Start value': 'Стартова сума'
     });
 
     $translateProvider.translations('ru', {
@@ -151,7 +155,7 @@ angular.module('auction')
       'Not valid bidder': ' Вы не являетесь валидный пользователем',
       'Stage not for bidding': 'Данный этап аукциона не предусматривает приема ставок',
       'Bid placed': 'Ставку принято',
-      'Your proposal :': 'Ваше предложение:',
+      'Your proposal': 'Ваше предложение',
       'Finish': 'Окончен',
       'days': 'дн',
       'hours': 'час',
@@ -169,6 +173,8 @@ angular.module('auction')
       'until the round ends': ' до окончания раунда',
       'until the results announcement': 'до объявления результатов',
       'after the auction was completed': 'после окончания аукциона',
-      'prohibit connection': 'запретить подключение'
+      'prohibit connection': 'запретить подключение',
+      'Step reduction of Bid': 'Шаг уменьшения торгов',
+      'Start value': 'Стартовая сумма'
     });
   }]);
