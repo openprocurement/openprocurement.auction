@@ -264,9 +264,9 @@
                         <div class="container">
                             <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert(alert.msg_id)">{{ alert.msg | translate }}</alert>
                             <form id="BidsForm" name="form.BidsForm" role="form">
-                                <label for="bid"><span translate>Your proposal</span>:<span> {{ max_bid_amount()|formatnumber }} {{'or lower'|translate}}</span></label>
+                                <label for="bid"><span translate>Your proposal</span>:</label><span> {{ max_bid_amount()|formatnumber }} {{'or lower'|translate}}</span>
                                 <div class="input-group">
-                                    <input type="number" ng-disabled="!allow_bidding" min="0" class="form-control" id="bid" name="bid" ng-model="form.bid" required>
+                                    <input type="number" pattern="[0-9]+([\.,][0-9]+)*" ng-disabled="!allow_bidding" min="0" class="form-control" id="bid" name="bid" ng-model="form.bid" required>
                                     <div class="input-group-btn">
                                         <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" translate>Place a bid</button>
                                         <button type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-link" translate>Edit</button>

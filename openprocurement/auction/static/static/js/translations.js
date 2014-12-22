@@ -96,7 +96,7 @@ angular.module('auction')
       'Not valid bidder': 'Ви не є валідний користувачем',
       'Stage not for bidding': 'Даний етап аукціону не передбачає приймання заявок',
       'Bid placed': 'Заявку прийнято',
-      'Your proposal': 'Ваша заявка:',
+      'Your proposal': 'Ваша заявка',
       'Finish': 'Завершено',
       'days': 'дн',
       'hours': 'год',

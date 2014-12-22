@@ -43,9 +43,9 @@ from gevent import monkey
 monkey.patch_all()
 
 ROUNDS = 3
-FIRST_PAUSE_SECONDS = 300
+FIRST_PAUSE_SECONDS = 30
 PAUSE_SECONDS = 120
-BIDS_SECONDS = 120
+BIDS_SECONDS = 1200
 
 BIDS_KEYS_FOR_COPY = (
     "bidder_id",
