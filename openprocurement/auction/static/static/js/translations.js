@@ -2,6 +2,7 @@ angular.module('auction')
   .config(['$translateProvider', function($translateProvider) {
     $translateProvider.useLocalStorage();
     $translateProvider.translations('en', {
+      'at': 'at',
       'Announcement': 'Announcement',
       'Bid': 'Bid',
       'Bidder': 'Bidder',
@@ -54,13 +55,14 @@ angular.module('auction')
       'until the round starts': 'until the round starts',
       'until the round ends': 'until the round ends',
       'until the results announcement': 'until the results announcement',
-      'after the auction was completed': 'after the auction was completed',
+      'Аuction was completed': 'Аuction was completed',
       'prohibit connection': 'prohibit connection',
       'Step reduction of Bid': 'Step reduction of Bid',
       'Start value': 'Start value'
     });
 
     $translateProvider.translations('uk', {
+      'at': 'о',
       'Announcement': 'Оголошення результатів',
       'Bid': 'Заявка',
       'Bidder': 'Учасник',
@@ -113,13 +115,14 @@ angular.module('auction')
       'until the round starts': 'до початку раунду',
       'until the round ends': 'до закінчення раунду',
       'until the results announcement': 'до оголошення результатів',
-      'after the auction was completed': 'після завершення аукціону',
+      'Аuction was completed': 'Аукціон завершився',
       'prohibit connection': 'заборонити підключення',
       'Step reduction of Bid': 'Крок зменшення торгів',
       'Start value': 'Стартова сума'
     });
 
     $translateProvider.translations('ru', {
+      'at': 'о',
       'Announcement': 'Объявление результатов',
       'Bid': 'Ставка',
       'Bidder': ' Участник',
@@ -172,7 +175,7 @@ angular.module('auction')
       'until the round starts': 'до начала раунда',
       'until the round ends': ' до окончания раунда',
       'until the results announcement': 'до объявления результатов',
-      'after the auction was completed': 'после окончания аукциона',
+      'Аuction was completed': 'Аукцион закончился',
       'prohibit connection': 'запретить подключение',
       'Step reduction of Bid': 'Шаг уменьшения торгов',
       'Start value': 'Стартовая сумма'

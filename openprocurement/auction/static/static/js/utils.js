@@ -21,7 +21,7 @@ angular.module('auction')
         return {
           'countdown': false,
           'start_time': ends_time,
-          'msg': 'after the auction was completed'
+          'msg': 'Аuction was completed'
         };
       }
       if (bidder_id) {
@@ -104,8 +104,8 @@ angular.module('auction')
         }
       }
       // Format date with traslations
-    function format_date(date, format) {
-      return $filter('date')(date, $filter('translate')(format));
+    function format_date(date, lang, format) {
+      return moment(date).locale(lang).format(format);
     }
 
     // Get round data

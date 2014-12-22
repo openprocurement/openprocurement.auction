@@ -53,23 +53,14 @@
                                 {{ info_timer.msg|translate}}
                             </span>
                         </timer>
-                        <timer ng-if="!info_timer.countdown" start-time="info_timer.start_time" max-time-unit="minute" interval="1000">
-                            <span ng-show="days">
-                                <span class="timer-item">{{days}}</span>{{'days'|translate}}
-                            </span>
-                            <span ng-hide="(days > 0)||(hours == 0)">
-                                <span class="timer-item">{{hours}}</span>{{'hours'|translate}}
-                            </span>
-                            <span ng-hide="((days)||(hours)||(minutes == 0))">
-                                <span class="timer-item">{{minutes}}</span>{{'minutes'|translate}}
-                            </span>
-                            <span ng-hide="((days)||(hours)||(minutes))">
-                                <span class="timer-item">{{seconds}}</span>{{'seconds'|translate}}
-                            </span>
+                        <span start-time="info_timer.start_time" max-time-unit="minute" interval="1000">
                             <span ng-if="$parent.info_timer.msg">
                                 {{ info_timer.msg|translate}}
                             </span>
-                        </timer>
+                            <span>
+                              {{ format_date(info_timer.start_time, lang,'Do MMMM YYYY') }} {{'at'|translate}} {{ format_date(info_timer.start_time, lang,'HH:mm') }}
+                            </span>
+                        </span>
                     </span>
                 </div>
                 <div class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'waiting'">
