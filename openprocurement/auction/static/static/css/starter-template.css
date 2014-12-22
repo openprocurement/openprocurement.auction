@@ -128,7 +128,8 @@ body {
   background-image: url(../../static/img/current_stage.png);
   }
 .current-round .current-stage .stage-amount {
-  color: #999;
+  color: #bbb;
+  font-size: 16px;
   }
 .stage-info {
   display: table-cell;
@@ -174,7 +175,10 @@ body {
 
 /* Bids stage forecast*/
 .future-stage {
-  color: #999;
+  color: #bbb;
+  }
+.future-stage .stage-amount {
+  font-size: 16px;
   }
 /*.bids-stage-forecast .default-amount {
   background-color: #f5f5f5;
