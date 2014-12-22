@@ -264,9 +264,9 @@
                         <div class="container">
                             <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert(alert.msg_id)">{{ alert.msg | translate }}</alert>
                             <form id="BidsForm" name="form.BidsForm" role="form">
-                                <label for="bid" translate>Your proposal :</label>
+                                <label for="bid"><span translate>Your proposal</span>:<span> {{ max_bid_amount() }} {{'or lower'|translate}}"</span></label>
                                 <div class="input-group">
-                                    <input type="number" ng-disabled="!allow_bidding" class="form-control" id="bid" name="bid" ng-model="form.bid" placeholder="{{ max_bid_amount() }} {{'or lower'|translate}}">
+                                    <input type="number" ng-disabled="!allow_bidding" min="0" class="form-control" id="bid" name="bid" ng-model="form.bid" required>
                                     <div class="input-group-btn">
                                         <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" translate>Place a bid</button>
                                         <button type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-link" translate>Edit</button>
@@ -293,22 +293,33 @@
     <script type="text/ng-template" id="templates/menu.html">
         <ul class="list-group">
               <li class="list-group-item">
-                <h4  ng-switch on="auction_doc.procuringEntity['name'+ lang] == undefined" class="list-group-item-heading">
-                    <span ng-switch-when="false">{{ auction_doc.procuringEntity['name'+ lang]}} </span>
-                    <span ng-switch-when="true">{{ auction_doc.procuringEntity.name}}</span>
+                <span class="glyphicon glyphicon-info-sign text-primary pull-right" aria-hidden="true" style="font-size:2.5em; padding-left:0.2em"></span>
+                <h4 class="list-group-item-heading">
+                    <span ng-switch on="auction_doc.procuringEntity['name_'+ lang] == undefined" class="procuringEntity">
+                        <span ng-switch-when="false">{{ auction_doc.procuringEntity['name_'+ lang]}}</span>
+                        <span ng-switch-when="true">{{ auction_doc.procuringEntity.name}}</span></span><span ng-if="auction_doc.title" ng-switch on="auction_doc['title_'+ lang] == undefined" class="tenderTitle">:
+                        <span ng-switch-when="false">{{ auction_doc['title_'+ lang]}} </span>
+                        <span ng-switch-when="true">{{ auction_doc.title}}</span>
+                    </span>
                 </h4>
-
+                <p class="text-muted tenderDescription" ng-if="auction_doc.description" ng-switch on="auction_doc['description_'+ lang] == undefined">
+                        <span ng-switch-when="false">{{ auction_doc['description_'+ lang]}} </span>
+                        <span ng-switch-when="true">{{ auction_doc.description}}</span>
+                </p>
                 <p ng-repeat="item in auction_doc.items">
-                    <span ng-switch on="item['description'+ lang] == undefined">
-                        <span ng-switch-when="false">{{item['description'+ lang] }}</span>
+                    <span ng-switch on="item['description_'+ lang] == undefined">
+                        <span ng-switch-when="false">{{item['description_'+ lang] }}</span>
                         <span ng-switch-when="true">{{item.description}}</span>
-                    </span> - {{ item.quantity }} 
-                    <span ng-switch on="item.unit['name'+ lang] == undefined">
-                        <span ng-switch-when="false">{{item.unit['name'+ lang] }}</span>
+                    </span> - {{ item.quantity|formatnumber }} 
+                    <span ng-switch on="item.unit['name_'+ lang] == undefined">
+                        <span ng-switch-when="false">{{item.unit['name_'+ lang] }}</span>
                         <span ng-switch-when="true">{{item.unit.name}}</span>
                     </span>
                 </p>
+                <p class="list-group-item-heading minimalStep"><span translate>Step reduction of Bid</span>: <strong>{{ auction_doc.minimalStep.amount|formatnumber }} {{ auction_doc.minimalStep.currency }}</strong></p>
+                <p class="list-group-item-heading tenderValue"><span translate>Start value</span>: {{ auction_doc.value.amount|formatnumber }} {{ auction_doc.value.currency }}</p>
               </li>
+         
               <li ng-if="clients" class="list-group-item">
                 <p ng-repeat="(id, client) in clients">
                     <span ng-switch on="id == client_id">
