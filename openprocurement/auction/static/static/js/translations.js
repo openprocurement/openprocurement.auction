@@ -55,7 +55,7 @@ angular.module('auction')
       'until the round starts': 'until the round starts',
       'until the round ends': 'until the round ends',
       'until the results announcement': 'until the results announcement',
-      'Аuction was completed': 'Аuction was completed',
+      'Аuction was completed': 'Аuction was completed on',
       'prohibit connection': 'prohibit connection',
       'Step reduction of Bid': 'Step reduction of Bid',
       'Start value': 'Start value'

@@ -53,7 +53,7 @@
                                 {{ info_timer.msg|translate}}
                             </span>
                         </timer>
-                        <span start-time="info_timer.start_time" max-time-unit="minute" interval="1000">
+                        <span ng-if="!info_timer.countdown">
                             <span ng-if="$parent.info_timer.msg">
                                 {{ info_timer.msg|translate}}
                             </span>
@@ -98,11 +98,12 @@
         <div class="row">
             <div class="col-xs-12 hidden-xs">
                 <div class="page-header">
-                    <h2 ng-switch on="auction_doc.procuringEntity['name'+ lang] == undefined">
-                        <span ng-switch-when="false">{{ auction_doc.procuringEntity['name'+ lang]}} </span>
-                        <span ng-switch-when="true">{{ auction_doc.procuringEntity.name}}</span>
-                    </h2>
+                    <h2>{{ auction_doc.tenderID }}</h2>
                 </div>
+                <p ng-switch on="auction_doc.procuringEntity['name'+ lang] == undefined" class="lead">
+                    <span ng-switch-when="false">{{ auction_doc.procuringEntity['name'+ lang]}} </span>
+                    <span ng-switch-when="true">{{ auction_doc.procuringEntity.name}}</span>
+                </p>
                 <ul>
                     <li ng-repeat="item in auction_doc.items">
                         <span ng-switch on="item['description'+ lang] == undefined">

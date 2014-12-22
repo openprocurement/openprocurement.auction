@@ -38,6 +38,7 @@ css = Bundle("vendor/bootstrap/dist/css/bootstrap.min.css",
 assets.register('all_css', css)
 
 js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
+            "vendor/moment/min/moment.min.js",
             "vendor/angular/angular.min.js",
             "vendor/angular-cookies/angular-cookies.min.js",
             "vendor/pouchdb/dist/pouchdb.js",
@@ -51,10 +52,9 @@ js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
             "static/js/utils.js",
             "static/js/translations.js",
             "static/js/controllers.js",
-            "vendor/moment/min/moment.min.js",
-            "vendor/moment/locale/ru.js",
             "vendor/moment/locale/uk.js",
-            filters='rjsmin', output='min/all_js_%(version)s.js')
+            "vendor/moment/locale/ru.js",
+            filters='jsmin', output='min/all_js_%(version)s.js')
 assets.register('all_js', js)
 
 ################################################################################
