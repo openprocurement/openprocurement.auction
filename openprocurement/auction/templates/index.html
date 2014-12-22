@@ -264,7 +264,7 @@
                         <div class="container">
                             <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert(alert.msg_id)">{{ alert.msg | translate }}</alert>
                             <form id="BidsForm" name="form.BidsForm" role="form">
-                                <label for="bid"><span translate>Your proposal</span>:<span> {{ max_bid_amount() }} {{'or lower'|translate}}"</span></label>
+                                <label for="bid"><span translate>Your proposal</span>:<span> {{ max_bid_amount()|formatnumber }} {{'or lower'|translate}}</span></label>
                                 <div class="input-group">
                                     <input type="number" ng-disabled="!allow_bidding" min="0" class="form-control" id="bid" name="bid" ng-model="form.bid" required>
                                     <div class="input-group-btn">
@@ -316,8 +316,8 @@
                         <span ng-switch-when="true">{{item.unit.name}}</span>
                     </span>
                 </p>
-                <p class="list-group-item-heading minimalStep"><span translate>Step reduction of Bid</span>: <strong>{{ auction_doc.minimalStep.amount|formatnumber }} {{ auction_doc.minimalStep.currency }}</strong></p>
-                <p class="list-group-item-heading tenderValue"><span translate>Start value</span>: {{ auction_doc.value.amount|formatnumber }} {{ auction_doc.value.currency }}</p>
+                <p class="list-group-item-heading minimalStep" ng-if="auction_doc.minimalStep.amount"><span translate>Step reduction of Bid</span>: <strong>{{ auction_doc.minimalStep.amount|formatnumber }} {{ auction_doc.minimalStep.currency }}</strong></p>
+                <p class="list-group-item-heading tenderValue" ng-if="auction_doc.value.amount"><span translate>Start value</span>: {{ auction_doc.value.amount|formatnumber }} {{ auction_doc.value.currency }}</p>
               </li>
          
               <li ng-if="clients" class="list-group-item">
