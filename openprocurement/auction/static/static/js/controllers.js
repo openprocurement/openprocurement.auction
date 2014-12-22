@@ -165,10 +165,14 @@ angular.module('auction').controller('AuctionController', [
     };
 
     $scope.max_bid_amount = function () {
+      var amount = 0;
       if ((angular.isString($scope.bidder_id)) && (angular.isObject($scope.auction_doc)) && (angular.isObject($scope.auction_doc.stages[$scope.auction_doc.current_stage]))) {
-        return $scope.auction_doc.stages[$scope.auction_doc.current_stage].amount - $scope.auction_doc.minimalStep.amount;
+        amount = $scope.auction_doc.stages[$scope.auction_doc.current_stage].amount - $scope.auction_doc.minimalStep.amount;
       }
-      return 0;
+      if (amount < 0){
+        return 0;
+      };
+      return amount
     };
     $scope.calculate_minimal_bid_amount = function () {
       if ((angular.isObject($scope.auction_doc)) && (angular.isArray($scope.auction_doc.stages)) && (angular.isArray($scope.auction_doc.initial_bids))) {
