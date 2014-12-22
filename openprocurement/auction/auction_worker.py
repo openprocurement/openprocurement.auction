@@ -179,16 +179,20 @@ class Auction(object):
         self.get_auction_document()
         if not self.auction_document:
             self.auction_document = {}
+        # TODO: Get multilingual title and description
         self.auction_document.update(
             {"_id": self.auction_doc_id,
              "stages": [],
              "tenderID": self._auction_data["data"].get("tenderID", ""),
+             "title": self._auction_data["data"].get("title", ""),
+             "description": self._auction_data["data"].get("description", ""),
              "initial_bids": [],
              "current_stage": -1,
              "results": [],
-             "minimalStep": self._auction_data["data"]["minimalStep"],
-             "procuringEntity": self._auction_data["data"]["procuringEntity"],
-             "items": self._auction_data["data"]["items"]}
+             "minimalStep": self._auction_data["data"].get("minimalStep", {}),
+             "procuringEntity": self._auction_data["data"].get("procuringEntity", {}),
+             "items": self._auction_data["data"].get("items", {}),
+             "value": self._auction_data["data"].get("value", {})}
         )
         # Initital Bids
         for bid_info in self._auction_data["data"]["bids"]:
