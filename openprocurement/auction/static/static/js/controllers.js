@@ -19,7 +19,7 @@ angular.module('auction').controller('AuctionController', [
     $rootScope.form = {};
     $rootScope.alerts = [];
     $scope.db = new PouchDB(AuctionConfig.remote_db);
-    if ($translate.storage().get($translate.storageKey())){
+    if ($translate.storage().get($translate.storageKey()) == "undefined"){
       $scope.lang = $translate.storage().get($translate.storageKey());
     } else {
       $translate.use(AuctionConfig.default_lang);
