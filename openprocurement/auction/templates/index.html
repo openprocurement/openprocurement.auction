@@ -205,7 +205,6 @@
                 </div>
             </div>
         </div>
-
         <div class="auction-round"
             ng-if="auction_doc.current_stage >= 0" 
             ng-class="{'current-round': auction_doc.current_stage == (auction_doc.stages.length - 1),
@@ -246,6 +245,10 @@
                     </div>
                 </div>
             </div>        
+        </div>
+        <div class="row" ng-if="auction_doc.current_stage == (auction_doc.stages.length - 1)">
+            <br/>
+            <a ng-if="return_url" class="btn btn-block btn-success" href="{{ return_url }}" translate>Return to Tender</a>
         </div>
     </div>
     <div class="container-fluid">
