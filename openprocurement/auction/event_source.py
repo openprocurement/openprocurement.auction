@@ -58,7 +58,8 @@ def event_source():
             current_app.logger.debug('Send identificcation')
             send_event_to_client(bidder, client_hash,
                                  {"bidder_id": bidder,
-                                  "client_id": client_hash},
+                                  "client_id": client_hash,
+                                  "return_url": session.get('return_url', '')},
                                  "Identification")
             current_app.logger.debug('Send ClientsList')
             send_event(
