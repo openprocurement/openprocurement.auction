@@ -147,7 +147,7 @@
                                   ng-class="{true: 'minimal-amount', false: 'default-amount'}[bid_info.amount == minimal_bid]">
                                 <span class="label-price">
                                     {{ bid_info['amount']|formatnumber }}
-                                    <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency }}</span>
+                                    <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
                                 </span>
                                 <span class="label-minimum" ng-if="bid_info.amount == minimal_bid" translate>minimum</span>
                             </span>
@@ -191,7 +191,7 @@
                                   ng-class="{true: 'minimal-amount', false: 'default-amount'}[auction_doc.stages[stage + $index + 1].amount == minimal_bid]">
                                 <span class="label-price" ng-if="auction_doc.stages[stage + $index + 1]['changed']">
                                     <strong>{{ auction_doc.stages[stage + $index + 1]['amount']|formatnumber }}
-                                        <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency }}</span>
+                                        <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
                                     </strong>
                                 </span>
                                 <span class="label-price" ng-if="!auction_doc.stages[stage + $index + 1]['changed']">
@@ -237,7 +237,7 @@
                                   ng-class="{true: 'minimal-amount', false: 'default-amount'}[bid_info.amount == minimal_bid]">
                                 <span class="label-price">
                                     {{ bid_info['amount']|formatnumber }}
-                                    <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency }}</span>
+                                    <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
                                 </span>
                                 <span class="label-minimum" ng-if="bid_info.amount == minimal_bid" translate>minimum</span>
                             </span>
@@ -311,7 +311,7 @@
                         <span ng-switch-when="true">{{item.unit.name}}</span>
                     </span>
                 </p>
-                <p class="list-group-item-heading minimalStep" ng-if="auction_doc.minimalStep.amount"><span translate>Step reduction of Bid</span>: <strong>{{ auction_doc.minimalStep.amount|formatnumber }} {{ auction_doc.minimalStep.currency }}</strong></p>
+                <p class="list-group-item-heading minimalStep" ng-if="auction_doc.minimalStep.amount"><span translate>Step reduction of Bid</span>: <strong>{{ auction_doc.minimalStep.amount|formatnumber }} {{ auction_doc.minimalStep.currency|translate }}</strong></p>
                 <p class="list-group-item-heading tenderValue" ng-if="auction_doc.value.amount"><span translate>Start value</span>: {{ auction_doc.value.amount|formatnumber }} {{ auction_doc.value.currency }}</p>
               </li>
          
