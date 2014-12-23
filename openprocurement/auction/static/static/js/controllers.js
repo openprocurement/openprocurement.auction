@@ -67,6 +67,7 @@ angular.module('auction').controller('AuctionController', [
         $scope.$apply(function () {
           $scope.bidder_id = data.bidder_id;
           $scope.client_id = data.client_id;
+          $scope.return_url = data.return_url;
         })
       }, false);
 
@@ -147,6 +148,14 @@ angular.module('auction').controller('AuctionController', [
               }
             }
           } else {
+            if ($rootScope.form.bid <= ($scope.max_bid_amount() * 0.1)){
+              msg_id = Math.random();
+              $rootScope.alerts.push({
+                msg_id: msg_id,
+                type: 'warning',
+                msg: 'Your bid appears too low'
+              });
+            }
             msg_id = Math.random();
             $rootScope.alerts.push({
               msg_id: msg_id,
