@@ -58,7 +58,10 @@ angular.module('auction')
       'Аuction was completed': 'Аuction was completed on',
       'prohibit connection': 'prohibit connection',
       'Step reduction of Bid': 'Step reduction of Bid',
-      'Start value': 'Start value'
+      'Start value': 'Start value',
+      'Your bid appears too low': 'Your bid appears too low',
+      'Return to Tender': 'Return to Tender',
+      'Your latest bid': 'Your latest bid'
     });
 
     $translateProvider.translations('uk', {
@@ -118,7 +121,10 @@ angular.module('auction')
       'Аuction was completed': 'Аукціон завершився',
       'prohibit connection': 'заборонити підключення',
       'Step reduction of Bid': 'Крок зменшення торгів',
-      'Start value': 'Стартова сума'
+      'Start value': 'Стартова сума',
+      'Your bid appears too low': 'Ви ввели дуже малу суму, ви впевнені?',
+      'Return to Tender': 'Повернутися до Закупівлі',
+      'Your latest bid': 'Ваша остання заявка'
     });
 
     $translateProvider.translations('ru', {
@@ -178,6 +184,9 @@ angular.module('auction')
       'Аuction was completed': 'Аукцион закончился',
       'prohibit connection': 'запретить подключение',
       'Step reduction of Bid': 'Шаг уменьшения торгов',
-      'Start value': 'Стартовая сумма'
+      'Start value': 'Стартовая сумма',
+      'Your bid appears too low': 'Вы ввели очень маленькую сумму, вы уверены?',
+      'Return to Tender': 'Вернуться к Закупке',
+      'Your latest bid': 'Ваша последняя заявка'
     });
   }]);
