@@ -1,10 +1,10 @@
 from sse import Sse as PySse
-from flask import json, current_app, Blueprint, request, abort, session, Response
+from flask import json, current_app, Blueprint, request, session, Response
 from gevent.queue import Queue
-from gevent import sleep
 import logging
 
 LOGGER = logging.getLogger(__name__)
+CHUNK = ' ' * 2048 + '\n'
 
 
 class SseStream(object):
@@ -15,6 +15,8 @@ class SseStream(object):
 
     def __iter__(self):
         sse = PySse()
+        # TODO: https://app.asana.com/0/17412748309135/22939294056733
+        yield CHUNK
         for data in sse:
             yield data.encode('u8')
 
