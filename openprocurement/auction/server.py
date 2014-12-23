@@ -26,7 +26,7 @@ def login():
     if 'remote_oauth' in session:
         resp = app.remote_oauth.get('me')
         if resp.status == 200:
-            return redirect(
+            response = redirect(
                 urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
             )
     if 'bidder_id' in request.args and 'hash' in request.args:
@@ -38,12 +38,15 @@ def login():
             )
         else:
             callback_url = url_for('authorized', next=next_url, _external=True)
-        return app.remote_oauth.authorize(
+        response = app.remote_oauth.authorize(
             callback=callback_url,
             bidder_id=request.args['bidder_id'],
             hash=request.args['hash']
-
         )
+        if 'return_url' in request.args:
+            session['return_url'] = request.args['return_url']
+
+        return response
     return abort(401)
 
 
