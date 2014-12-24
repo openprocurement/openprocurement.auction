@@ -1,12 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" data-ng-app="auction" ng-controller="AuctionController">
-
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
+{% extends "base.html" %}
+{% block head %}
     <base href="{{ request.url + '/'}}">
     <title >Auction Software</title>     
     <style type="text/css">
@@ -17,8 +10,9 @@
     {% assets "all_css" %}
         <link href="{{ ASSET_URL }}" rel="stylesheet">
     {% endassets %}
+    {% endblock %}
 
-</head>
+{% block body %}
 {% raw %}
 
 <body ng-if="document_exists" ng-cloak>
@@ -350,5 +344,6 @@ var auction_doc_id = '{{ auction_doc_id }}';
 {% assets "all_js" %}
     <script src="{{ ASSET_URL }}"></script>
 {% endassets %}
+{% endblock %}
 
 </html>
