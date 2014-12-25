@@ -1,6 +1,6 @@
 var evtSrc = {};
 
-
+dataLayer = dataLayer || [];
 
 angular.module('auction').controller('AuctionController', [
   '$scope', 'AuctionConfig', 'AuctionUtils',
@@ -16,6 +16,7 @@ angular.module('auction').controller('AuctionController', [
     growlMessages.initDirective(0, 10);
     $scope.allow_bidding = true;
     $scope.bid = null;
+    dataLayer.push({"tenderId": AuctionConfig.auction_doc_id});
     $rootScope.form = {};
     $rootScope.alerts = [];
     $scope.db = new PouchDB(AuctionConfig.remote_db);
@@ -36,11 +37,16 @@ angular.module('auction').controller('AuctionController', [
       })
     });
     $scope.start_subscribe = function (argument) {
+      dataLayer.push({"event": "EventSourceStart"})
+      response_timeout = $timeout(function () {
+        dataLayer.push({"event": "EventSource.ResponseTimeout"})
+      }, 15000);
       evtSrc = new EventSource(window.location.href.replace(window.location.search, '') + '/event_source');
       $scope.restart_retries_events = 5;
       evtSrc.addEventListener('ClientsList', function (e) {
         var data = angular.fromJson(e.data);
         $log.debug("New ClientsList: ", data);
+        dataLayer.push({"event": "EventSource.ClientsList"});
         $scope.$apply(function () {
           var i;
           if (angular.isObject($scope.clients)) {
@@ -62,7 +68,11 @@ angular.module('auction').controller('AuctionController', [
         $log.debug("Tick: ", data);
       }, false);
       evtSrc.addEventListener('Identification', function (e) {
+        if (response_timeout){
+          $timeout.cancel(response_timeout);
+        }
         var data = angular.fromJson(e.data);
+        dataLayer.push({"event": "EventSource.Identification", "data": data})
         $log.debug("Identification: ", data);
         $scope.$apply(function () {
           $scope.bidder_id = data.bidder_id;
@@ -73,14 +83,19 @@ angular.module('auction').controller('AuctionController', [
 
       evtSrc.addEventListener('KickClient', function (e) {
         var data = angular.fromJson(e.data);
+        dataLayer.push({"event": "EventSource.KickClient"});
         $log.debug("You are must logout: ", data);
         window.location.replace(window.location.href + '/logout');
       }, false);
       evtSrc.addEventListener('Close', function (e) {
+        $timeout.cancel(response_timeout);
+        dataLayer.push({"event": "EventSource.Close"});
         $log.debug("You are must logout ");
         evtSrc.close();
       }, false);
       evtSrc.onerror = function (e) {
+        $timeout.cancel(response_timeout);
+        dataLayer.push({"event": "EventSource.Error", "data": e})
         $scope.restart_retries_events = $scope.restart_retries_events - 1;
         $log.debug("EventSource failed.", e);
         if($scope.restart_retries_events == 0){
