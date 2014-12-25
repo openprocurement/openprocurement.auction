@@ -1,17 +1,27 @@
 from sse import Sse as PySse
 from flask import json, current_app, Blueprint, request, session, Response
+from flask import jsonify
 from gevent.queue import Queue
+from gevent import spawn, sleep
 import logging
 
 LOGGER = logging.getLogger(__name__)
 CHUNK = ' ' * 2048 + '\n'
 
 
+def sse_timeout(queue, sleep_seconds):
+    sleep(sleep_seconds)
+    if queue:
+        queue.put({"event": "StopSSE"})
+    
+
 class SseStream(object):
-    def __init__(self, queue, bidder_id=None, client_id=None):
+    def __init__(self, queue, bidder_id=None, client_id=None, timeout=None):
         self.queue = queue
         self.client_id = client_id
         self.bidder_id = bidder_id
+        if timeout:
+            spawn(sse_timeout, queue, timeout)
 
     def __iter__(self):
         sse = PySse()
@@ -22,6 +32,8 @@ class SseStream(object):
 
         while True:
             message = self.queue.get()
+            if message["event"] == "StopSSE":
+                return
             LOGGER.debug(' '.join([
                 'Event Message to bidder:', str(self.bidder_id), ' Client:',
                 str(self.client_id), 'MSG:', str(repr(message))
@@ -32,6 +44,15 @@ class SseStream(object):
 
 
 sse = Blueprint('sse', __name__)
+
+
+@sse.route("/set_sse_timeout")
+def set_sse_timeout():
+    if 'timeout' in request.args:
+        current_app.config["SSE_TIMEOUT"] = int(request.args['timeout'])
+    else:
+        current_app.config["SSE_TIMEOUT"] = 0
+    return jsonify({'timeout': current_app.config["SSE_TIMEOUT"]})
 
 
 @sse.route("/event_source")
@@ -73,7 +94,8 @@ def event_source():
                 SseStream(
                     current_app.auction_bidders[bidder]["channels"][client_hash],
                     bidder_id=bidder,
-                    client_id=client_hash
+                    client_id=client_hash,
+                    timeout=current_app.config.get("SSE_TIMEOUT", 0)
                 ),
                 direct_passthrough=True,
                 mimetype='text/event-stream',
@@ -83,7 +105,6 @@ def event_source():
     current_app.logger.debug('Disable event_source for anonimous.')
     events_close = PySse()
     events_close.add_message("Close", "Disable")
-
     return Response(
         iter([bytearray(''.join([x for x in events_close]), 'UTF-8')]),
         direct_passthrough=True,
