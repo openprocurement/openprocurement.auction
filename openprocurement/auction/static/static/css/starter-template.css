@@ -325,8 +325,9 @@ body {
 }
 
 .modal-backdrop{
-  background-color: transparent;
+  top: 70px;
 }
+
 
 .modal-dialog {
   width: 91.66666667%;
