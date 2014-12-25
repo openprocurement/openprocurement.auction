@@ -126,7 +126,7 @@ angular.module('auction')
       'Your bid appears too low': 'Ви ввели дуже малу суму, ви впевнені?',
       'Return to Tender': 'Повернутися до Закупівлі',
       'Your latest bid': 'Ваша остання заявка',
-      'Tender cancelled': 'Закуіплю скасовано'
+      'Tender cancelled': 'Закупілю скасовано'
     });
 
     $translateProvider.translations('ru', {
