@@ -155,11 +155,22 @@ class Auction(object):
                 )
             else:
                 self._auction_data = {'data': {}}
-            self._auction_data['data'].update(
-                get_tender_data(
-                    self.tender_url + '/auction',
-                    user=self.worker_defaults["TENDERS_API_TOKEN"])['data']
+            auction_data = get_tender_data(
+                self.tender_url + '/auction',
+                user=self.worker_defaults["TENDERS_API_TOKEN"]
             )
+            if auction_data:
+                self._auction_data['data'].update(auction_data['data'])
+                del auction_data
+            else:
+                self.get_auction_document()
+                self.auction_document["current_stage"] = -100
+                self.save_auction_document()
+                logger.warrning("Cancel auction: {}".format(
+                    self.auction_doc_id
+                ))
+                sys.exit(1)
+
         self.bidders_count = len(self._auction_data["data"]["bids"])
         self.rounds_stages = []
         for stage in range((self.bidders_count + 1) * ROUNDS + 1):

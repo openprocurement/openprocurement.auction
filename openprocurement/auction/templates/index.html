@@ -51,7 +51,7 @@
                             <span ng-if="$parent.info_timer.msg">
                                 {{ info_timer.msg|translate}}
                             </span>
-                            <span>
+                            <span ng-if="info_timer.start_time != true">
                               {{ format_date(info_timer.start_time, lang,'Do MMMM YYYY') }} {{'at'|translate}} {{ format_date(info_timer.start_time, lang,'HH:mm') }}
                             </span>
                         </span>

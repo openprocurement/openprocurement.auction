@@ -61,7 +61,8 @@ angular.module('auction')
       'Start value': 'Start value',
       'Your bid appears too low': 'Your bid appears too low',
       'Return to Tender': 'Return to Tender',
-      'Your latest bid': 'Your latest bid'
+      'Your latest bid': 'Your latest bid',
+      'Tender cancelled': 'Tender cancelled'
     });
 
     $translateProvider.translations('uk', {
@@ -124,7 +125,8 @@ angular.module('auction')
       'Start value': 'Стартова сума',
       'Your bid appears too low': 'Ви ввели дуже малу суму, ви впевнені?',
       'Return to Tender': 'Повернутися до Закупівлі',
-      'Your latest bid': 'Ваша остання заявка'
+      'Your latest bid': 'Ваша остання заявка',
+      'Tender cancelled': 'Закуіплю скасовано'
     });
 
     $translateProvider.translations('ru', {
@@ -187,6 +189,7 @@ angular.module('auction')
       'Start value': 'Стартовая сумма',
       'Your bid appears too low': 'Вы ввели очень маленькую сумму, вы уверены?',
       'Return to Tender': 'Вернуться к Закупке',
-      'Your latest bid': 'Ваша последняя заявка'
+      'Your latest bid': 'Ваша последняя заявка',
+      'Tender cancelled': 'Закупка отменена'
     });
   }]);

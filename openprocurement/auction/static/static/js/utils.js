@@ -5,7 +5,14 @@ angular.module('auction')
 
     function prepare_info_timer_data(current_time, auction, bidder_id, Rounds) {
       var i;
-      if (auction.current_stage < 0) {
+      if (auction.current_stage === -100) {
+        return {
+          'countdown': false,
+          'start_time': true,
+          'msg': 'Tender cancelled'
+        };
+      }
+      if (auction.current_stage === -1) {
         return {
           'countdown': ((new Date(auction.stages[0].start) - current_time) / 1000),
           'start_time': false,
@@ -74,7 +81,7 @@ angular.module('auction')
     }
 
     function prepare_progress_timer_data(current_time, auction) {
-        if (auction.current_stage === (auction.stages.length - 1)) {
+        if ((auction.current_stage === (auction.stages.length - 1))||(auction.current_stage === -100)) {
           return {
             'countdown_seconds': false,
             'rounds_seconds': 0,
