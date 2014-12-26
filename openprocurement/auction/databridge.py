@@ -79,6 +79,18 @@ class AuctionsDataBridge(object):
                                 logger.warning("Tender with id {} already scheduled".format(item["id"]))
                                 continue
                         yield item
+                    if item['status'] == "cancelled":
+                        future_auctions = endDate_view(
+                            self.db, startkey=time() * 1000
+                        )
+                        if item["id"] in [i.id for i in future_auctions]:
+                            logger.info("Tender {} canceled".format(item["id"]))
+                            auction_document = self.db[item["id"]]
+                            auction_document["current_stage"] = -100
+                            auction_document["endDate"] = datetime.now(self.tz).isoformat()
+                            self.db.save(auction_document)
+                            logger.info("Change auction {} status to 'canceled'".format(item["id"]))
+
                 logger.info("Change offset date to {}".format(response_json['next_page']['offset']))
                 self.offset = response_json['next_page']['offset']
 
