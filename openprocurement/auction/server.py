@@ -9,10 +9,12 @@ from pytz import timezone
 from openprocurement.auction.forms import BidsForm
 from openprocurement.auction.utils import get_lisener, create_mapping
 from openprocurement.auction.event_source import (
-    sse, send_event, send_event_to_client, remove_client
+    sse, send_event, send_event_to_client, remove_client,
+    push_timestamps_events, check_clients
 )
+
 from pytz import timezone as tz
-from gevent import spawn, sleep
+from gevent import spawn
 
 
 app = Flask(__name__, static_url_path='', template_folder='static')
@@ -120,35 +122,6 @@ def authorized():
     return redirect(
         urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
     )
-
-
-def push_timestamps_events(app):
-    with app.app_context():
-        while True:
-            sleep(5)
-            time = datetime.now(app.config['timezone']).isoformat()
-            for bidder_id in app.auction_bidders:
-                send_event(bidder_id, {"time": time}, "Tick")
-
-
-def check_clients(app):
-    with app.app_context():
-        while True:
-            sleep(30)
-
-            for bidder_id in app.auction_bidders:
-                removed_clients = []
-                for client in app.auction_bidders[bidder_id]["channels"]:
-                    if app.auction_bidders[bidder_id]["channels"][client].qsize() > 3:
-                        removed_clients.append(client)
-                if removed_clients:
-                    for client in removed_clients:
-                        remove_client(bidder_id, client)
-                    send_event(
-                        bidder_id,
-                        app.auction_bidders[bidder_id]["clients"],
-                        "ClientsList"
-                    )
 
 
 def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
