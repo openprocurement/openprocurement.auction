@@ -13,7 +13,7 @@ app.constant('AuctionConfig', {
 app.filter('formatnumber', ['$filter',
   function(filter) {
     return function(val) {
-      return filter('number')(val).replace(/,/g, " ")
+      return (filter('number')(val) || "").replace(/,/g, " ") || undefined;
     }
   }
 ]);
