@@ -39,6 +39,9 @@ angular.module('auction').controller('AuctionController', [
     $scope.start_subscribe = function (argument) {
       dataLayer.push({"event": "EventSourceStart"})
       response_timeout = $timeout(function () {
+        $http.post('./set_sse_timeout', {timeout:'7'}).success(function (data) {
+          dataLayer.push({"event": "EventSourceSetTimeout", "data": data});
+        });
         dataLayer.push({"event": "EventSource.ResponseTimeout"})
       }, 15000);
       evtSrc = new EventSource(window.location.href.replace(window.location.search, '') + '/event_source');
@@ -333,5 +336,5 @@ angular.module('auction').directive('nghReplace', function($compile, $parse, $ro
         }, true);
       }
     }
-  })
+  });
 
