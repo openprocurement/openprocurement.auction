@@ -34,15 +34,15 @@ angular.module('auction').controller('AuctionController', [
       $http.post('./kickclient', {'client_id': client_id}).success(
         function (data) {
           $log.debug('disable connection', client_id, msg);
-      })
+      });
     });
     $scope.start_subscribe = function (argument) {
-      dataLayer.push({"event": "EventSourceStart"})
+      dataLayer.push({"event": "EventSourceStart"});
       response_timeout = $timeout(function () {
         $http.post('./set_sse_timeout', {timeout:'7'}).success(function (data) {
           dataLayer.push({"event": "EventSourceSetTimeout", "data": data});
         });
-        dataLayer.push({"event": "EventSource.ResponseTimeout"})
+        dataLayer.push({"event": "EventSource.ResponseTimeout"});
       }, 15000);
       evtSrc = new EventSource(window.location.href.replace(window.location.search, '') + '/event_source');
       $scope.restart_retries_events = 5;
@@ -75,13 +75,13 @@ angular.module('auction').controller('AuctionController', [
           $timeout.cancel(response_timeout);
         }
         var data = angular.fromJson(e.data);
-        dataLayer.push({"event": "EventSource.Identification", "data": data})
+        dataLayer.push({"event": "EventSource.Identification", "data": data});
         $log.debug("Identification: ", data);
         $scope.$apply(function () {
           $scope.bidder_id = data.bidder_id;
           $scope.client_id = data.client_id;
           $scope.return_url = data.return_url;
-        })
+        });
       }, false);
 
       evtSrc.addEventListener('KickClient', function (e) {
@@ -98,10 +98,10 @@ angular.module('auction').controller('AuctionController', [
       }, false);
       evtSrc.onerror = function (e) {
         $timeout.cancel(response_timeout);
-        dataLayer.push({"event": "EventSource.Error", "data": e})
+        dataLayer.push({"event": "EventSource.Error", "data": e});
         $scope.restart_retries_events = $scope.restart_retries_events - 1;
         $log.debug("EventSource failed.", e);
-        if($scope.restart_retries_events == 0){
+        if($scope.restart_retries_events === 0){
           evtSrc.close();
           $log.debug("EventSource Stoped.", e);
         }
@@ -198,8 +198,8 @@ angular.module('auction').controller('AuctionController', [
       }
       if (amount < 0){
         return 0;
-      };
-      return amount
+      }
+      return amount;
     };
     $scope.calculate_minimal_bid_amount = function () {
       if ((angular.isObject($scope.auction_doc)) && (angular.isArray($scope.auction_doc.stages)) && (angular.isArray($scope.auction_doc.initial_bids))) {
@@ -314,8 +314,7 @@ angular.module('auction').controller('OffCanvasController', ['$scope', '$modalIn
   function($scope, $modalInstance){
     $scope.allert = function () {
       console.log($scope);
-      // body...
-    }
+    };
     $scope.ok = function () {
       $modalInstance.close($scope.selected.item);
     };
@@ -335,6 +334,6 @@ angular.module('auction').directive('nghReplace', function($compile, $parse, $ro
           $compile(element.contents())(scope);
         }, true);
       }
-    }
+    };
   });
 
