@@ -11,13 +11,14 @@ setup(name='openprocurement.auction',
       # Get more strings from
       # http://pypi.python.org/pypi?:action=list_classifiers
       classifiers=[
+        "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
       ],
       keywords='',
-      author='',
-      author_email='',
-      url='http://svn.plone.org/svn/collective/',
-      license='GPL',
+      author='Quintagroup, Ltd.',
+      author_email='info@quintagroup.com',
+      license='Apache License 2.0',
+      url='https://github.com/openprocurement/openprocurement.auction',
       packages=find_packages(exclude=['ez_setup']),
       namespace_packages=['openprocurement'],
       include_package_data=True,
