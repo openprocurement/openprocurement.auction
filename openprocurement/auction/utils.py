@@ -80,9 +80,9 @@ def get_tender_data(tender_url, user="", password="", retry_count=10):
                     tender_url, response.status_code, response.text)
                 )
                 if response.status_code == 403:
-                    data = response.json()
-                    if data["errors"]["description"] == 'Can\'t get auction info in current tender status':
-                        return None
+                    for error in response.json()["errors"]:
+                        if error["description"] == 'Can\'t get auction info in current tender status':
+                            return None
         except requests.exceptions.RequestException, e:
             logging.error("Request error {} error: {}".format(
                 tender_url,
