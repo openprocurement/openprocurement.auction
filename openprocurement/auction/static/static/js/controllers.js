@@ -216,7 +216,7 @@ angular.module('auction').controller('AuctionController', [
         };
         $scope.auction_doc.stages.forEach(filter_func);
         $scope.auction_doc.initial_bids.forEach(filter_func);
-        $scope.minimal_bid = bids.sort(function(a, b){return a-b}))[0];
+        $scope.minimal_bid = bids.sort(function(a, b){return a-b})[0];
       }
     };
     $scope.start_sync = function () {
