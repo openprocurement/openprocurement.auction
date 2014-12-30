@@ -37,7 +37,7 @@ angular.module('auction').controller('AuctionController', [
       });
     });
     $scope.start_subscribe = function (argument) {
-      dataLayer.push({"event": "EventSourceStart"});
+      dataLayer.push({"event": "EventSource.Start"});
       response_timeout = $timeout(function () {
         $http.post('./set_sse_timeout', {timeout:'7'}).success(function (data) {
           dataLayer.push({"event": "EventSourceSetTimeout", "data": data});
@@ -68,7 +68,12 @@ angular.module('auction').controller('AuctionController', [
       evtSrc.addEventListener('Tick', function (e) {
         $scope.restart_retries_events = 5;
         var data = angular.fromJson(e.data);
+        $scope.last_sync = new Date(data.time);
         $log.debug("Tick: ", data);
+        $rootScope.info_timer = AuctionUtils.prepare_info_timer_data($scope.last_sync, $scope.auction_doc, $scope.bidder_id, $scope.Rounds);
+        $log.debug("Info timer data:", $rootScope.info_timer);
+        $rootScope.progres_timer = AuctionUtils.prepare_progress_timer_data($scope.last_sync, $scope.auction_doc);
+        $log.debug("Progres timer data:", $rootScope.progres_timer);
       }, false);
       evtSrc.addEventListener('Identification', function (e) {
         if (response_timeout){
@@ -211,7 +216,7 @@ angular.module('auction').controller('AuctionController', [
         };
         $scope.auction_doc.stages.forEach(filter_func);
         $scope.auction_doc.initial_bids.forEach(filter_func);
-        $scope.minimal_bid = bids.sort()[0];
+        $scope.minimal_bid = bids.sort(function(a, b){return a-b}))[0];
       }
     };
     $scope.start_sync = function () {
