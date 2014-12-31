@@ -111,14 +111,15 @@ def kickclient():
 
 @app.route('/authorized')
 def authorized():
-    resp = app.remote_oauth.authorized_response()
-    if resp is None:
-        return abort(401, 'Access denied: reason=%s error=%s' % (
-            request.args['error_reason'],
-            request.args['error_description']
-        ))
-    session['remote_oauth'] = (resp['access_token'], '')
-    session['client_id'] = os.urandom(16).encode('hex')
+    if not('error' in request.args and request.args['error'] == 'access_denied'):
+        resp = app.remote_oauth.authorized_response()
+        if resp is None:
+            return abort(401, 'Access denied: reason=%s error=%s' % (
+                request.args['error_reason'],
+                request.args['error_description']
+            ))
+        session['remote_oauth'] = (resp['access_token'], '')
+        session['client_id'] = os.urandom(16).encode('hex')
     return redirect(
         urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
     )
