@@ -303,7 +303,7 @@ class Auction(object):
         logger.info("Systemctl return code: {}".format(response))
         logger.info("Start timer")
         response = call(['/usr/bin/systemctl', '--user',
-                         'start', 'auction_' + '.'.join([self.auction_doc_id, 'timer'])])
+                         'reload-or-restart', 'auction_' + '.'.join([self.auction_doc_id, 'timer'])])
         logger.info("Systemctl return code: {}".format(response))
 
     ###########################################################################
