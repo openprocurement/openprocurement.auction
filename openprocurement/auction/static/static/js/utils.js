@@ -159,10 +159,8 @@ angular.module('auction')
         var stage_el = document.getElementById('stage-' + stage.toString());
         if (stage_el) {
           $log.debug('Scroll to:', stage_el);
-          window.scrollBy(0, stage_el.getBoundingClientRect().top);
-          if (document.getElementById('stage-' + stage.toString()).getBoundingClientRect().top == 0){
-            window.scrollBy(0, -200);
-          }
+          stage_el.scrollIntoView(false);
+          window.scrollBy(0, window.innerHeight/2);
         }
       }, 1000);
     }
