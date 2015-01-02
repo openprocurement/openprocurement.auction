@@ -39,7 +39,8 @@ setup(name='openprocurement.auction',
           'flask_oauthlib',
           'Flask-Assets',
           'cssmin',
-          'jsmin'
+          'jsmin',
+          'PyYAML'
       ],
       entry_points={
           'console_scripts': [

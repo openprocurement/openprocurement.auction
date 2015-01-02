@@ -2,7 +2,6 @@ import argparse
 import logging
 import logging.config
 import requests
-import ConfigParser
 import os
 from time import sleep
 from urlparse import urljoin
@@ -15,7 +14,7 @@ from time import time
 import iso8601
 from .design import endDate_view
 from .utils import do_until_success
-from systemd.journal import JournalHandler
+from yaml import load
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class AuctionsDataBridge(object):
         self.url = self.tenders_url
 
     def config_get(self, name):
-        return self.config.get('main', name)
+        return self.config.get('main').get(name)
 
     def tender_url(self, tender_id):
         return urljoin(self.tenders_url, 'tenders/{}/auction'.format(tender_id))
@@ -124,17 +123,9 @@ def main():
         help='Not ignore auctions which already scheduled')
     params = parser.parse_args()
     if os.path.isfile(params.config):
-        logging.config.fileConfig(params.config)
-        config = ConfigParser.ConfigParser()
-        config.read(params.config)
-        logger.addHandler(
-            JournalHandler(
-                level=logging.INFO,
-                SYSLOG_IDENTIFIER="AUCTION_DATA_RIDGE",
-                TENDERS_API_VERSION=config.get('main', 'tenders_api_version'),
-                TENDERS_API_URL=config.get('main', 'tenders_api_server')
-            )
-        )
+        with open(params.config) as config_file_obj:
+            config = load(config_file_obj.read())
+        logging.config.dictConfig(config)
         AuctionsDataBridge(config, params.ignore_exists).run()
 
 
