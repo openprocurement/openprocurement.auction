@@ -5,7 +5,6 @@ from gevent import sleep
 import logging
 import json
 import requests
-import sys
 from hashlib import sha1
 
 from gevent.pywsgi import WSGIServer
@@ -94,8 +93,8 @@ def get_tender_data(tender_url, user="", password="", retry_count=10):
                 e)
             )
         logging.info("Wait before retry...")
-        sleep(1)
-    sys.exit(1)
+        sleep(pow(iteration, 2))
+    return None
 
 
 def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
@@ -134,7 +133,7 @@ def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
                 e)
             )
         logging.info("Wait before retry...")
-        sleep(1)
+        sleep(pow(iteration, 2))
 
 
 def do_until_success(func, args=(), kw={}, repeat=10, sleep_seconds=10):
