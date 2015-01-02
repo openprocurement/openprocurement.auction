@@ -15,7 +15,7 @@ from time import time
 import iso8601
 from .design import endDate_view
 from .utils import do_until_success
-
+from systemd.journal import JournalHandler
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +127,14 @@ def main():
         logging.config.fileConfig(params.config)
         config = ConfigParser.ConfigParser()
         config.read(params.config)
+        logger.addHandler(
+            JournalHandler(
+                level=logging.INFO,
+                SYSLOG_IDENTIFIER="AUCTION_DATA_RIDGE",
+                TENDERS_API_VERSION=config.get('main', 'tenders_api_version'),
+                TENDERS_API_URL=config.get('main', 'tenders_api_server')
+            )
+        )
         AuctionsDataBridge(config, params.ignore_exists).run()
 
 
