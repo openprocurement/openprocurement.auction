@@ -139,9 +139,6 @@ class Auction(object):
         date = self.convert_datetime(
             self._auction_data['data']['auctionPeriod']['startDate']
         )
-        if datetime.now(timezone('Europe/Kiev')) > date:
-            date = datetime.now(timezone('Europe/Kiev')) + timedelta(seconds=20)
-            self._auction_data['data']['auctionPeriod']['startDate'] = date.isoformat()
         return date
 
     def convert_datetime(self, datetime_stamp):
@@ -164,11 +161,16 @@ class Auction(object):
                 del auction_data
             else:
                 self.get_auction_document()
-                self.auction_document["current_stage"] = -100
-                self.save_auction_document()
-                logger.warrning("Cancel auction: {}".format(
-                    self.auction_doc_id
-                ))
+                if self.auction_document:
+                    self.auction_document["current_stage"] = -100
+                    self.save_auction_document()
+                    logger.warrning("Cancel auction: {}".format(
+                        self.auction_doc_id
+                    ))
+                else:
+                    logger.error("Auction {} not exists".format(
+                        self.auction_doc_id
+                    ))
                 sys.exit(1)
 
         self.bidders_count = len(self._auction_data["data"]["bids"])
@@ -291,6 +293,14 @@ class Auction(object):
             )
 
         start_time = (self.startDate - timedelta(minutes=15)).astimezone(tzlocal())
+        extra_start_time = datetime.now(tzlocal()) + timedelta(seconds=15)
+        if extra_start_time > start_time:
+            logger.warning('Planned auction\'s starts date in the past')
+            start_time = extra_start_time
+            if start_time > self.startDate:
+                logger.error('We not have a time to start auction')
+                sys.exit()
+
         with open(os.path.join(home_dir, SYSTEMD_RELATIVE_PATH.format(self.auction_doc_id, 'timer')), 'w') as timer_file:
             template = get_template('systemd.timer')
             logger.info("Write configuration to {}".format(timer_file.name))
@@ -572,6 +582,10 @@ def main():
 
     if os.path.isfile(args.auction_worker_config):
         worker_defaults = json.load(open(args.auction_worker_config))
+        worker_defaults['handlers']['journal']['TENDER_ID'] = args.auction_doc_id
+        for key in ('TENDERS_API_VERSION', 'TENDERS_API_URL',):
+            worker_defaults['handlers']['journal'][key] = worker_defaults[key]
+
         logging.config.dictConfig(worker_defaults)
     else:
         print "Auction worker defaults config not exists!!!"
