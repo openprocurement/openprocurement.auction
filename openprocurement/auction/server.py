@@ -23,6 +23,18 @@ app.register_blueprint(sse)
 app.secret_key = os.urandom(24)
 
 
+class _LoggerStream(object):
+    """
+    Logging workaround for Gevent PyWSGI Server
+    """
+    def __init__(self, logger):
+        super(_LoggerStream, self).__init__()
+        self.logger = logger
+
+    def write(self, msg):
+        self.logger.info(msg)
+
+
 @app.route('/login')
 def login():
     if 'remote_oauth' in session:
@@ -72,20 +84,32 @@ def logout():
 @app.route('/postbid', methods=['POST'])
 def postBid():
     auction = app.config['auction']
-    with auction.bids_actions:
-        form = BidsForm.from_json(request.json)
-        form.document = auction.db.get(auction.auction_doc_id)
-        if form.validate():
-            # write data
-            current_time = datetime.now(timezone('Europe/Kiev'))
-            auction.add_bid(form.document['current_stage'],
-                            {'amount': request.json['bid'],
-                             'bidder_id': request.json['bidder_id'],
-                             'time': current_time.isoformat()})
-            response = {'status': 'ok', 'data': request.json}
-        else:
-            response = {'status': 'failed', 'errors': form.errors}
-        return jsonify(response)
+    if 'remote_oauth' in session and 'client_id' in session:
+        resp = app.remote_oauth.get('me')
+        if resp.status == 200 and resp.data['bidder_id'] == request.json['bidder_id']:
+            with auction.bids_actions:
+                form = BidsForm.from_json(request.json)
+                form.document = auction.db.get(auction.auction_doc_id)
+                current_time = datetime.now(timezone('Europe/Kiev'))
+                if form.validate():
+                    # write data
+                    auction.add_bid(form.document['current_stage'],
+                                    {'amount': request.json['bid'],
+                                     'bidder_id': request.json['bidder_id'],
+                                     'time': current_time.isoformat()})
+                    app.logger.info("Bidder {} with client_id {} placed bid {} in {}".format(
+                        request.json['bidder_id'], session['client_id'],
+                        request.json['bid'], current_time.isoformat()
+                    ))
+                    response = {'status': 'ok', 'data': request.json}
+                else:
+                    response = {'status': 'failed', 'errors': form.errors}
+                    app.logger.info("Bidder {} with client_id {} wants place bid {} in {} with errors {}".format(
+                        request.json['bidder_id'], session['client_id'],
+                        request.json['bid'], current_time.isoformat(),
+                        repr(form.errors)
+                    ))
+                return jsonify(response)
     abort(401)
 
 
@@ -97,7 +121,6 @@ def kickclient():
             data = request.json
             resp = app.remote_oauth.get('me')
             if resp.status == 200:
-
                 data['bidder_id'] = resp.data['bidder_id']
                 if 'client_id' in data:
                     send_event_to_client(
@@ -113,10 +136,9 @@ def kickclient():
 def authorized():
     if not('error' in request.args and request.args['error'] == 'access_denied'):
         resp = app.remote_oauth.authorized_response()
-        if resp is None:
-            return abort(401, 'Access denied: reason=%s error=%s' % (
-                request.args['error_reason'],
-                request.args['error_description']
+        if resp is None or hasattr(resp, 'data'):
+            return abort(403, 'Access denied: {}'.format(
+                resp.data['error']
             ))
         session['remote_oauth'] = (resp['access_token'], '')
         session['client_id'] = os.urandom(16).encode('hex')
@@ -127,7 +149,9 @@ def authorized():
 
 def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
     app.config.update(auction.worker_defaults)
-    app.log = logger
+    # Replace Flask custom logger
+    app.logger_name = logger.name
+    app._logger = logger
     app.config['auction'] = auction
     app.config['timezone'] = tz(timezone)
     app.config['SESSION_COOKIE_PATH'] = '/tenders/{}'.format(auction.auction_doc_id)
@@ -150,15 +174,15 @@ def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
 
     # Start server on unused port
     lisener = get_lisener(auction.worker_defaults["STARTS_PORT"])
-    logger.info("Start server on {0}:{1}".format(*lisener.getsockname()))
-    server = WSGIServer(lisener, app)
+    app.logger.info("Start server on {0}:{1}".format(*lisener.getsockname()))
+    server = WSGIServer(lisener, app, log=_LoggerStream(logger))
     server.start()
     # Set mapping
     mapping_value = "http://{0}:{1}/".format(*lisener.getsockname())
     create_mapping(auction.worker_defaults["REDIS_URL"],
                    auction.auction_doc_id,
                    mapping_value)
-    logger.info("Server mapping: {} -> {}".format(
+    app.logger.info("Server mapping: {} -> {}".format(
         auction.auction_doc_id,
         mapping_value,
         mapping_expire_time
