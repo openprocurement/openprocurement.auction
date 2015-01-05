@@ -92,6 +92,8 @@ class AuctionsDataBridge(object):
 
                 logger.info("Change offset date to {}".format(response_json['next_page']['offset']))
                 self.offset = response_json['next_page']['offset']
+            else:
+                sleep(2)
 
     def start_auction_worker(self, tender_item):
         result = do_until_success(
