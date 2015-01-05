@@ -164,7 +164,7 @@ class Auction(object):
                 if self.auction_document:
                     self.auction_document["current_stage"] = -100
                     self.save_auction_document()
-                    logger.warrning("Cancel auction: {}".format(
+                    logger.warning("Cancel auction: {}".format(
                         self.auction_doc_id
                     ))
                 else:
