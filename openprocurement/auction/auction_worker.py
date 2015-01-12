@@ -496,18 +496,21 @@ class Auction(object):
 
     def approve_bids_information(self):
         current_stage = self.auction_document["current_stage"]
-        all_bids = []
+
         if current_stage in self._bids_data:
             logger.debug(
                 "Current stage bids {}".format(self._bids_data[current_stage])
             )
-            all_bids += self._bids_data[current_stage]
-        if all_bids:
+
             bid_info = get_latest_bid_for_bidder(
-                all_bids,
+                self._bids_data[current_stage],
                 self.auction_document["stages"][current_stage]['bidder_id']
             )
-
+            if bid_info['amount'] == -1:
+                logger.info(
+                    "Latest bid is bid cancellation: {}".format(bid_info)
+                )
+                return False
             bid_info = {key: bid_info[key] for key in BIDS_KEYS_FOR_COPY}
             bid_info["bidder_name"] = self.mapping[bid_info['bidder_id']]
             self.auction_document["stages"][current_stage] = generate_bids_stage(
