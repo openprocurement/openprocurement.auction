@@ -13,15 +13,47 @@ from redis import Redis
 
 
 def filter_by_bidder_id(bids, bidder_id):
+    """
+    >>> bids = [
+    ...     {"bidder_id": "1", "amount": 100},
+    ...     {"bidder_id": "1", "amount": 200},
+    ...     {"bidder_id": "2", "amount": 101}
+    ... ]
+
+    >>> filter_by_bidder_id(bids, "1")
+    [{'amount': 100, 'bidder_id': '1'}, {'amount': 200, 'bidder_id': '1'}]
+
+    >>> filter_by_bidder_id(bids, "2")
+    [{'amount': 101, 'bidder_id': '2'}]
+
+    """
     return [bid for bid in bids if bid['bidder_id'] == bidder_id]
 
 
 def filter_start_bids_by_bidder_id(bids, bidder):
+    """
+    """
     return [bid for bid in bids
             if bid['bidders'][0]['id']['name'] == bidder]
 
 
 def get_time(item):
+    """
+    >>> date = get_time({"time": "2015-01-04T15:40:44Z"}) # doctest: +NORMALIZE_WHITESPACE
+    >>> date.utctimetuple()  # doctest: +NORMALIZE_WHITESPACE
+    time.struct_time(tm_year=2015, tm_mon=1, tm_mday=4, tm_hour=15, tm_min=40,
+                     tm_sec=44, tm_wday=6, tm_yday=4, tm_isdst=0)
+
+    >>> date = get_time({"date": "2015-01-04T15:40:44Z"})
+    >>> date.utctimetuple()  # doctest: +NORMALIZE_WHITESPACE
+    time.struct_time(tm_year=2015, tm_mon=1, tm_mday=4, tm_hour=15, tm_min=40,
+                     tm_sec=44, tm_wday=6, tm_yday=4, tm_isdst=0)
+
+    >>> date = get_time({})
+    >>> date.utctimetuple()  # doctest: +NORMALIZE_WHITESPACE
+    time.struct_time(tm_year=0, tm_mon=12, tm_mday=31, tm_hour=21, tm_min=58,
+                     tm_sec=0, tm_wday=6, tm_yday=366, tm_isdst=0)
+    """
     if item.get('time', ''):
         bid_time = iso8601.parse_date(item['time'])
     elif item.get('date', ''):
@@ -32,6 +64,22 @@ def get_time(item):
 
 
 def sorting_by_amount(bids, reverse=True):
+    """
+    >>> bids = [
+    ...     {"bidder_id": "1", "amount": 100},
+    ...     {"bidder_id": "1", "amount": 200},
+    ...     {"bidder_id": "2", "amount": 101}
+    ... ]
+    >>> sorting_by_amount(bids)  # doctest: +NORMALIZE_WHITESPACE
+    [{'amount': 200, 'bidder_id': '1'},
+     {'amount': 101, 'bidder_id': '2'},
+     {'amount': 100, 'bidder_id': '1'}]
+
+    >>> sorting_by_amount(bids, reverse=False)  # doctest: +NORMALIZE_WHITESPACE
+    [{'amount': 100, 'bidder_id': '1'},
+     {'amount': 101, 'bidder_id': '2'},
+     {'amount': 200, 'bidder_id': '1'}]
+    """
     def get_amount(item):
         return item['amount']
 
@@ -39,6 +87,21 @@ def sorting_by_amount(bids, reverse=True):
 
 
 def sorting_start_bids_by_amount(bids, reverse=True):
+    """
+    >>> from json import load
+    >>> import os
+    >>> data = load(open(os.path.join(os.path.dirname(__file__),
+    ...                               'tests/data/tender_data.json')))
+    >>> sorted_data = sorting_start_bids_by_amount(data['data']['bids'])
+    >>> sorted_data[0]['value']['amount'] > sorted_data[1]['value']['amount']
+    True
+
+    >>> sorted_data = sorting_start_bids_by_amount(data['data']['bids'],
+    ...                                            reverse=False)
+    >>> sorted_data[0]['value']['amount'] < sorted_data[1]['value']['amount']
+    True
+
+    """
     def get_amount(item):
         return item['value']['amount']
 
