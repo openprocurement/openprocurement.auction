@@ -3,7 +3,9 @@ from flask import Flask, request, jsonify, url_for, session, abort, redirect
 import os
 from urlparse import urljoin
 
-from gevent.pywsgi import WSGIServer
+from gevent.pywsgi import WSGIServer, WSGIHandler
+from gevent import socket
+import errno
 from datetime import datetime
 from pytz import timezone
 from openprocurement.auction.forms import BidsForm
@@ -33,6 +35,19 @@ class _LoggerStream(object):
 
     def write(self, msg):
         self.logger.info(msg)
+
+
+class AuctionsWSGIHandler(WSGIHandler):
+
+    def run_application(self):
+        try:
+            return super(AuctionsWSGIHandler, self).run_application()
+        except socket.error as ex:
+            # Broken pipe, connection reset by peer
+            if ex.args[0] in (errno.EPIPE, errno.ECONNRESET):
+                self.close_connection = True
+            else:
+                raise ex
 
 
 @app.route('/login')
@@ -97,10 +112,16 @@ def postBid():
                                     {'amount': request.json['bid'],
                                      'bidder_id': request.json['bidder_id'],
                                      'time': current_time.isoformat()})
-                    app.logger.info("Bidder {} with client_id {} placed bid {} in {}".format(
-                        request.json['bidder_id'], session['client_id'],
-                        request.json['bid'], current_time.isoformat()
-                    ))
+                    if request.json['bid'] == -1:
+                        app.logger.info("Bidder {} with client_id {} canceled bids in stage {} in {}".format(
+                            request.json['bidder_id'], session['client_id'],
+                            form.document['current_stage'], current_time.isoformat()
+                        ))
+                    else:
+                        app.logger.info("Bidder {} with client_id {} placed bid {} in {}".format(
+                            request.json['bidder_id'], session['client_id'],
+                            request.json['bid'], current_time.isoformat()
+                        ))
                     response = {'status': 'ok', 'data': request.json}
                 else:
                     response = {'status': 'failed', 'errors': form.errors}
@@ -175,7 +196,9 @@ def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
     # Start server on unused port
     lisener = get_lisener(auction.worker_defaults["STARTS_PORT"])
     app.logger.info("Start server on {0}:{1}".format(*lisener.getsockname()))
-    server = WSGIServer(lisener, app, log=_LoggerStream(logger))
+    server = WSGIServer(lisener, app,
+                        log=_LoggerStream(logger),
+                        handler_class=AuctionsWSGIHandler)
     server.start()
     # Set mapping
     mapping_value = "http://{0}:{1}/".format(*lisener.getsockname())
