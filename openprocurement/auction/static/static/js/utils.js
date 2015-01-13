@@ -1,5 +1,5 @@
 angular.module('auction')
-  .factory('AuctionUtils', ['$filter', '$timeout', '$log', function ($filter, $timeout, $log) {
+  .factory('AuctionUtils', ['$filter', '$timeout', '$log', '$window', function ($filter, $timeout, $log, $window) {
     // Format msg for timer
     'use strict';
 
@@ -154,15 +154,40 @@ angular.module('auction')
         }
       }
       // Scroll functionality
-    function scroll_to_stage(stage) {
+    function scroll_to_stage(auction_doc, Rounds) {
       $timeout(function () {
-        var stage_el = document.getElementById('stage-' + stage.toString());
-        if (stage_el) {
-          $log.debug('Scroll to:', stage_el);
-          stage_el.scrollIntoView(false);
-          window.scrollBy(0, window.innerHeight/2);
+        var current_round = 0;
+        for (var index in Rounds){
+          $log.debug('Min round:', Rounds[index], 'Max round:', Rounds[index] + auction_doc.initial_bids.length);
+          if ((auction_doc.current_stage >= Rounds[index]) && (auction_doc.current_stage <= (Rounds[index] + auction_doc.initial_bids.length))){
+            current_round = parseInt(index) + 1;
+            $log.debug('Current round:', current_round);
+            break;
+          }
         }
-      }, 1000);
+        if (auction_doc.current_stage >= 0) {
+          if (current_round){
+            var round_elem = document.getElementById('round-header-' + current_round.toString());
+          } else {
+            var round_elem = document.getElementById('results-header');
+          }; 
+          // var elem = document.getElementById('stage-' + auction_doc.current_stage.toString());
+        }
+        // a.getBoundingClientRect().height
+        if (round_elem) {
+          $log.debug('Scroll to:', round_elem);
+          round_elem.scrollIntoView();
+          var round_elem_dimensions = round_elem.getBoundingClientRect();
+          $window.scrollBy(0, round_elem_dimensions.top - 75);
+          // if (($window.innerHeight - 200) < round_elem_dimensions.height) {
+          //   var stage_elem = document.getElementById('stage-' + auction_doc.current_stage.toString());
+          //   if (stage_elem){
+          //     stage_elem.scrollIntoView(false);
+
+          //   }
+          // }
+        }
+      }, 500);
     }
     return {
       'prepare_info_timer_data': prepare_info_timer_data,

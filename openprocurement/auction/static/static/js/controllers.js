@@ -315,8 +315,8 @@ angular.module('auction').controller('AuctionController', [
       });
 
     };
-    $scope.scroll_to_stage = function (argument) {
-      AuctionUtils.scroll_to_stage($scope.auction_doc.current_stage);
+    $scope.scroll_to_stage = function () {
+      AuctionUtils.scroll_to_stage($scope.auction_doc, $scope.Rounds);
     };
     $scope.array = function (int) {
       return new Array(int);

@@ -60,12 +60,12 @@
                 <div class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'waiting'">
                     <p class="round-number" translate>Waiting</p>
                 </div>
-                <div class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'pause'">
+                <div class="header-auction-item navbar-brand pull-right round-information" ng-click="scroll_to_stage()" ng-if="get_round_number(auction_doc.current_stage).type == 'pause'">
                     <span class="round-number">
                         {{get_round_number(auction_doc.current_stage).data[0]}} &#8594; {{get_round_number(auction_doc.current_stage).data[1]}}
                     </span>
                 </div>
-                <div class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'round'">
+                <div class="header-auction-item navbar-brand pull-right round-information" ng-click="scroll_to_stage()" ng-if="get_round_number(auction_doc.current_stage).type == 'round'">
                     <p class="round-label" translate>Round</p>
                     <p class="round-number">{{get_round_number(auction_doc.current_stage).data}}</p>
                 </div>
@@ -112,7 +112,7 @@
                 </ul>
             </div>
         </div>
-        <div class="auction-round past-round">
+        <div id="initial-bids-header" class="auction-round past-round">
             <div class="row">
                 <div class="col-xs-12 stage-item stage-round">
                     <div class="stage-item-lining">
@@ -151,7 +151,8 @@
             </div>
         </div>
         <div ng-if="auction_doc.current_stage >= 0" 
-             class="auction-round" 
+             class="auction-round"
+             id="round-header-{{$index + 1}}"
              ng-class="{'past-round':  (auction_doc.current_stage > (stage + auction_doc.initial_bids.length)),
                         'current-round': ((auction_doc.current_stage >= stage)&&(auction_doc.current_stage <= (stage + auction_doc.initial_bids.length))),
                         'future-round': auction_doc.current_stage < (stage + auction_doc.initial_bids.length)}"
@@ -201,6 +202,7 @@
             </div>
         </div>
         <div class="auction-round"
+            id="results-header"
             ng-if="auction_doc.current_stage >= 0" 
             ng-class="{'current-round': auction_doc.current_stage == (auction_doc.stages.length - 1),
                        'future-round': auction_doc.current_stage < (auction_doc.stages.length - 1)}">
@@ -216,8 +218,7 @@
                     </div>
                 </div>
             </div> 
-            <div id="stage-{{ auction_doc.stages.length - 1 }}"
-                 class="row auction-stage stage-item stage-bids past-stage"
+            <div class="row auction-stage stage-item stage-bids past-stage"
                  ng-class="{'past-stage': auction_doc.current_stage == (auction_doc.stages.length - 1),
                             'future-stage': auction_doc.current_stage < (auction_doc.stages.length - 1)}"
                  ng-repeat="bid_info in auction_doc.results">
