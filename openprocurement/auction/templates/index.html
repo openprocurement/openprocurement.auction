@@ -174,6 +174,7 @@
                             'future-stage':  auction_doc.current_stage < (stage + $index + 1),
                             'past-stage':  auction_doc.current_stage > (stage + $index + 1),
                             'my-bid-stage': auction_doc.stages[stage + $index + 1].bidder_id == bidder_id}">
+                <div ng-if="$first" id="stage-{{ stage + $index}}"></div>
                 <div class="stage-item-lining">
                     <i class="stage-icon"></i>
                     <div class="stage-info">
@@ -255,9 +256,10 @@
                             <form id="BidsForm" name="form.BidsForm" role="form">
                                 <label for="bid"><span translate>Your proposal</span>:</label><span> {{ max_bid_amount()|formatnumber }} {{'or lower'|translate}}</span>
                                 <div class="input-group">
-                                    <input type="number" pattern="[0-9]+([\.,][0-9]+)*" ng-disabled="!allow_bidding" min="0" class="form-control" id="bid" name="bid" ng-model="form.bid" required>
+                                    <input ng-disabled="!allow_bidding" min="0" class="form-control" id="bid" name="bid" ng-model="form.bid" required format="formatnumber">
                                     <div class="input-group-btn">
                                         <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" translate>Place a bid</button>
+                                        <button type="submit" ng-hide="allow_bidding" ng-click="post_bid(-1)" class="btn btn-success" translate>Cancel Bid</button>
                                         <button type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-link" translate>Edit</button>
                                     </div>
                                 </div>

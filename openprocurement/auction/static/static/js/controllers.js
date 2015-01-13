@@ -70,10 +70,12 @@ angular.module('auction').controller('AuctionController', [
         var data = angular.fromJson(e.data);
         $scope.last_sync = new Date(data.time);
         $log.debug("Tick: ", data);
-        $rootScope.info_timer = AuctionUtils.prepare_info_timer_data($scope.last_sync, $scope.auction_doc, $scope.bidder_id, $scope.Rounds);
-        $log.debug("Info timer data:", $rootScope.info_timer);
-        $rootScope.progres_timer = AuctionUtils.prepare_progress_timer_data($scope.last_sync, $scope.auction_doc);
-        $log.debug("Progres timer data:", $rootScope.progres_timer);
+        if ($scope.auction_doc.stage > -1){
+          $rootScope.info_timer = AuctionUtils.prepare_info_timer_data($scope.last_sync, $scope.auction_doc, $scope.bidder_id, $scope.Rounds);
+          $log.debug("Info timer data:", $rootScope.info_timer);
+          $rootScope.progres_timer = AuctionUtils.prepare_progress_timer_data($scope.last_sync, $scope.auction_doc);
+          $log.debug("Progres timer data:", $rootScope.progres_timer);
+        }
       }, false);
       evtSrc.addEventListener('Identification', function (e) {
         if (response_timeout){
@@ -151,10 +153,10 @@ angular.module('auction').controller('AuctionController', [
 
       });
     };
-    $scope.post_bid = function () {
+    $scope.post_bid = function (bid) {
       if ($rootScope.form.BidsForm.$valid) {
         $http.post('./postbid', {
-          'bid': $rootScope.form.bid,
+          'bid': bid||$rootScope.form.bid,
           'bidder_id': $scope.bidder_id || bidder_id || "0"
         }).success(function (data) {
           var msg_id = '';
@@ -171,7 +173,7 @@ angular.module('auction').controller('AuctionController', [
               }
             }
           } else {
-            if ($rootScope.form.bid <= ($scope.max_bid_amount() * 0.1)){
+            if (($rootScope.form.bid <= ($scope.max_bid_amount() * 0.1))&&(bid != -1)){
               msg_id = Math.random();
               $rootScope.alerts.push({
                 msg_id: msg_id,
@@ -180,13 +182,24 @@ angular.module('auction').controller('AuctionController', [
               });
             }
             msg_id = Math.random();
-            $rootScope.alerts.push({
-              msg_id: msg_id,
-              type: 'success',
-              msg: 'Bid placed'
-            });
+
+            if (bid == -1){
+              $scope.allow_bidding = true;
+              $rootScope.alerts.push({
+                msg_id: msg_id,
+                type: 'success',
+                msg: 'Bid canceled'
+              });
+              $rootScope.form.bid = "";
+            } else {
+              $rootScope.alerts.push({
+                msg_id: msg_id,
+                type: 'success',
+                msg: 'Bid placed'
+              });
+              $scope.allow_bidding = false;
+            }
             $scope.auto_close_alert(msg_id);
-            $scope.allow_bidding = false;
           }
 
         });
@@ -342,3 +355,22 @@ angular.module('auction').directive('nghReplace', function($compile, $parse, $ro
     };
   });
 
+angular.module('auction')
+    .directive('format', ['$filter', function($filter) {
+        return {
+            require: '?ngModel',
+            link: function(scope, elem, attrs, ctrl) {
+                if (!ctrl) return;
+                ctrl.$formatters.unshift(function(value) {
+                    return $filter('formatnumber')(value);
+                });
+
+                ctrl.$parsers.unshift(function(viewValue) {
+                    var plainNumber = (viewValue || "").replace(/ /g, '');
+                    ctrl.$viewValue = $filter('formatnumber')(plainNumber);
+                    ctrl.$render()
+                    return plainNumber;
+                });
+            }
+        };
+    }]);

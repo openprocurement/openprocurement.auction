@@ -20,6 +20,7 @@ angular.module('auction')
       'Login in as': 'Login in as',
       'Logout': 'Logout',
       'Place a bid': 'Place a bid',
+      'Cancel': 'Cancel',
       'Preliminary bids': 'Preliminary bids',
       'Round': 'Round',
       'Settings': 'Settings',
@@ -62,7 +63,8 @@ angular.module('auction')
       'Your bid appears too low': 'Your bid appears too low',
       'Return to Tender': 'Return to Tender',
       'Your latest bid': 'Your latest bid',
-      'Tender cancelled': 'Tender cancelled'
+      'Tender cancelled': 'Tender cancelled',
+      'Bid canceled': 'Bid canceled'
     });
 
     $translateProvider.translations('uk', {
@@ -84,6 +86,7 @@ angular.module('auction')
       'Login in as': 'Вхід в якості ',
       'Logout': 'Вийти',
       'Place a bid': 'Зробити заявку',
+      'Cancel': 'Відмінити',
       'Preliminary bids': 'Попередні заявки',
       'Round': 'Раунд',
       'Settings': 'Налаштування',
@@ -126,7 +129,8 @@ angular.module('auction')
       'Your bid appears too low': 'Ви ввели дуже малу суму, ви впевнені?',
       'Return to Tender': 'Повернутися до Закупівлі',
       'Your latest bid': 'Ваша остання заявка',
-      'Tender cancelled': 'Закупілю скасовано'
+      'Tender cancelled': 'Закупілю скасовано',
+      'Bid canceled': 'Заявку відмінено'
     });
 
     $translateProvider.translations('ru', {
@@ -148,6 +152,7 @@ angular.module('auction')
       'Login in as': 'Вход в качестве',
       'Logout': 'Выйти',
       'Place a bid': 'Сделать ставку',
+      'Cancel': 'Отменить',
       'Preliminary bids': 'Предварительные ставки',
       'Round': 'Раунд',
       'Settings': 'Настройки',
@@ -190,6 +195,7 @@ angular.module('auction')
       'Your bid appears too low': 'Вы ввели очень маленькую сумму, вы уверены?',
       'Return to Tender': 'Вернуться к Закупке',
       'Your latest bid': 'Ваша последняя заявка',
-      'Tender cancelled': 'Закупка отменена'
+      'Tender cancelled': 'Закупка отменена',
+      'Bid canceled': 'Ставку отменено'
     });
   }]);
