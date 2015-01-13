@@ -69,7 +69,7 @@
                     <p class="round-label" translate>Round</p>
                     <p class="round-number">{{get_round_number(auction_doc.current_stage).data}}</p>
                 </div>
-                <div class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'finish'">
+                <div class="header-auction-item navbar-brand pull-right round-information" ng-click="scroll_to_stage()" ng-if="get_round_number(auction_doc.current_stage).type == 'finish'">
                     <p class="round-number" translate>Finish</p>
                 </div>
             </div>
@@ -286,14 +286,15 @@
         <ul class="list-group">
               <li class="list-group-item">
                 <span class="glyphicon glyphicon-info-sign text-primary pull-right" aria-hidden="true" style="font-size:2.5em; padding-left:0.2em"></span>
-                <h4 class="list-group-item-heading">
-                    <span ng-switch on="auction_doc.procuringEntity['name_'+ lang] == undefined" class="procuringEntity">
+                <h4>{{ auction_doc.tenderID }}</h4>
+                <p class="list-group-item-heading">
+                    <strong ng-switch on="auction_doc.procuringEntity['name_'+ lang] == undefined" class="procuringEntity">
                         <span ng-switch-when="false">{{ auction_doc.procuringEntity['name_'+ lang]}}</span>
                         <span ng-switch-when="true">{{ auction_doc.procuringEntity.name}}</span></span><span ng-if="auction_doc.title" ng-switch on="auction_doc['title_'+ lang] == undefined" class="tenderTitle">:
                         <span ng-switch-when="false">{{ auction_doc['title_'+ lang]}} </span>
                         <span ng-switch-when="true">{{ auction_doc.title}}</span>
-                    </span>
-                </h4>
+                    </strong>
+                </p>
                 <p class="text-muted tenderDescription" ng-if="auction_doc.description" ng-switch on="auction_doc['description_'+ lang] == undefined">
                         <span ng-switch-when="false">{{ auction_doc['description_'+ lang]}} </span>
                         <span ng-switch-when="true">{{ auction_doc.description}}</span>
