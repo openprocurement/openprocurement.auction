@@ -258,8 +258,8 @@
                                 <div class="input-group">
                                     <input ng-disabled="!allow_bidding" min="0" class="form-control" id="bid" name="bid" ng-model="form.bid" required format="formatnumber">
                                     <div class="input-group-btn">
-                                        <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" translate>Place a bid</button>
-                                        <button type="submit" ng-hide="allow_bidding" ng-click="post_bid(-1)" class="btn btn-success" translate>Cancel Bid</button>
+                                        <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" ng-class="{'active': form.active}" translate>Place a bid</button>
+                                        <button type="submit" ng-hide="allow_bidding" ng-click="post_bid(-1)" class="btn btn-success" ng-class="{'active': form.active}" translate>Cancel Bid</button>
                                         <button type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-link" translate>Edit</button>
                                     </div>
                                 </div>

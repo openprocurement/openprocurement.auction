@@ -155,10 +155,15 @@ angular.module('auction').controller('AuctionController', [
     };
     $scope.post_bid = function (bid) {
       if ($rootScope.form.BidsForm.$valid) {
+        $rootScope.form.active = true;
+        $timeout(function () {
+          $rootScope.form.active = false;
+        }, 5000);
         $http.post('./postbid', {
           'bid': bid||$rootScope.form.bid,
           'bidder_id': $scope.bidder_id || bidder_id || "0"
         }).success(function (data) {
+          $rootScope.form.active = false;
           var msg_id = '';
           if (data.status == 'failed') {
             for (var error_id in data.errors) {
