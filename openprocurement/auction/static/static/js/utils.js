@@ -158,10 +158,8 @@ angular.module('auction')
       $timeout(function () {
         var current_round = 0;
         for (var index in Rounds){
-          $log.debug('Min round:', Rounds[index], 'Max round:', Rounds[index] + auction_doc.initial_bids.length);
           if ((auction_doc.current_stage >= Rounds[index]) && (auction_doc.current_stage <= (Rounds[index] + auction_doc.initial_bids.length))){
             current_round = parseInt(index) + 1;
-            $log.debug('Current round:', current_round);
             break;
           }
         }
@@ -171,23 +169,23 @@ angular.module('auction')
           } else {
             var round_elem = document.getElementById('results-header');
           }; 
-          // var elem = document.getElementById('stage-' + auction_doc.current_stage.toString());
         }
-        // a.getBoundingClientRect().height
         if (round_elem) {
           $log.debug('Scroll to:', round_elem);
           round_elem.scrollIntoView();
           var round_elem_dimensions = round_elem.getBoundingClientRect();
           $window.scrollBy(0, round_elem_dimensions.top - 75);
-          // if (($window.innerHeight - 200) < round_elem_dimensions.height) {
-          //   var stage_elem = document.getElementById('stage-' + auction_doc.current_stage.toString());
-          //   if (stage_elem){
-          //     stage_elem.scrollIntoView(false);
 
-          //   }
-          // }
+          if (($window.innerHeight - 169) < round_elem_dimensions.height) {
+            var stage_elem = document.getElementById('stage-' + auction_doc.current_stage.toString());
+            if (stage_elem){
+              stage_elem.scrollIntoView(false);
+              var stage_elem_dimensions = stage_elem.getBoundingClientRect();
+              $window.scrollBy(0, stage_elem_dimensions.top + 96);
+            }
+          }
         }
-      }, 500);
+      }, 0);
     }
     return {
       'prepare_info_timer_data': prepare_info_timer_data,
