@@ -248,6 +248,20 @@
         </div>
     </div>
     <div class="container-fluid">
+        <div ng-show="follow_login_allowed" class="panel panel-default bg-warning fixed-bottom">
+            <div class="panel-body bg-warning">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="container text-center">
+                            <h4 translate ng-if="!follow_login">Login is currently closed.</h4>
+                            <a ng-href="{{login_url}}" ng-if="!follow_login" translate>Please try again later.</a>
+                            <a ng-href="{{login_url}}" class="btn btn-success btn-lg btn-block" ng-if="follow_login"><span  translate>Login</span></a>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div ng-show="show_bids_form()" class="panel panel-default bg-warning fixed-bottom">
             <div class="panel-body bg-warning">
                 <div class="row">
