@@ -1,6 +1,6 @@
 from datetime import datetime
 from design import sync_design, endDate_view
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, abort, url_for, redirect
 from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
 from gevent import monkey
@@ -118,7 +118,10 @@ def auctions_proxy(auction_doc_id, path):
         auctions_server.logger.debug('Start proxy to path: {}'.format(path))
         return AuctionsHostProxy(proxy_path, client='requests', chunk_size=1)
     elif path == 'login' and auction_doc_id in auctions_server.db:
-        return render_template('splash.html')
+        return redirect((
+            url_for('auction_url', auction_doc_id=auction_doc_id,
+                    wait=1, **request.args)
+        ))
     return abort(404)
 
 
