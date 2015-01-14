@@ -17,7 +17,7 @@ angular.module('auction')
       'Initial bids': 'Initial bids',
       'Language': 'Language',
       'Login in as viewer': 'Login in as viewer',
-      'Login in as': 'Login in as',
+      'Login': 'Login',
       'Logout': 'Logout',
       'Place a bid': 'Place a bid',
       'Cancel': 'Cancel',
@@ -64,7 +64,9 @@ angular.module('auction')
       'Return to Tender': 'Return to Tender',
       'Your latest bid': 'Your latest bid',
       'Tender cancelled': 'Tender cancelled',
-      'Bid canceled': 'Bid canceled'
+      'Bid canceled': 'Bid canceled',
+      'Login is currently closed.': 'Login is currently closed.',
+      'Please try again later.': 'Please try again later.'
     });
 
     $translateProvider.translations('uk', {
@@ -83,7 +85,7 @@ angular.module('auction')
       'Initial bids': 'Початкові заявки',
       'Language': 'Мова',
       'Login in as viewer': 'Вхід в якості глядача',
-      'Login in as': 'Вхід в якості ',
+      'Login': 'Вхід',
       'Logout': 'Вийти',
       'Place a bid': 'Зробити заявку',
       'Cancel': 'Відмінити',
@@ -130,7 +132,9 @@ angular.module('auction')
       'Return to Tender': 'Повернутися до Закупівлі',
       'Your latest bid': 'Ваша остання заявка',
       'Tender cancelled': 'Закупілю скасовано',
-      'Bid canceled': 'Заявку відмінено'
+      'Bid canceled': 'Заявку відмінено',
+      'Login is currently closed.': 'Вхід на даний момент закритий.',
+      'Please try again later.': 'Спробуйте пізніше.'
     });
 
     $translateProvider.translations('ru', {
@@ -149,7 +153,7 @@ angular.module('auction')
       'Initial bids': 'Первоначальные ставки',
       'Language': 'Язык',
       'Login in as viewer': 'Вход в качестве зрителя',
-      'Login in as': 'Вход в качестве',
+      'Login': 'Вход',
       'Logout': 'Выйти',
       'Place a bid': 'Сделать ставку',
       'Cancel': 'Отменить',
@@ -196,6 +200,8 @@ angular.module('auction')
       'Return to Tender': 'Вернуться к Закупке',
       'Your latest bid': 'Ваша последняя заявка',
       'Tender cancelled': 'Закупка отменена',
-      'Bid canceled': 'Ставку отменено'
+      'Bid canceled': 'Ставку отменено',
+      'Login is currently closed.': 'Вход на данный момент закрыт.',
+      'Please try again later.': 'Попробуйте позже.'
     });
   }]);
