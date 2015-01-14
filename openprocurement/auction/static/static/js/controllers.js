@@ -150,7 +150,22 @@ angular.module('auction').controller('AuctionController', [
         $log.debug("Info timer data:", $rootScope.info_timer);
         $rootScope.progres_timer = AuctionUtils.prepare_progress_timer_data($scope.last_sync, $scope.auction_doc);
         $log.debug("Progres timer data:", $rootScope.progres_timer);
-
+        var params = AuctionUtils.parseQueryString(location.search);
+        if ($scope.auction_doc.current_stage === -1 && params.wait){
+          $scope.follow_login_allowed = true;
+          console.log($rootScope.progres_timer.countdown_seconds);
+          if ($rootScope.progres_timer.countdown_seconds < 900){
+            $scope.follow_login = true;
+          } else {
+            $scope.follow_login = false;
+            $timeout(function() {$scope.follow_login = true}, ($rootScope.progres_timer.countdown_seconds - 900)* 1000);
+          }
+          $scope.login_params = params;
+          delete $scope.login_params.wait;
+          $scope.login_url = AuctionConfig.auction_doc_id + '/login?' + AuctionUtils.stringifyQueryString($scope.login_params);
+        } else {
+          $scope.follow_login_allowed = false;
+        }
       });
     };
     $scope.post_bid = function (bid) {
