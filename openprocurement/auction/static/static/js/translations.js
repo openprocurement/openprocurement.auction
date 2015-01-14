@@ -66,7 +66,8 @@ angular.module('auction')
       'Tender cancelled': 'Tender cancelled',
       'Bid canceled': 'Bid canceled',
       'Login is currently closed.': 'Login is currently closed.',
-      'Please try again later.': 'Please try again later.'
+      'Please try again later.': 'Please try again later.',
+      'Cancel Bid': 'Cancel Bid'
     });
 
     $translateProvider.translations('uk', {
@@ -134,7 +135,8 @@ angular.module('auction')
       'Tender cancelled': 'Закупілю скасовано',
       'Bid canceled': 'Заявку відмінено',
       'Login is currently closed.': 'Вхід на даний момент закритий.',
-      'Please try again later.': 'Спробуйте пізніше.'
+      'Please try again later.': 'Спробуйте пізніше.',
+      'Cancel Bid': 'Відмінити заявку'
     });
 
     $translateProvider.translations('ru', {
@@ -202,6 +204,7 @@ angular.module('auction')
       'Tender cancelled': 'Закупка отменена',
       'Bid canceled': 'Ставку отменено',
       'Login is currently closed.': 'Вход на данный момент закрыт.',
-      'Please try again later.': 'Попробуйте позже.'
+      'Please try again later.': 'Попробуйте позже.',
+      'Cancel Bid': 'Отменить ставку'
     });
   }]);
