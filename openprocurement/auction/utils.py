@@ -143,7 +143,7 @@ def get_tender_data(tender_url, user="", password="", retry_count=10):
                 )
                 if response.status_code == 403:
                     for error in response.json()["errors"]:
-                        if error["description"] == 'Can\'t get auction info in current tender status':
+                        if error["description"].startswith('Can\'t get auction info'):
                             return None
         except requests.exceptions.RequestException, e:
             logging.error("Request error {} error: {}".format(
