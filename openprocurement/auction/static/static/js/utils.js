@@ -81,35 +81,50 @@ angular.module('auction')
     }
 
     function prepare_progress_timer_data(current_time, auction) {
-        if ((auction.current_stage === (auction.stages.length - 1))||(auction.current_stage === -100)) {
-          return {
-            'countdown_seconds': false,
-            'rounds_seconds': 0,
-          };
-        }
-        if (auction.current_stage === -1) {
-          return {
-            'countdown_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000),
-            'rounds_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000),
-          };
-        }
+      if ((auction.current_stage === (auction.stages.length - 1))||(auction.current_stage === -100)) {
         return {
-          'countdown_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
-          'rounds_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - new Date(auction.stages[auction.current_stage].start)) / 1000),
+          'countdown_seconds': false,
+          'rounds_seconds': 0,
         };
-
       }
+      if (auction.current_stage === -1) {
+        return {
+          'countdown_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000),
+          'rounds_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000),
+        };
+      }
+      return {
+        'countdown_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
+        'rounds_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - new Date(auction.stages[auction.current_stage].start)) / 1000),
+      };
+
+    }
+
+    function prepare_title_ending_data(auction, lang) {
+      var ending = auction.tenderID + " - ";
+      for (var i in auction.items) {
+        ending += auction.items[i]['description_'+ lang]||auction.items[i]['description']||"";
+        ending += ": ";
+        ending += auction.items[i].quantity;
+        ending += " ";
+        ending += auction.items[i]['unit']['name_'+ lang]||auction.items[i]['unit']['name']||"";
+
+      };
+      ending += " - ";
+      ending += auction.procuringEntity['name_'+ lang]||auction.procuringEntity['name'];
+      return ending;
+    }
       // Get bidder_id from query
     function get_bidder_id() {
-        var query = window.location.search.substring(1);
-        var vars = query.split('&');
-        for (var i = 0; i < vars.length; i++) {
-          var pair = vars[i].split('=');
-          if (decodeURIComponent(pair[0]) == 'bidder_id') {
-            return decodeURIComponent(pair[1]);
-          }
+      var query = window.location.search.substring(1);
+      var vars = query.split('&');
+      for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+        if (decodeURIComponent(pair[0]) == 'bidder_id') {
+          return decodeURIComponent(pair[1]);
         }
       }
+    }
       // Format date with traslations
     function format_date(date, lang, format) {
       return moment(date).locale(lang).format(format);
@@ -236,7 +251,8 @@ angular.module('auction')
       'get_round_data': get_round_data,
       'scroll_to_stage': scroll_to_stage,
       'parseQueryString': parseQueryString,
-      'stringifyQueryString': stringifyQueryString
+      'stringifyQueryString': stringifyQueryString,
+      'prepare_title_ending_data': prepare_title_ending_data
     };
   }]);
 

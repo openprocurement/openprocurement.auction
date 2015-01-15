@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block head %}
     <base href="{{ request.url + '/'}}">
-    <title >Auction Software</title>     
     <style type="text/css">
         [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
           display: none !important;
@@ -10,6 +9,14 @@
     {% assets "all_css" %}
         <link href="{{ ASSET_URL }}" rel="stylesheet">
     {% endassets %}
+    {% raw %}
+    <title ng-bind-template="{{ time_in_title }} {{ info_timer.msg|translate}} - {{ title_ending }}" ng-if="!info_timer.start_time" >     
+        Аукціон
+    </title>
+    <title ng-bind-template="{{ info_timer.msg|translate}} {{ format_date(info_timer.start_time, lang,'Do MMMM YYYY') }} {{'at'|translate}} {{ format_date(info_timer.start_time, lang,'HH:mm') }} - {{ title_ending }}" ng-if="!info_timer.countdown" >     
+        
+    </title>
+    {% endraw %}     
     {% endblock %}
 
 {% block body %}

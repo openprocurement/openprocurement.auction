@@ -26,6 +26,15 @@ angular.module('auction').controller('AuctionController', [
       $translate.use(AuctionConfig.default_lang);
       $scope.lang = AuctionConfig.default_lang;
     }
+    $scope.$on('timer-tick', function(event){
+      if ($scope.auction_doc) {
+        $timeout(function() {
+          $scope.time_in_title = event.targetScope.hours ? (event.targetScope.hours.toString() + ":") : "";
+          $scope.time_in_title += (event.targetScope.minutes.toString() + ":");
+          $scope.time_in_title += (event.targetScope.seconds.toString() + " ");
+        }, 10);
+      };
+    })
     $scope.format_date = AuctionUtils.format_date;
     $scope.bidder_id = null;
     $scope.$on('kick_client', function(event, client_id, msg) {
@@ -291,6 +300,7 @@ angular.module('auction').controller('AuctionController', [
         $log.error('Error:', err);
         return 0;
       }
+      $scope.title_ending = AuctionUtils.prepare_title_ending_data(doc, $scope.lang);
       $scope.start_subscribe();
       $scope.replace_document(doc);
       $scope.document_exists = true;
