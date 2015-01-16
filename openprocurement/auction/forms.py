@@ -22,7 +22,7 @@ def validate_bid_change_on_bidding(form, field):
     """
     stage_id = form.document['current_stage']
     minimal_bid = form.document['stages'][stage_id]['amount']
-    if field.data > minimal_bid - form.document['minimalStep']['amount'] and field.data != minimal_bid:
+    if field.data > (minimal_bid - form.document['minimalStep']['amount']):
         raise ValidationError(u'To high value')
 
 
