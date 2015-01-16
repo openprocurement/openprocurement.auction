@@ -33,8 +33,8 @@ class _LoggerStream(object):
         super(_LoggerStream, self).__init__()
         self.logger = logger
 
-    def write(self, msg):
-        self.logger.info(msg)
+    def write(self, msg, **kw):
+        self.logger.info(msg, **kw)
 
 
 class AuctionsWSGIHandler(WSGIHandler):
@@ -48,6 +48,20 @@ class AuctionsWSGIHandler(WSGIHandler):
                 self.close_connection = True
             else:
                 raise ex
+
+    def log_request(self):
+        log = self.server.log
+        if log:
+            log.write(
+                self.format_request(),
+                extra={
+                    'REMOTE_ADDR': ','.join(
+                        [self.environ.get('HTTP_X_FORWARDED_FOR', ''),
+                         self.environ.get('HTTP_X_REAL_IP', '')]
+                    ),
+                    'USER_AGENT':self.environ.get('HTTP_USER_AGENT', '')
+                }    
+            )
 
 
 @app.route('/login')
