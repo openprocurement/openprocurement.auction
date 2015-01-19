@@ -29,9 +29,9 @@ angular.module('auction').controller('AuctionController', [
     $scope.$on('timer-tick', function(event){
       if ($scope.auction_doc) {
         $timeout(function() {
-          $scope.time_in_title = event.targetScope.hours ? (event.targetScope.hours.toString() + ":") : "";
-          $scope.time_in_title += (event.targetScope.minutes.toString() + ":");
-          $scope.time_in_title += (event.targetScope.seconds.toString() + " ");
+          $scope.time_in_title = event.targetScope.hours ? (AuctionUtils.pad(event.targetScope.hours) + ":") : "";
+          $scope.time_in_title += (AuctionUtils.pad(event.targetScope.minutes) + ":");
+          $scope.time_in_title += (AuctionUtils.pad(event.targetScope.seconds) + " ");
         }, 10);
       };
     })

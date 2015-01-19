@@ -2,6 +2,9 @@ angular.module('auction')
   .factory('AuctionUtils', ['$filter', '$timeout', '$log', '$window', function ($filter, $timeout, $log, $window) {
     // Format msg for timer
     'use strict';
+    function pad(d) {
+        return (d < 10) ? '0' + d.toString() : d.toString();
+    }
 
     function prepare_info_timer_data(current_time, auction, bidder_id, Rounds) {
       var i;
@@ -252,7 +255,8 @@ angular.module('auction')
       'scroll_to_stage': scroll_to_stage,
       'parseQueryString': parseQueryString,
       'stringifyQueryString': stringifyQueryString,
-      'prepare_title_ending_data': prepare_title_ending_data
+      'prepare_title_ending_data': prepare_title_ending_data,
+      'pad': pad
     };
   }]);
 
