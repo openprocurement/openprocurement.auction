@@ -246,6 +246,14 @@ angular.module('auction')
       }).join('&') : '';
     }
 
+    function inIframe () {
+        try {
+            return window.self !== window.top;
+        } catch (e) {
+            return true;
+        }
+    }
+
     return {
       'prepare_info_timer_data': prepare_info_timer_data,
       'prepare_progress_timer_data': prepare_progress_timer_data,
@@ -256,7 +264,8 @@ angular.module('auction')
       'parseQueryString': parseQueryString,
       'stringifyQueryString': stringifyQueryString,
       'prepare_title_ending_data': prepare_title_ending_data,
-      'pad': pad
+      'pad': pad,
+      'inIframe': inIframe
     };
   }]);
 

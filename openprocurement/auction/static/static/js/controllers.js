@@ -12,6 +12,11 @@ angular.module('auction').controller('AuctionController', [
     $rootScope, $location, $translate, $filter, growl, growlMessages, $aside
   ) {
     // init variables
+    if (AuctionUtils.inIframe()){
+      $log.error('Starts in iframe');
+      window.open(location.href, '_blank')
+      return false;
+    }
     $scope.growlMessages = growlMessages;
     growlMessages.initDirective(0, 10);
     $scope.allow_bidding = true;
