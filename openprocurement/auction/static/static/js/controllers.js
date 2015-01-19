@@ -27,7 +27,7 @@ angular.module('auction').controller('AuctionController', [
       $scope.lang = AuctionConfig.default_lang;
     }
     $scope.$on('timer-tick', function(event){
-      if ($scope.auction_doc) {
+      if (($scope.auction_doc)&&(event.targetScope.timerid == 1)) {
         $timeout(function() {
           $scope.time_in_title = event.targetScope.hours ? (AuctionUtils.pad(event.targetScope.hours) + ":") : "";
           $scope.time_in_title += (AuctionUtils.pad(event.targetScope.minutes) + ":");
