@@ -121,6 +121,7 @@ angular.module('auction').controller('AuctionController', [
           evtSrc.close();
           $log.debug("EventSource Stoped.", e);
         }
+        return true;
       };
     };
     $scope.changeLanguage = function (langKey) {
@@ -152,6 +153,7 @@ angular.module('auction').controller('AuctionController', [
       }
       return false;
     };
+
     $scope.sync_times_with_server = function (start) {
       $http.get('/get_current_server_time').success(function (data) {
         $scope.last_sync = new Date(data);

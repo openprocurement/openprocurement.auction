@@ -29,3 +29,33 @@ app.config(['$logProvider', 'AuctionConfig', 'growlProvider', function($logProvi
     growlProvider.globalPosition('top-center');
     growlProvider.onlyUniqueMessages(false);
 }]);
+
+
+// Catch error log msgs
+app.config([ "$provide", function( $provide ) {
+    // Use the `decorator` solution to substitute or attach behaviors to
+    // original service instance; @see angular-mocks for more examples....
+
+    $provide.decorator( '$log', [ "$delegate", function( $delegate )
+    {
+        // Save the original $log.debug()
+        var origDebug = $delegate.error;
+
+        $delegate.error = function () {
+            var args = [].slice.call(arguments);
+            dataLayer.push({"event": "JS.error", "MESSAGE": args.join(" ")});
+            origDebug.apply(null, arguments)
+        };
+
+        return $delegate;
+    }]);
+}]);
+
+
+// Catch exceptions
+app.factory('$exceptionHandler', function() {
+  return function(exception, cause) {
+    dataLayer.push({"event": "JS.error", "MESSAGE": exception.message});
+    throw exception;
+  };
+});
