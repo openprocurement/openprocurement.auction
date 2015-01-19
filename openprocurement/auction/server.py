@@ -55,11 +55,11 @@ class AuctionsWSGIHandler(WSGIHandler):
             log.write(
                 self.format_request(),
                 extra={
-                    'REMOTE_ADDR': ','.join(
+                    'JOURNAL_REMOTE_ADDR': ','.join(
                         [self.environ.get('HTTP_X_FORWARDED_FOR', ''),
                          self.environ.get('HTTP_X_REAL_IP', '')]
                     ),
-                    'USER_AGENT':self.environ.get('HTTP_USER_AGENT', '')
+                    'JOURNAL_USER_AGENT':self.environ.get('HTTP_USER_AGENT', '')
                 }    
             )
 
