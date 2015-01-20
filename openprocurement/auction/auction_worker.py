@@ -6,6 +6,7 @@ import iso8601
 import json
 import sys
 import os
+import re
 from urlparse import urljoin
 from dateutil.tz import tzlocal
 from copy import deepcopy
@@ -52,8 +53,13 @@ BIDS_KEYS_FOR_COPY = (
     "amount",
     "time"
 )
-
-SYSTEMD_RELATIVE_PATH = '.config/systemd/user/auction_{0}.{1}'
+SYSTEMD_DIRECORY = '.config/systemd/user/'
+SYSTEMD_RELATIVE_PATH = SYSTEMD_DIRECORY + 'auction_{0}.{1}'
+TIMER_STAMP = re.compile(
+    r"OnCalendar=(?P<year>[0-9][0-9][0-9][0-9])"
+    r"-(?P<mon>[0-9][0-9])-(?P<day>[0123][0-9]) "
+    r"(?P<hour>[0-2][0-9]):(?P<min>[0-5][0-9]):(?P<sec>[0-5][0-9])"
+)
 SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100})
 SCHEDULER.timezone = timezone('Europe/Kiev')
 
@@ -570,6 +576,33 @@ class Auction(object):
                         self.auction_document[section][index]["label"]["en"] = bidders[stage['bidder_id']]
 
 
+def cleanup():
+    now = datetime.now()
+    now = now.replace(now.year, now.month, now.day, 0, 0, 0)
+    systemd_files_dir =  os.path.join(os.path.expanduser('~'), SYSTEMD_DIRECORY)
+    for (dirpath, dirnames, filenames) in os.walk(systemd_files_dir):
+        for filename in filenames:
+            if filename.startswith('auction_') and filename.endswith('.timer'):
+                tender_id = filename[8:-6]
+                full_filename = os.path.join(systemd_files_dir, filename)
+                with open(full_filename) as timer_file:
+                    r = TIMER_STAMP.search(timer_file.read())
+                if r:
+                    datetime_args = [int(term) for term in r.groups()]
+                    if datetime(*datetime_args) < now:
+                        logger.info(
+                            'Remove systemd file: {}'.format(full_filename),
+                            extra={'JOURNAL_TENDER_ID': tender_id}
+                        )
+
+                        os.remove(full_filename)
+                        full_filename = full_filename[:-5] + 'service'
+                        logger.info(
+                            'Remove systemd file: {}'.format(full_filename),
+                            extra={'JOURNAL_TENDER_ID': tender_id}
+                        )
+                        os.remove(full_filename)
+
 def main():
     parser = argparse.ArgumentParser(description='---- Auction ----')
     parser.add_argument('cmd', type=str, help='')
@@ -585,7 +618,8 @@ def main():
 
     if os.path.isfile(args.auction_worker_config):
         worker_defaults = json.load(open(args.auction_worker_config))
-        worker_defaults['handlers']['journal']['TENDER_ID'] = args.auction_doc_id
+        if args.cmd != 'cleanup':
+            worker_defaults['handlers']['journal']['TENDER_ID'] = args.auction_doc_id
         for key in ('TENDERS_API_VERSION', 'TENDERS_API_URL',):
             worker_defaults['handlers']['journal'][key] = worker_defaults[key]
 
@@ -605,6 +639,9 @@ def main():
     elif args.cmd == 'planning':
         auction.prepare_auction_document()
         auction.prepare_tasks()
+    elif args.cmd == 'cleanup':
+        cleanup()
+
 
 ##############################################################
 if __name__ == "__main__":
