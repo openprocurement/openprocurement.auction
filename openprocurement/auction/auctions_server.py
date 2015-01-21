@@ -136,15 +136,6 @@ def couch_server_proxy(path):
         suppress_http_headers="")
 
 
-@auctions_server.context_processor
-def utility_processor():
-    def format_hash(bidder_id):
-        return calculate_hash(
-            bidder_id, auctions_server.config['HASH_SECRET_KEY']
-        )
-    return dict(format_hash=format_hash)
-
-
 def make_auctions_app(global_conf,
                       redis_url='redis://localhost:7777/0',
                       external_couch_url='http://localhost:5000/auction',

@@ -20,11 +20,6 @@
                 <p class="list-group-item-text">
                     Час проведення: {{ auction.stages[0].start }} - {{ auction.endDate }}
                 </p>
-                <div class="btn-group">
-                    {% for bidder in auction["initial_bids"] %}
-                    <a type="button" class="btn btn-default" href="/tenders/{{ auction._id }}/login?bidder_id={{ bidder['bidder_id'] }}&hash={{ format_hash(bidder['bidder_id'])}} ">{{ bidder['label']['uk'] }}</a>
-                    {% endfor %}
-                </div>
             </div>
             {% endfor %}
         </div>
