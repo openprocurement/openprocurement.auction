@@ -178,13 +178,18 @@
 
             <div id="stage-{{ stage + $index + 1 }}" class="row auction-stage stage-item stage-bids" 
                  ng-repeat="initial_bid in auction_doc.initial_bids" 
-                 ng-class="{'current-stage': auction_doc.current_stage == (stage + $index + 1),
+                 ng-class="{'current-stage svg': auction_doc.current_stage == (stage + $index + 1),
                             'future-stage':  auction_doc.current_stage < (stage + $index + 1),
                             'past-stage':  auction_doc.current_stage > (stage + $index + 1),
                             'my-bid-stage': auction_doc.stages[stage + $index + 1].bidder_id == bidder_id}">
                 <div ng-if="$first" id="stage-{{ stage + $index}}"></div>
                 <div class="stage-item-lining">
-                    <i class="stage-icon"></i>
+                    <i ng-if="auction_doc.current_stage != (stage + $index + 1)" class="stage-icon"></i>
+                    <div class="stage-icon-visual" ng-if="auction_doc.current_stage == (stage + $index + 1)">
+                        <svg class="stage-icon-svg" viewbox="0 0 48 48">
+                              <svg-timer></svg-timer>
+                        </svg>
+                    </div>
                     <div class="stage-info">
                         <div class="stage-info-lining">
                             <span class="stage-info-item stage-label" ng-if="auction_doc.stages[stage + $index + 1].bidder_id != bidder_id ">{{ auction_doc.stages[stage + $index + 1].label[lang] }}</span>

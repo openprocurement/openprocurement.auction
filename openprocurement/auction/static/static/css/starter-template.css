@@ -118,6 +118,20 @@ body {
   vertical-align: middle;
   width: 37px;
   }
+
+.stage-icon-visual {
+  display: table-cell;
+  height: 37px;
+  padding-top: 5px;
+  vertical-align: middle;
+  width: 37px;
+  }
+
+.stage-icon-svg {
+  width: 37px;
+  height: 37px;
+  }
+
 .past-round .past-stage .stage-icon {
   background-image: url(../../static/img/past_round_stage.png);
   }
@@ -136,6 +150,7 @@ body {
   padding: 0 0 0 5px;
   vertical-align: middle;
   }
+
 .stage-info-item {
   display: table-cell;
   height: 45px;
@@ -249,6 +264,11 @@ body {
     }
   .stage-icon {
     background-size: 46px 46px;
+    height: 47px;
+    width: 47px;
+    }
+  .stage-icon-visual,
+  .stage-icon-svg {
     height: 47px;
     width: 47px;
     }

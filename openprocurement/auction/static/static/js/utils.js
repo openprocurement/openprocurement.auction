@@ -254,6 +254,15 @@ angular.module('auction')
         }
     }
 
+    function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+      var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+    
+      return {
+        x: centerX + (radius * Math.cos(angleInRadians)),
+        y: centerY + (radius * Math.sin(angleInRadians))
+      };
+    }
+
     return {
       'prepare_info_timer_data': prepare_info_timer_data,
       'prepare_progress_timer_data': prepare_progress_timer_data,
@@ -265,7 +274,8 @@ angular.module('auction')
       'stringifyQueryString': stringifyQueryString,
       'prepare_title_ending_data': prepare_title_ending_data,
       'pad': pad,
-      'inIframe': inIframe
+      'inIframe': inIframe,
+      'polarToCartesian': polarToCartesian
     };
   }]);
 

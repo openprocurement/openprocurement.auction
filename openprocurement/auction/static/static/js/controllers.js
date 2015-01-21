@@ -11,7 +11,6 @@ angular.module('auction').controller('AuctionController', [
     $timeout, $http, $log, $cookies, $window,
     $rootScope, $location, $translate, $filter, growl, growlMessages, $aside
   ) {
-    // init variables
     if (AuctionUtils.inIframe()){
       $log.error('Starts in iframe');
       window.open(location.href, '_blank')
@@ -38,7 +37,13 @@ angular.module('auction').controller('AuctionController', [
           $scope.time_in_title += (AuctionUtils.pad(event.targetScope.minutes) + ":");
           $scope.time_in_title += (AuctionUtils.pad(event.targetScope.seconds) + " ");
         }, 10);
+      } else {
+        var date = new Date();
+        $scope.seconds_line = AuctionUtils.polarToCartesian(24, 24, 16, (date.getSeconds()/60)*360);
+        $scope.minutes_line = AuctionUtils.polarToCartesian(24, 24, 16, (date.getMinutes()/60)*360);
+        $scope.hours_line = AuctionUtils.polarToCartesian(24, 24, 14, (date.getHours()/60)*360);
       };
+
     })
     $scope.format_date = AuctionUtils.format_date;
     $scope.bidder_id = null;
@@ -411,3 +416,20 @@ angular.module('auction')
             }
         };
     }]);
+
+
+angular.module('auction')
+.directive('svgTimer', function () {
+    return {
+
+      templateNamespace: 'svg',
+      template: '<g><circle cx="24" cy="24" r="21"  stroke="#494949" stroke-width="5" fill="#DBDBDB" />' 
+      + '<line x1="24" y1="24" ng-attr-x2="{{minutes_line.x}}" ng-attr-y2="{{minutes_line.y}}" stroke="#15293D" style="stroke-width:2" />'
+      + '<line x1="24" y1="24" ng-attr-x2="{{seconds_line.x}}" ng-attr-y2="{{seconds_line.y}}" stroke="#88BDA4" style="stroke-width:1" />'
+      + '<line x1="24" y1="24" ng-attr-x2="{{hours_line.x}}" ng-attr-y2="{{hours_line.y}}" stroke="#26374A" style="stroke-width:2" />'
+      + '<path ng-attr-d="{{arc_params}}" fill="#A5A5A5" />'
+      + '<circle cx="24" cy="24" r="2.5" stroke="white" stroke-width="1.5" fill="192B3F" /></g>',
+      restrict: 'E',
+      replace: true
+    };
+  })
