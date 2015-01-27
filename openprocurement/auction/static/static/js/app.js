@@ -1,6 +1,8 @@
 var app = angular.module('auction', ['ui.bootstrap', 'ngCookies', 'pascalprecht.translate', 'timer', 'angular-growl']);
 var db = {};
-var bidder_id = "0"
+var bidder_id = "0";
+var auction_doc_id = auction_doc_id||"";
+var db_url = db_url||"";
 
 app.constant('AuctionConfig', {
     auction_doc_id: auction_doc_id,
@@ -13,7 +15,7 @@ app.constant('AuctionConfig', {
 app.filter('formatnumber', ['$filter',
     function(filter) {
         return function(val) {
-            return (filter('number')(val) || "").replace(/,/g, " ") || undefined;
+            return (filter('number')(val) || "").replace(/,/g, " ") || "";
         }
     }
 ]);

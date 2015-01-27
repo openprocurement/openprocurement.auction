@@ -1,6 +1,6 @@
 var evtSrc = {};
 
-dataLayer = dataLayer || [];
+var dataLayer = dataLayer || [];
 
 angular.module('auction').controller('AuctionController', [
   '$scope', 'AuctionConfig', 'AuctionUtils',
