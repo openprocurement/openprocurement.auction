@@ -48,7 +48,7 @@ class AuctionsDataBridge(object):
     def get_teders_list(self):
         while True:
             params = {'offset': self.offset,
-                      'opt_fields': 'status,auctionPeriod'
+                      'opt_fields': 'status,auctionPeriod',
                       'mode': '_all_'}
             logger.debug('Start request to {}, params: {}'.format(
                 self.url, params))
