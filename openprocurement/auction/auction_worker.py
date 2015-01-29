@@ -253,7 +253,8 @@ class Auction(object):
         self.auction_document['stages'].append(announcement)
         self.auction_document['endDate'] = next_stage_timedelta.isoformat()
         self.save_auction_document()
-        self.set_auction_and_participation_urls()
+        if not self.debug:
+            self.set_auction_and_participation_urls()
 
     def set_auction_and_participation_urls(self):
         if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.6'):
