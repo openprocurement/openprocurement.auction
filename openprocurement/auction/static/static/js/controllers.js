@@ -350,7 +350,6 @@ angular.module('auction').controller('AuctionController', [
           $scope.Rounds.push(index);
         }
       });
-
     };
     $scope.scroll_to_stage = function () {
       AuctionUtils.scroll_to_stage($scope.auction_doc, $scope.Rounds);
