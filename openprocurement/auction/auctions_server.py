@@ -142,7 +142,9 @@ def make_auctions_app(global_conf,
                       internal_couch_url='http://localhost:9000/',
                       auctions_db='auctions',
                       hash_secret_key='',
-                      timezone='Europe/Kiev'):
+                      timezone='Europe/Kiev',
+                      preferred_url_scheme='http'
+                      ):
     """
     [app:main]
     use = egg:openprocurement.auction#auctions_server
@@ -152,7 +154,7 @@ def make_auctions_app(global_conf,
     auctions_db = auction
     timezone = Europe/Kiev
     """
-
+    auctions_server.config['PREFERRED_URL_SCHEME'] = preferred_url_scheme
     auctions_server.config['REDIS_URL'] = redis_url
     auctions_server.config['EXT_COUCH_DB'] = urljoin(
         external_couch_url,
