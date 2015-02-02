@@ -10,7 +10,15 @@ from hashlib import sha1
 from gevent.pywsgi import WSGIServer
 from gevent.baseserver import parse_address
 from redis import Redis
+import uuid
 
+EXTRA_LOGGING_VALUES = {
+    'X-Request-ID': 'JOURNAL_REQUEST_ID',
+    'X-Clint-Request-ID': 'JOURNAL_CLIENT_REQUEST_ID'
+}
+
+def generate_request_id(prefix=b'auction-req-'):
+    return prefix + str(uuid.uuid4()).encode('ascii')
 
 def filter_by_bidder_id(bids, bidder_id):
     """
@@ -123,45 +131,54 @@ def get_latest_start_bid_for_bidder(bids, bidder):
 
 
 def get_tender_data(tender_url, user="", password="", retry_count=10):
+    request_id = generate_request_id()
+    headers={'content-type': 'application/json', 'X-Request-ID': request_id}
     if user or password:
         auth = (user, password)
     else:
         auth = None
     for iteration in xrange(retry_count):
         try:
-            logging.info("Get data from {}".format(tender_url))
-            response = requests.get(tender_url, auth=auth,
+            logging.info("Get data from {}".format(tender_url),
+                         extra={"JOURNAL_REQUEST_ID": request_id})
+            response = requests.get(tender_url, auth=auth, headers=headers,
                                     timeout=300)
             if response.ok:
                 logging.info("Response from {}: status: {} text: {}".format(
-                    tender_url, response.status_code, response.text)
+                    tender_url, response.status_code, response.text),
+                    extra={"JOURNAL_REQUEST_ID": request_id}
                 )
                 return response.json()
             else:
                 logging.error("Response from {}: status: {} text: {}".format(
-                    tender_url, response.status_code, response.text)
+                    tender_url, response.status_code, response.text),
+                    extra={"JOURNAL_REQUEST_ID": request_id}
                 )
                 if response.status_code == 403:
                     for error in response.json()["errors"]:
                         if error["description"].startswith('Can\'t get auction info'):
                             return None
         except requests.exceptions.RequestException, e:
-            logging.error("Request error {} error: {}".format(
-                tender_url,
-                e)
+            logging.error(
+                "Request error {} error: {}".format(tender_url, e),
+                extra={"JOURNAL_REQUEST_ID": request_id}
             )
         except Exception, e:
-            logging.error("Unhandled error {} error: {}".format(
-                tender_url,
-                e)
+            logging.error(
+                "Unhandled error {} error: {}".format(tender_url, e),
+                extra={"JOURNAL_REQUEST_ID": request_id}
             )
-        logging.info("Wait before retry...")
+        logging.info("Wait before retry...",
+                     extra={"JOURNAL_REQUEST_ID": request_id})
         sleep(pow(iteration, 2))
     return None
 
 
 def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
                       method='patch'):
+    request_id = generate_request_id()
+    headers={'content-type': 'application/json', 'X-Request-ID': request_id}
+
     if user or password:
         auth = (user, password)
     else:
@@ -171,31 +188,36 @@ def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
             response = getattr(requests, method)(
                 tender_url,
                 auth=auth,
-                headers={'content-type': 'application/json'},
+                headers=headers,
                 data=json.dumps(data),
                 timeout=300
             )
 
             if response.ok:
                 logging.info("Response from {}: status: {} text: {}".format(
-                    tender_url, response.status_code, response.text)
+                    tender_url, response.status_code, response.text),
+                    extra={"JOURNAL_REQUEST_ID": request_id}
                 )
                 return response.json()
             else:
                 logging.error("Response from {}: status: {} text: {}".format(
-                    tender_url, response.status_code, response.text)
+                    tender_url, response.status_code, response.text),
+                    extra={"JOURNAL_REQUEST_ID": request_id}
                 )
         except requests.exceptions.RequestException, e:
             logging.error("Request error {} error: {}".format(
                 tender_url,
-                e)
+                e),
+                extra={"JOURNAL_REQUEST_ID": request_id}
             )
         except Exception, e:
             logging.error("Unhandled error {} error: {}".format(
                 tender_url,
-                e)
+                e),
+                extra={"JOURNAL_REQUEST_ID": request_id}
             )
-        logging.info("Wait before retry...")
+        logging.info("Wait before retry...",
+                     extra={"JOURNAL_REQUEST_ID": request_id})
         sleep(pow(iteration, 2))
 
 
@@ -242,3 +264,12 @@ def create_mapping(redis_url, auction_id, auction_url):
 def delete_mapping(redis_url, auction_id):
     mapings = Redis.from_url(redis_url)
     return mapings.delete(auction_id)
+
+
+def prepare_extra_journal_fields(headers):
+    extra = {}
+    for key in EXTRA_LOGGING_VALUES:
+        if  key in headers:
+            extra[EXTRA_LOGGING_VALUES[key]] = headers[key]
+    return extra
+
