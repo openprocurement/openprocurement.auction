@@ -13,7 +13,7 @@ from couchdb.client import Database
 from time import time
 import iso8601
 from .design import endDate_view
-from .utils import do_until_success
+from .utils import do_until_success, generate_request_id
 from yaml import load
 
 logger = logging.getLogger(__name__)
@@ -50,9 +50,15 @@ class AuctionsDataBridge(object):
             params = {'offset': self.offset,
                       'opt_fields': 'status,auctionPeriod',
                       'mode': '_all_'}
+            request_id = generate_request_id(prefix=b'data-bridge-req-')
             logger.debug('Start request to {}, params: {}'.format(
-                self.url, params))
-            response = requests.get(self.url, params=params)
+                self.url, params),
+                extra={"JOURNAL_REQUEST_ID": request_id})
+
+            response = requests.get(self.url, params=params, 
+                                    headers={'content-type': 'application/json',
+                                             'X-Request-ID': request_id}
+            )
 
             logger.debug('Request response: {}'.format(response.status_code))
             if response.ok:
@@ -76,7 +82,10 @@ class AuctionsDataBridge(object):
                                 self.db, startkey=time() * 1000
                             )
                             if item["id"] in [i.id for i in future_auctions]:
-                                logger.warning("Tender with id {} already scheduled".format(item["id"]))
+                                logger.warning(
+                                    "Tender with id {} already scheduled".format(item["id"]),
+                                    extra={"JOURNAL_REQUEST_ID": request_id}
+                                )
                                 continue
                         yield item
                     if item['status'] == "cancelled":
@@ -89,9 +98,15 @@ class AuctionsDataBridge(object):
                             auction_document["current_stage"] = -100
                             auction_document["endDate"] = datetime.now(self.tz).isoformat()
                             self.db.save(auction_document)
-                            logger.info("Change auction {} status to 'canceled'".format(item["id"]))
+                            logger.info(
+                                "Change auction {} status to 'canceled'".format(item["id"]),
+                                extra={"JOURNAL_REQUEST_ID": request_id}
+                            )
 
-                logger.info("Change offset date to {}".format(response_json['next_page']['offset']))
+                logger.info(
+                    "Change offset date to {}".format(response_json['next_page']['offset']),
+                    extra={"JOURNAL_REQUEST_ID": request_id}
+                )
                 self.offset = response_json['next_page']['offset']
             else:
                 sleep(2)
