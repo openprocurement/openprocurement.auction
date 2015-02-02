@@ -12,6 +12,11 @@ from gevent.baseserver import parse_address
 from redis import Redis
 
 
+EXTRA_LOGGING_VALUES = {
+    'X-Request-ID': 'JOURNAL_REQUEST_ID',
+    'X-Clint-Request-ID': 'JOURNAL_CLIENT_REQUEST_ID'
+}
+
 def filter_by_bidder_id(bids, bidder_id):
     """
     >>> bids = [
@@ -242,3 +247,11 @@ def create_mapping(redis_url, auction_id, auction_url):
 def delete_mapping(redis_url, auction_id):
     mapings = Redis.from_url(redis_url)
     return mapings.delete(auction_id)
+
+
+def prepare_extra_journal_fields(headers):
+    extra = {}
+    for key in EXTRA_LOGGING_VALUES:
+        if  key in headers:
+            extra[EXTRA_LOGGING_VALUES[key]] = headers[key]
+    return extra

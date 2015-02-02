@@ -9,7 +9,7 @@ import errno
 from datetime import datetime
 from pytz import timezone
 from openprocurement.auction.forms import BidsForm
-from openprocurement.auction.utils import get_lisener, create_mapping
+from openprocurement.auction.utils import get_lisener, create_mapping, prepare_extra_journal_fields
 from openprocurement.auction.event_source import (
     sse, send_event, send_event_to_client, remove_client,
     push_timestamps_events, check_clients
@@ -52,16 +52,14 @@ class AuctionsWSGIHandler(WSGIHandler):
     def log_request(self):
         log = self.server.log
         if log:
-            log.write(
-                self.format_request(),
-                extra={
-                    'JOURNAL_REMOTE_ADDR': ','.join(
-                        [self.environ.get('HTTP_X_FORWARDED_FOR', ''),
-                         self.environ.get('HTTP_X_REAL_IP', '')]
-                    ),
-                    'JOURNAL_USER_AGENT':self.environ.get('HTTP_USER_AGENT', '')
-                }    
+            extra = prepare_extra_journal_fields(self.headers)
+            extra['JOURNAL_REMOTE_ADDR']  = ','.join(
+                [self.environ.get('HTTP_X_FORWARDED_FOR', ''),
+                 self.environ.get('HTTP_X_REAL_IP', '')]
             )
+            extra['JOURNAL_USER_AGENT'] = self.environ.get('HTTP_USER_AGENT', '')
+
+            log.write(self.format_request(), extra=extra)
 
 
 @app.route('/login')
@@ -130,12 +128,12 @@ def postBid():
                         app.logger.info("Bidder {} with client_id {} canceled bids in stage {} in {}".format(
                             request.json['bidder_id'], session['client_id'],
                             form.document['current_stage'], current_time.isoformat()
-                        ))
+                        ), extra=prepare_extra_journal_fields(request.headers))
                     else:
                         app.logger.info("Bidder {} with client_id {} placed bid {} in {}".format(
                             request.json['bidder_id'], session['client_id'],
                             request.json['bid'], current_time.isoformat()
-                        ))
+                        ), extra=prepare_extra_journal_fields(request.headers))
                     response = {'status': 'ok', 'data': request.json}
                 else:
                     response = {'status': 'failed', 'errors': form.errors}
@@ -143,7 +141,7 @@ def postBid():
                         request.json['bidder_id'], session['client_id'],
                         request.json['bid'], current_time.isoformat(),
                         repr(form.errors)
-                    ))
+                    ), extra=prepare_extra_journal_fields(request.headers))
                 return jsonify(response)
     abort(401)
 

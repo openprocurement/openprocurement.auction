@@ -19,6 +19,7 @@ class AuctionsHostProxy(HostProxy):
 
     def process_request(self, uri, method, headers, environ):
         headers["X-Forwarded-Path"] = request.url
+        headers["X-Request-ID"] = environ.get("x_request_id", "")
         return super(AuctionsHostProxy, self).process_request(
             uri, method, headers, environ
         )

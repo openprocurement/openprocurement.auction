@@ -40,7 +40,8 @@ setup(name='openprocurement.auction',
           'Flask-Assets',
           'cssmin',
           'jsmin',
-          'PyYAML'
+          'PyYAML',
+          'request_id_middleware'
       ],
       entry_points={
           'console_scripts': [

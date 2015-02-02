@@ -89,7 +89,7 @@ def event_source():
                     'User-Agent': request.headers.get('User-Agent'),
                 }
                 current_app.auction_bidders[bidder]["channels"][client_hash] = Queue()
-            current_app.logger.debug('Send identificcation')
+            current_app.logger.debug('Send identification')
             send_event_to_client(bidder, client_hash,
                                  {"bidder_id": bidder,
                                   "client_id": client_hash,
