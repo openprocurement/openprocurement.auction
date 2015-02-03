@@ -55,10 +55,9 @@ class AuctionsDataBridge(object):
                 self.url, params),
                 extra={"JOURNAL_REQUEST_ID": request_id})
 
-            response = requests.get(self.url, params=params, 
+            response = requests.get(self.url, params=params,
                                     headers={'content-type': 'application/json',
-                                             'X-Request-ID': request_id}
-            )
+                                             'X-Client-Request-ID': request_id})
 
             logger.debug('Request response: {}'.format(response.status_code))
             if response.ok:
