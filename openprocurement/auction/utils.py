@@ -130,9 +130,12 @@ def get_latest_start_bid_for_bidder(bids, bidder):
                   key=get_time, reverse=True)[0]
 
 
-def get_tender_data(tender_url, user="", password="", retry_count=10):
-    request_id = generate_request_id()
-    headers={'content-type': 'application/json', 'X-Request-ID': request_id}
+def get_tender_data(tender_url, user="", password="", retry_count=10,
+                    request_id=None):
+    if not request_id:
+        request_id = generate_request_id()
+    extra_headers = {'content-type': 'application/json', 'X-Client-Request-ID': request_id}
+
     if user or password:
         auth = (user, password)
     else:
@@ -141,7 +144,7 @@ def get_tender_data(tender_url, user="", password="", retry_count=10):
         try:
             logging.info("Get data from {}".format(tender_url),
                          extra={"JOURNAL_REQUEST_ID": request_id})
-            response = requests.get(tender_url, auth=auth, headers=headers,
+            response = requests.get(tender_url, auth=auth, headers=extra_headers,
                                     timeout=300)
             if response.ok:
                 logging.info("Response from {}: status: {} text: {}".format(
@@ -175,9 +178,10 @@ def get_tender_data(tender_url, user="", password="", retry_count=10):
 
 
 def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
-                      method='patch'):
-    request_id = generate_request_id()
-    headers={'content-type': 'application/json', 'X-Request-ID': request_id}
+                      method='patch', request_id=None):
+    if not request_id:
+        request_id = generate_request_id()
+    extra_headers = {'content-type': 'application/json', 'X-Client-Request-ID': request_id}
 
     if user or password:
         auth = (user, password)
@@ -188,7 +192,7 @@ def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
             response = getattr(requests, method)(
                 tender_url,
                 auth=auth,
-                headers=headers,
+                headers=extra_headers,
                 data=json.dumps(data),
                 timeout=300
             )
@@ -269,7 +273,6 @@ def delete_mapping(redis_url, auction_id):
 def prepare_extra_journal_fields(headers):
     extra = {}
     for key in EXTRA_LOGGING_VALUES:
-        if  key in headers:
+        if key in headers:
             extra[EXTRA_LOGGING_VALUES[key]] = headers[key]
     return extra
-
