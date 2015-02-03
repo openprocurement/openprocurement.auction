@@ -159,14 +159,14 @@ class Auction(object):
             if prepare:
                 self._auction_data = get_tender_data(
                     self.tender_url,
-                    headers={'X-Client-Request-ID': self.request_id}
+                    request_id=self.request_id
                 )
             else:
                 self._auction_data = {'data': {}}
             auction_data = get_tender_data(
                 self.tender_url + '/auction',
                 user=self.worker_defaults["TENDERS_API_TOKEN"],
-                headers={'X-Client-Request-ID': self.request_id}
+                request_id=self.request_id
             )
             if auction_data:
                 self._auction_data['data'].update(auction_data['data'])
