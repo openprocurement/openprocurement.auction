@@ -207,7 +207,10 @@ def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
 
     # Start server on unused port
     lisener = get_lisener(auction.worker_defaults["STARTS_PORT"])
-    app.logger.info("Start server on {0}:{1}".format(*lisener.getsockname()))
+    app.logger.info(
+        "Start server on {0}:{1}".format(*lisener.getsockname()),
+        extra={"JOURNAL_REQUEST_ID": auction.request_id}
+    )
     server = WSGIServer(lisener, app,
                         log=_LoggerStream(logger),
                         handler_class=AuctionsWSGIHandler)
@@ -221,7 +224,7 @@ def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
         auction.auction_doc_id,
         mapping_value,
         mapping_expire_time
-    ))
+    ), extra={"JOURNAL_REQUEST_ID": auction.request_id})
 
     # Spawn events functionality
     spawn(push_timestamps_events, app,)
