@@ -10,7 +10,6 @@ from urlparse import urljoin
 from wsgiproxy import HostProxy
 import couchdb
 import time
-from .utils import calculate_hash
 
 monkey.patch_all()
 
@@ -133,7 +132,7 @@ def auctions_server_current_server_time():
 
 def couch_server_proxy(path):
     return make_proxy(
-        {}, auctions_server.config['INT_COUCH_URL'], allowed_request_methods="",
+        {}, auctions_server.config['PROXY_COUCH_URL'], allowed_request_methods="",
         suppress_http_headers="")
 
 
@@ -141,6 +140,7 @@ def make_auctions_app(global_conf,
                       redis_url='redis://localhost:7777/0',
                       external_couch_url='http://localhost:5000/auction',
                       internal_couch_url='http://localhost:9000/',
+                      proxy_internal_couch_url='http://localhost:9000/',
                       auctions_db='auctions',
                       hash_secret_key='',
                       timezone='Europe/Kiev',
@@ -172,6 +172,7 @@ def make_auctions_app(global_conf,
         couch_server_proxy,
         methods=['GET'], defaults={'path': ''})
     auctions_server.config['INT_COUCH_URL'] = internal_couch_url
+    auctions_server.config['PROXY_COUCH_URL'] = proxy_internal_couch_url
     auctions_server.config['COUCH_DB'] = auctions_db
     auctions_server.config['TIMEZONE'] = tz(timezone)
     auctions_server.redis = Redis(auctions_server)
