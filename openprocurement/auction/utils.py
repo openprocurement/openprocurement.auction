@@ -177,8 +177,8 @@ def get_tender_data(tender_url, user="", password="", retry_count=10,
     return None
 
 
-def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
-                      method='patch', request_id=None):
+def patch_tender_data(tender_url, data=None, files=None, user="", password="",
+                      retry_count=10, method='patch', request_id=None):
     if not request_id:
         request_id = generate_request_id()
     extra_headers = {'content-type': 'application/json', 'X-Client-Request-ID': request_id}
@@ -189,13 +189,22 @@ def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
         auth = None
     for iteration in xrange(retry_count):
         try:
-            response = getattr(requests, method)(
-                tender_url,
-                auth=auth,
-                headers=extra_headers,
-                data=json.dumps(data),
-                timeout=300
-            )
+            if data:
+                response = getattr(requests, method)(
+                    tender_url,
+                    auth=auth,
+                    headers=extra_headers,
+                    data=json.dumps(data),
+                    timeout=300
+                )
+            else:
+                response = getattr(requests, method)(
+                    tender_url,
+                    auth=auth,
+                    headers=extra_headers,
+                    files=files,
+                    timeout=300
+                )
 
             if response.ok:
                 logging.info("Response from {}: status: {} text: {}".format(
@@ -223,6 +232,8 @@ def patch_tender_data(tender_url, data, user="", password="", retry_count=10,
         logging.info("Wait before retry...",
                      extra={"JOURNAL_REQUEST_ID": request_id})
         sleep(pow(iteration, 2))
+
+
 
 
 def do_until_success(func, args=(), kw={}, repeat=10, sleep_seconds=10):
