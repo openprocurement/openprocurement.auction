@@ -41,7 +41,7 @@ angular.module('auction').controller('AuctionController', [
         var date = new Date();
         $scope.seconds_line = AuctionUtils.polarToCartesian(24, 24, 16, (date.getSeconds()/60)*360);
         $scope.minutes_line = AuctionUtils.polarToCartesian(24, 24, 16, (date.getMinutes()/60)*360);
-        $scope.hours_line = AuctionUtils.polarToCartesian(24, 24, 14, (date.getHours()/60)*360);
+        $scope.hours_line = AuctionUtils.polarToCartesian(24, 24, 14, (date.getHours()/12)*360);
       };
 
     })
