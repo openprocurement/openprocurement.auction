@@ -1,6 +1,6 @@
 from datetime import datetime
 from design import sync_design, endDate_view
-from flask import Flask, render_template, request, abort, url_for, redirect
+from flask import Flask, render_template, request, abort, url_for, redirect, Response
 from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
 from gevent import monkey
@@ -10,6 +10,7 @@ from urlparse import urljoin
 from wsgiproxy import HostProxy
 import couchdb
 import time
+from sse import Sse as PySse
 
 monkey.patch_all()
 
@@ -122,12 +123,22 @@ def auctions_proxy(auction_doc_id, path):
             url_for('auction_url', auction_doc_id=auction_doc_id,
                     wait=1, **request.args)
         ))
+    elif path == 'event_source':
+        events_close = PySse()
+        events_close.add_message("Close", "Disable")
+        return Response(
+            events_close,
+            mimetype='text/event-stream',
+            content_type='text/event-stream'
+        )
     return abort(404)
 
 
 @auctions_server.route('/get_current_server_time')
 def auctions_server_current_server_time():
-    return datetime.now(auctions_server.config['TIMEZONE']).isoformat()
+    response = Response(datetime.now(auctions_server.config['TIMEZONE']).isoformat())
+    response.headers['Cache-Control'] = 'public, max-age=0'
+    return response
 
 
 def couch_server_proxy(path):
