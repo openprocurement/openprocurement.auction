@@ -88,7 +88,7 @@
         </div>
         <timer timerid="2" ng-if="progres_timer.countdown_seconds" countdown="progres_timer.countdown_seconds" interval="1000">
             <div class="progress progress-fixed-top">
-                <div class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="{{($parent.progres_timer.rounds_seconds - countdown)/$parent.progres_timer.rounds_seconds*100}}" aria-valuemin="0" aria-valuemax="100" style="width: {{($parent.progres_timer.rounds_seconds - countdown)/$parent.progres_timer.rounds_seconds*100}}%">
+                <div class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="{{($parent.progres_timer.rounds_seconds - countdown)/$parent.progres_timer.rounds_seconds*100}}" aria-valuemin="0" aria-valuemax="100" ng-style="{'width': ($parent.progres_timer.rounds_seconds - countdown)/$parent.progres_timer.rounds_seconds*100 + '%'}">
                 </div>
             </div>
         </timer>

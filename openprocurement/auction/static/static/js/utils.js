@@ -130,7 +130,11 @@ angular.module('auction')
     }
       // Format date with traslations
     function format_date(date, lang, format) {
-      return moment(date).locale(lang).format(format);
+      var temp_date = moment(date).locale(lang);
+      if (typeof temp_date.format === 'function'){
+        return temp_date.format(format);
+      }
+      return "";
     }
 
     // Get round data
