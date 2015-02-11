@@ -174,7 +174,7 @@ class Auction(object):
         turn_label = 'turn_{}'.format(turn_in_round)
         self.audit['timeline'][round_label][turn_label] = {
             'time': datetime.now(tzlocal()).isoformat(),
-            'bidder': self.auction_document["stages"][self.current_stage]['bidder_id']
+            'bidder': self.auction_document["stages"][self.current_stage].get('bidder_id', '')
         }
         if self.auction_document["stages"][self.current_stage].get('changed', False):
             self.audit['timeline'][round_label][turn_label]["bid_time"] = self.auction_document["stages"][self.current_stage]['time']
@@ -682,7 +682,8 @@ class Auction(object):
             response = patch_tender_data(
                 self.tender_url + '/documents', files=files,
                 user=self.worker_defaults["TENDERS_API_TOKEN"],
-                method='post', request_id=self.request_id
+                method='post', request_id=self.request_id,
+                retry_count=2
             )
             if response:
                 doc_id = response["data"]['id']
@@ -737,7 +738,8 @@ class Auction(object):
                 response = patch_tender_data(
                     self.tender_url + '/documents/{}'.format(doc_id), files=files,
                     user=self.worker_defaults["TENDERS_API_TOKEN"],
-                    method='put', request_id=self.request_id
+                    method='put', request_id=self.request_id,
+                    retry_count=2
                 )
                 if response:
                     doc_id = response["data"]['id']
