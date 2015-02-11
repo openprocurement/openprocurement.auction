@@ -181,7 +181,9 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
                       retry_count=10, method='patch', request_id=None):
     if not request_id:
         request_id = generate_request_id()
-    extra_headers = {'content-type': 'application/json', 'X-Client-Request-ID': request_id}
+    extra_headers = {'X-Client-Request-ID': request_id}
+    if data:
+        extra_headers['content-type'] = 'application/json'
 
     if user or password:
         auth = (user, password)
