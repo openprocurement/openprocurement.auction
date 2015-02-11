@@ -732,8 +732,8 @@ class Auction(object):
                         self.auction_document[section][index]["label"]["ru"] = bids_dict[stage['bidder_id']][0]["name"]
                         self.auction_document[section][index]["label"]["en"] = bids_dict[stage['bidder_id']][0]["name"]
 
-            self.approve_audit_info_on_announcement(approved=bids_dict)
             if (doc_id)and(parse_version(self.worker_defaults['TENDERS_API_VERSION']) > parse_version('0.6')):
+                self.approve_audit_info_on_announcement(approved=bids_dict)
                 files = {'file': ('audit.yaml', yaml_dump(self.audit))}
                 response = patch_tender_data(
                     self.tender_url + '/documents/{}'.format(doc_id), files=files,
