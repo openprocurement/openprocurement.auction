@@ -181,7 +181,7 @@ class Auction(object):
             self.audit['timeline'][round_label][turn_label]["amount"] = self.auction_document["stages"][self.current_stage]['amount']
 
     def approve_audit_info_on_announcement(self, approved={}):
-        self.audit['timeline']['anouncement'] = {
+        self.audit['timeline']['results'] = {
             "time": datetime.now(tzlocal()).isoformat(),
             "bids": []
         }
@@ -193,7 +193,7 @@ class Auction(object):
             }
             if approved:
                 bid_result_audit["identification"] = approved[bid['bidder_id']][0]["identifier"]
-            self.audit['timeline']['anouncement']['bids'].append(bid_result_audit)
+            self.audit['timeline']['results']['bids'].append(bid_result_audit)
 
     def convert_datetime(self, datetime_stamp):
         return iso8601.parse_date(datetime_stamp).astimezone(SCHEDULER.timezone)
@@ -678,7 +678,7 @@ class Auction(object):
         doc_id = None
         self.approve_audit_info_on_announcement()
         if parse_version(self.worker_defaults['TENDERS_API_VERSION']) > parse_version('0.6'):
-            files = {'file': ('audit.yaml', yaml_dump(self.audit))}
+            files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
             response = patch_tender_data(
                 self.tender_url + '/documents', files=files,
                 user=self.worker_defaults["TENDERS_API_TOKEN"],
@@ -734,7 +734,7 @@ class Auction(object):
 
             if (doc_id)and(parse_version(self.worker_defaults['TENDERS_API_VERSION']) > parse_version('0.6')):
                 self.approve_audit_info_on_announcement(approved=bids_dict)
-                files = {'file': ('audit.yaml', yaml_dump(self.audit))}
+                files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
                 response = patch_tender_data(
                     self.tender_url + '/documents/{}'.format(doc_id), files=files,
                     user=self.worker_defaults["TENDERS_API_TOKEN"],
