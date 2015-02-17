@@ -192,7 +192,7 @@ class Auction(object):
                 'time': bid['time']
             }
             if approved:
-                bid_result_audit["identification"] = approved[bid['bidder_id']][0]["identifier"]
+                bid_result_audit["identification"] = approved[bid['bidder_id']]
             self.audit['timeline']['results']['bids'].append(bid_result_audit)
 
     def convert_datetime(self, datetime_stamp):
