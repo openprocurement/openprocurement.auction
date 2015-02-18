@@ -67,7 +67,8 @@ angular.module('auction')
       'Bid canceled': 'Bid canceled',
       'Login is currently closed.': 'Login is currently closed.',
       'Please try again later.': 'Please try again later.',
-      'Cancel Bid': 'Cancel Bid'
+      'Cancel Bid': 'Cancel Bid',
+      'You are unauthorized. Please login again.': 'You are unauthorized. Please login again.'
     });
 
     $translateProvider.translations('uk', {
@@ -136,7 +137,8 @@ angular.module('auction')
       'Bid canceled': 'Заявку відмінено',
       'Login is currently closed.': 'Вхід на даний момент закритий.',
       'Please try again later.': 'Спробуйте пізніше.',
-      'Cancel Bid': 'Відмінити заявку'
+      'Cancel Bid': 'Відмінити заявку',
+      'You are unauthorized. Please login again.': 'Ви не авторизовані. Будь ласка, увійдіть знову.'
     });
 
     $translateProvider.translations('ru', {
@@ -205,6 +207,7 @@ angular.module('auction')
       'Bid canceled': 'Ставку отменено',
       'Login is currently closed.': 'Вход на данный момент закрыт.',
       'Please try again later.': 'Попробуйте позже.',
-      'Cancel Bid': 'Отменить ставку'
+      'Cancel Bid': 'Отменить ставку',
+      'You are unauthorized. Please login again.': 'Вы не авторизованы. Пожалуйста, войдите снова.'
     });
   }]);
