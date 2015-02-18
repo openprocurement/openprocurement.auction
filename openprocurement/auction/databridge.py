@@ -3,7 +3,7 @@ import logging
 import logging.config
 import requests
 import os
-from time import sleep
+from time import sleep, mktime
 from urlparse import urljoin
 
 from datetime import datetime
@@ -12,7 +12,7 @@ from subprocess import check_output
 from couchdb.client import Database
 from time import time
 import iso8601
-from .design import endDate_view
+from .design import endDate_view, startDate_view
 from .utils import do_until_success, generate_request_id
 from yaml import load
 
@@ -74,7 +74,12 @@ class AuctionsDataBridge(object):
 
                         date = iso8601.parse_date(item['auctionPeriod']['startDate'])
                         date = date.astimezone(self.tz)
-                        if datetime.now(self.tz) > date:
+                        auctions_start_in_date = startDate_view(
+                            self.db,
+                            key=(mktime(date.timetuple()) + date.microsecond / 1E6) * 1000
+                        )
+                        if (datetime.now(self.tz) > date
+                                or item['id'] in [item.id for item in auctions_start_in_date.rows]):
                             continue
                         if self.ignore_exists:
                             future_auctions = endDate_view(
