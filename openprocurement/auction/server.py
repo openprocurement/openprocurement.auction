@@ -64,12 +64,6 @@ class AuctionsWSGIHandler(WSGIHandler):
 
 @app.route('/login')
 def login():
-    if 'remote_oauth' in session:
-        resp = app.remote_oauth.get('me')
-        if resp.status == 200:
-            response = redirect(
-                urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
-            )
     if 'bidder_id' in request.args and 'hash' in request.args:
         next_url = request.args.get('next') or request.referrer or None
         if 'X-Forwarded-Path' in request.headers:
@@ -143,6 +137,10 @@ def postBid():
                         repr(form.errors)
                     ), extra=prepare_extra_journal_fields(request.headers))
                 return jsonify(response)
+        else:
+            app.logger.warning("Client with client id: {} and bidder_id {} wants post bid but response status from Oauth is {}".format(
+                session.get('client_id', ''), request.json.get('bidder_id', ''), resp.status
+            ))
     abort(401)
 
 
@@ -173,6 +171,7 @@ def authorized():
             return abort(403, 'Access denied: {}'.format(
                 resp.data['error']
             ))
+        app.logger.info("Get response from Oauth: {}".format(repr(resp)))
         session['remote_oauth'] = (resp['access_token'], '')
         session['client_id'] = os.urandom(16).encode('hex')
     return redirect(
