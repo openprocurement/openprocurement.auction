@@ -14,9 +14,19 @@ endDate_view = ViewDefinition(
     '''
 )
 
+startDate_view = ViewDefinition(
+    "auctions",
+    "by_startDate",
+    ''' function(doc) {
+            var start = new Date(doc.stages[0].start).getTime()
+            emit(start, null);
+        }
+    '''
+)
+
 
 def sync_design(db):
-    views = [endDate_view]
+    views = [endDate_view, startDate_view]
     for view in views:
         view.sync(db)
     updated = False
