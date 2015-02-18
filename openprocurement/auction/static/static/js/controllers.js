@@ -244,6 +244,15 @@ angular.module('auction').controller('AuctionController', [
             $scope.auto_close_alert(msg_id);
           }
 
+        })
+        .error(function(data, status, headers, config) {
+          if (status==401){
+            growl.error('You are unauthorized. Please login again.');
+            dataLayer.push({"event": "JS.error", "MESSAGE": "Unauthorized error while post bid"});
+            $timeout(function () {
+              window.location.replace(window.location.href + '/logout');
+            }, 3000);
+          }
         });
       }
     };
