@@ -95,6 +95,13 @@ def event_source():
                                   "client_id": client_hash,
                                   "return_url": session.get('return_url', '')},
                                  "Identification")
+            if 'amount' in session:
+                send_event_to_client(bidder, client_hash,
+                                     {"last_amount": session['amount']},
+                                     "RestoreBidAmount")
+                current_app.logger.debug('Send RestoreBidAmount')
+                del session['amount']
+
             current_app.logger.debug('Send ClientsList')
             send_event(
                 bidder,
