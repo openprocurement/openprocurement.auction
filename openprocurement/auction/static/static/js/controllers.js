@@ -36,7 +36,7 @@ angular.module('auction').controller('AuctionController', [
 
     $scope.$on('timer-tick', function(event) {
       if (($scope.auction_doc) && (event.targetScope.timerid == 1)) {
-        if (((($rootScope.info_timer||{}).msg||"") === 'until your turn') && (event.targetScope.minutes == 1) && (event.targetScope.seconds == 50)) {
+        if (((($rootScope.info_timer || {}).msg || "") === 'until your turn') && (event.targetScope.minutes == 1) && (event.targetScope.seconds == 50)) {
           $http.post('./check_authorization').success(function(data) {
             $log.debug("Authorization checked");
           }).error(function(data, status, headers, config) {
@@ -85,7 +85,7 @@ angular.module('auction').controller('AuctionController', [
         "event": "EventSource.Start"
       });
       response_timeout = $timeout(function() {
-        $http.post('./set_sse_timeout', {
+        $http.get('./set_sse_timeout', {
           timeout: '7'
         }).success(function(data) {
           dataLayer.push({
@@ -294,7 +294,11 @@ angular.module('auction').controller('AuctionController', [
           })
           .error(function(data, status, headers, config) {
             if (status == 401) {
-              growl.error('You are unauthorized. Please login again.');
+              $rootScope.alerts.push({
+                msg_id: Math.random(),
+                type: 'danger',
+                msg: 'You are unauthorized. Please login again.'
+              });
               dataLayer.push({
                 "event": "JS.error",
                 "MESSAGE": "Unauthorized error while post bid"
@@ -302,11 +306,12 @@ angular.module('auction').controller('AuctionController', [
               $timeout(function() {
                 window.location.replace(window.location.href + '/relogin');
               }, 3000);
+            } else {
+              dataLayer.push({
+                "event": "JS.error",
+                "MESSAGE": "Unhandled Error while post bid"
+              });
             }
-            dataLayer.push({
-              "event": "JS.error",
-              "MESSAGE": "Error while post bid"
-            });
           });
       }
     };

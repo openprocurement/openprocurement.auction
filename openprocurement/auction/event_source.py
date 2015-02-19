@@ -50,7 +50,7 @@ class SseStream(object):
 sse = Blueprint('sse', __name__)
 
 
-@sse.route("/set_sse_timeout", methods=['POST'])
+@sse.route("/set_sse_timeout")
 def set_sse_timeout():
     if 'remote_oauth' in session and 'client_id' in session:
         resp = current_app.remote_oauth.get('me')
