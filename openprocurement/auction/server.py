@@ -53,7 +53,7 @@ class AuctionsWSGIHandler(WSGIHandler):
         log = self.server.log
         if log:
             extra = prepare_extra_journal_fields(self.headers)
-            extra['JOURNAL_REMOTE_ADDR']  = ','.join(
+            extra['JOURNAL_REMOTE_ADDR'] = ','.join(
                 [self.environ.get('HTTP_X_FORWARDED_FOR', ''),
                  self.environ.get('HTTP_X_REAL_IP', '')]
             )
@@ -80,8 +80,38 @@ def login():
         )
         if 'return_url' in request.args:
             session['return_url'] = request.args['return_url']
-
+        session['login_bidder_id'] = request.args['bidder_id']
+        session['login_hash'] = request.args['hash']
+        session['login_callback'] = callback_url
         return response
+    return abort(401)
+
+
+@app.route('/authorized')
+def authorized():
+    if not('error' in request.args and request.args['error'] == 'access_denied'):
+        resp = app.remote_oauth.authorized_response()
+        if resp is None or hasattr(resp, 'data'):
+            app.logger.info("Error Response from Oauth: {}".format(resp))
+            return abort(403, 'Access denied')
+        app.logger.info("Get response from Oauth: {}".format(repr(resp)))
+        session['remote_oauth'] = (resp['access_token'], '')
+        session['client_id'] = os.urandom(16).encode('hex')
+    return redirect(
+        urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
+    )
+
+
+@app.route('/relogin')
+def relogin():
+    if (all([key in session
+             for key in ['login_callback', 'login_bidder_id', 'login_hash']])):
+        return app.remote_oauth.authorize(
+            callback=session['login_callback'],
+            bidder_id=session['login_bidder_id'],
+            hash=session['login_hash'],
+            auto_allow='1'
+        )
     return abort(401)
 
 
@@ -103,7 +133,7 @@ def logout():
 
 
 @app.route('/postbid', methods=['POST'])
-def postBid():
+def post_bid():
     auction = app.config['auction']
     if 'remote_oauth' in session and 'client_id' in session:
         resp = app.remote_oauth.get('me')
@@ -161,22 +191,6 @@ def kickclient():
                     )
                     return jsonify({"status": "ok"})
     abort(401)
-
-
-@app.route('/authorized')
-def authorized():
-    if not('error' in request.args and request.args['error'] == 'access_denied'):
-        resp = app.remote_oauth.authorized_response()
-        if resp is None or hasattr(resp, 'data'):
-            return abort(403, 'Access denied: {}'.format(
-                resp.data['error']
-            ))
-        app.logger.info("Get response from Oauth: {}".format(repr(resp)))
-        session['remote_oauth'] = (resp['access_token'], '')
-        session['client_id'] = os.urandom(16).encode('hex')
-    return redirect(
-        urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
-    )
 
 
 def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
