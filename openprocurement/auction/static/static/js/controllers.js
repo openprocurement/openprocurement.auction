@@ -149,6 +149,21 @@ angular.module('auction').controller('AuctionController', [
         });
       }, false);
 
+      evtSrc.addEventListener('RestoreBidAmount', function(e) {
+        if (response_timeout) {
+          $timeout.cancel(response_timeout);
+        }
+        var data = angular.fromJson(e.data);
+        dataLayer.push({
+          "event": "EventSource.RestoreBidAmount",
+          "data": data
+        });
+        $log.debug("RestoreBidAmount: ", data);
+        $scope.$apply(function() {
+          $rootScope.form.bid = data.last_amount;
+        });
+      }, false);
+
       evtSrc.addEventListener('KickClient', function(e) {
         var data = angular.fromJson(e.data);
         dataLayer.push({
@@ -303,9 +318,10 @@ angular.module('auction').controller('AuctionController', [
                 "event": "JS.error",
                 "MESSAGE": "Unauthorized error while post bid"
               });
-              $timeout(function() {
-                window.location.replace(window.location.href + '/relogin');
-              }, 3000);
+              relogin = function() {
+                window.location.replace(window.location.href + '/relogin?amount=' + $rootScope.form.bid);
+              }
+              $timeout(relogin, 3000);
             } else {
               dataLayer.push({
                 "event": "JS.error",
