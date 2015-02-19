@@ -112,7 +112,24 @@ def relogin():
             hash=session['login_hash'],
             auto_allow='1'
         )
-    return abort(401)
+    return redirect(
+        urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
+    )
+
+
+@app.route('/check_authorization', methods=['POST'])
+def check_authorization():
+    if 'remote_oauth' in session and 'client_id' in session:
+        resp = app.remote_oauth.get('me')
+        if resp.status == 200:
+            app.logger.info("Bidder {} with client_id {} pass check_authorization".format(
+                            resp.data['bidder_id'], session['client_id'],
+                            ), extra=prepare_extra_journal_fields(request.headers))
+            return jsonify({'status': 'ok'})
+        else:
+            app.logger.warning("Client_id {} didn't passed check_authorization".format(session['client_id']),
+                               extra=prepare_extra_journal_fields(request.headers))
+    abort(401)
 
 
 @app.route('/logout')
