@@ -87,6 +87,7 @@ def login():
         session['login_bidder_id'] = request.args['bidder_id']
         session['login_hash'] = request.args['hash']
         session['login_callback'] = callback_url
+        app.logger.debug("Session: {}".format(repr(session)))
         return response
     return abort(401)
 
@@ -101,6 +102,7 @@ def authorized():
         app.logger.info("Get response from Oauth: {}".format(repr(resp)))
         session['remote_oauth'] = (resp['access_token'], '')
         session['client_id'] = os.urandom(16).encode('hex')
+    app.logger.debug("Session: {}".format(repr(session)))
     return redirect(
         urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
     )
@@ -110,6 +112,9 @@ def authorized():
 def relogin():
     if (all([key in session
              for key in ['login_callback', 'login_bidder_id', 'login_hash']])):
+        if 'amount' in request.args:
+            session['amount'] = request.args['amount']
+        app.logger.debug("Session: {}".format(repr(session)))
         return app.remote_oauth.authorize(
             callback=session['login_callback'],
             bidder_id=session['login_bidder_id'],
