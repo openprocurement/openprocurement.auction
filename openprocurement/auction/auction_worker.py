@@ -822,7 +822,8 @@ def main():
         SCHEDULER.shutdown()
     elif args.cmd == 'planning':
         auction.prepare_auction_document()
-        auction.prepare_tasks()
+        if not auction.debug:
+            auction.prepare_tasks()
     elif args.cmd == 'cleanup':
         cleanup()
 
