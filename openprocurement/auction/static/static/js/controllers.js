@@ -36,7 +36,7 @@ angular.module('auction').controller('AuctionController', [
 
     $scope.$on('timer-tick', function(event) {
       if (($scope.auction_doc) && (event.targetScope.timerid == 1)) {
-        if (($rootScope.info_timer||{}.msg||"" === 'until your turn') && (event.targetScope.minutes == 1) && (event.targetScope.seconds == 50)) {
+        if (((($rootScope.info_timer||{}).msg||"") === 'until your turn') && (event.targetScope.minutes == 1) && (event.targetScope.seconds == 50)) {
           $http.post('./check_authorization').success(function(data) {
             $log.debug("Authorization checked");
           }).error(function(data, status, headers, config) {

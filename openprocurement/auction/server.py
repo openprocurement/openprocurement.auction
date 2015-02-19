@@ -2,11 +2,13 @@ from flask_oauthlib.client import OAuth
 from flask import Flask, request, jsonify, url_for, session, abort, redirect
 import os
 from urlparse import urljoin
+import iso8601
+from dateutil.tz import tzlocal
 
 from gevent.pywsgi import WSGIServer, WSGIHandler
 from gevent import socket
 import errno
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 from openprocurement.auction.forms import BidsForm
 from openprocurement.auction.utils import get_lisener, create_mapping, prepare_extra_journal_fields
@@ -23,6 +25,8 @@ app = Flask(__name__, static_url_path='', template_folder='static')
 app.auction_bidders = {}
 app.register_blueprint(sse)
 app.secret_key = os.urandom(24)
+
+INVALIDATE_GRANT = timedelta(0, 230)
 
 
 class _LoggerStream(object):
@@ -122,10 +126,17 @@ def check_authorization():
     if 'remote_oauth' in session and 'client_id' in session:
         resp = app.remote_oauth.get('me')
         if resp.status == 200:
-            app.logger.info("Bidder {} with client_id {} pass check_authorization".format(
-                            resp.data['bidder_id'], session['client_id'],
-                            ), extra=prepare_extra_journal_fields(request.headers))
-            return jsonify({'status': 'ok'})
+            grant_timeout = iso8601.parse_date(resp.data[u'expires']) - datetime.now(tzlocal())
+            if grant_timeout > INVALIDATE_GRANT:
+                app.logger.info("Bidder {} with client_id {} pass check_authorization".format(
+                                resp.data['bidder_id'], session['client_id'],
+                                ), extra=prepare_extra_journal_fields(request.headers))
+                return jsonify({'status': 'ok'})
+            else:
+                app.logger.info(
+                    "Grant will end in a short time. Activate re-login functionality",
+                    extra=prepare_extra_journal_fields(request.headers)
+                )
         else:
             app.logger.warning("Client_id {} didn't passed check_authorization".format(session['client_id']),
                                extra=prepare_extra_journal_fields(request.headers))
