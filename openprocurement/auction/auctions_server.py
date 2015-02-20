@@ -81,9 +81,6 @@ def auction_url(auction_doc_id):
     if request.user_agent.browser == 'msie':
         if parse_version(request.user_agent.version) < parse_version('9'):
             unsupported_browser = True
-    elif request.user_agent.browser == 'firefox':
-        if parse_version(request.user_agent.version) < parse_version('23'):
-            unsupported_browser = True
     elif request.user_agent.browser == 'opera':
         if 'Opera Mini' in request.user_agent.string:
             unsupported_browser = True
