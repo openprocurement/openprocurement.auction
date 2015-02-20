@@ -5,11 +5,11 @@ var dataLayer = dataLayer || [];
 angular.module('auction').controller('AuctionController', [
   '$scope', 'AuctionConfig', 'AuctionUtils',
   '$timeout', '$http', '$log', '$cookies', '$window',
-  '$rootScope', '$location', '$translate', '$filter', 'growl', 'growlMessages', 'aside',
+  '$rootScope', '$location', '$translate', '$filter', 'growl', 'growlMessages', 'aside', '$q',
   function(
     $scope, AuctionConfig, AuctionUtils,
     $timeout, $http, $log, $cookies, $window,
-    $rootScope, $location, $translate, $filter, growl, growlMessages, $aside
+    $rootScope, $location, $translate, $filter, growl, growlMessages, $aside, $q
   ) {
     if (AuctionUtils.inIframe()) {
       $log.error('Starts in iframe');
@@ -17,16 +17,26 @@ angular.module('auction').controller('AuctionController', [
       return false;
     }
     $scope.lang = 'uk';
-    $scope.growlMessages = growlMessages;
-    growlMessages.initDirective(0, 10);
-    $scope.allow_bidding = true;
+    $scope.format_date = AuctionUtils.format_date;
+    $scope.bidder_id = null;
     $scope.bid = null;
-    dataLayer.push({
-      "tenderId": AuctionConfig.auction_doc_id
-    });
+    $scope.allow_bidding = true;
     $rootScope.form = {};
     $rootScope.alerts = [];
     $scope.db = new PouchDB(AuctionConfig.remote_db);
+    $scope.start_sync_event = $q.defer();
+    $timeout(function() {
+      $scope.start_sync_event.resolve('start');
+    }, 5000);
+
+    $scope.growlMessages = growlMessages;
+    growlMessages.initDirective(0, 10);
+    
+    dataLayer.push({
+      "tenderId": AuctionConfig.auction_doc_id
+    });
+
+
     if (($translate.storage().get($translate.storageKey()) === "undefined") || ($translate.storage().get($translate.storageKey()) === undefined)) {
       $translate.use(AuctionConfig.default_lang);
       $scope.lang = AuctionConfig.default_lang;
@@ -34,6 +44,7 @@ angular.module('auction').controller('AuctionController', [
       $scope.lang = $translate.storage().get($translate.storageKey()) || $scope.lang;
     }
 
+    /*      Time tick events    */
     $scope.$on('timer-tick', function(event) {
       if (($scope.auction_doc) && (event.targetScope.timerid == 1)) {
         if (((($rootScope.info_timer || {}).msg || "") === 'until your turn') && (event.targetScope.minutes == 1) && (event.targetScope.seconds == 50)) {
@@ -45,7 +56,7 @@ angular.module('auction').controller('AuctionController', [
               "MESSAGE": "Error while check_authorization"
             });
             if (status == 401) {
-              growl.error('You are unauthorized. Please login again.');
+              growl.error('Ability to submit bids has been lost. Wait until page reloads.');
               dataLayer.push({
                 "event": "JS.error",
                 "MESSAGE": "Unauthorized error while post bid"
@@ -68,8 +79,10 @@ angular.module('auction').controller('AuctionController', [
         $scope.hours_line = AuctionUtils.polarToCartesian(24, 24, 14, (date.getHours() / 12) * 360);
       }
     });
-    $scope.format_date = AuctionUtils.format_date;
-    $scope.bidder_id = null;
+
+
+    /*      Kick client event    */
+
     $scope.$on('kick_client', function(event, client_id, msg) {
       $log.debug('Kick client connection', client_id, msg);
       $scope.growlMessages.deleteMessage(msg);
@@ -80,7 +93,11 @@ angular.module('auction').controller('AuctionController', [
           $log.debug('disable connection', client_id, msg);
         });
     });
+    //
+
+
     $scope.start_subscribe = function(argument) {
+      
       dataLayer.push({
         "event": "EventSource.Start"
       });
@@ -142,6 +159,7 @@ angular.module('auction').controller('AuctionController', [
           "data": data
         });
         $log.debug("Identification: ", data);
+        $scope.start_sync_event.resolve('start');
         $scope.$apply(function() {
           $scope.bidder_id = data.bidder_id;
           $scope.client_id = data.client_id;
@@ -178,6 +196,7 @@ angular.module('auction').controller('AuctionController', [
           "event": "EventSource.Close"
         });
         $log.debug("You are must logout ");
+        $scope.start_sync_event.resolve('start');
         evtSrc.close();
       }, false);
       evtSrc.onerror = function(e) {
@@ -312,7 +331,7 @@ angular.module('auction').controller('AuctionController', [
               $rootScope.alerts.push({
                 msg_id: Math.random(),
                 type: 'danger',
-                msg: 'You are unauthorized. Please login again.'
+                msg: 'Ability to submit bids has been lost. Wait until page reloads, and retry.'
               });
               dataLayer.push({
                 "event": "JS.error",
@@ -406,7 +425,7 @@ angular.module('auction').controller('AuctionController', [
       $scope.scroll_to_stage();
       if ($scope.auction_doc.current_stage != ($scope.auction_doc.stages.length - 1)) {
         $scope.restart_retries = AuctionConfig.restart_retries;
-        $scope.sync = $scope.start_sync();
+        $scope.start_sync_event.promise.then(function() {$scope.sync = $scope.start_sync()});
       }
     });
     $scope.restart_changes = function() {
