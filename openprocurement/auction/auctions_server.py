@@ -11,6 +11,7 @@ from wsgiproxy import HostProxy
 import couchdb
 import time
 from sse import Sse as PySse
+from pkg_resources import parse_version
 
 monkey.patch_all()
 
@@ -76,10 +77,21 @@ def after_request(response):
 
 @auctions_server.route('/tenders/<auction_doc_id>')
 def auction_url(auction_doc_id):
+    unsupported_browser = False
+    if request.user_agent.browser == 'msie':
+        if parse_version(request.user_agent.version) < parse_version('9'):
+            unsupported_browser = True
+    elif request.user_agent.browser == 'firefox':
+        if parse_version(request.user_agent.version) < parse_version('23'):
+            unsupported_browser = True
+    elif request.user_agent.browser == 'opera':
+        if 'Opera Mini' in request.user_agent.string:
+            unsupported_browser = True
     return render_template(
         'index.html',
         db_url=auctions_server.config.get('EXT_COUCH_DB'),
-        auction_doc_id=auction_doc_id
+        auction_doc_id=auction_doc_id,
+        unsupported_browser=unsupported_browser
     )
 
 
