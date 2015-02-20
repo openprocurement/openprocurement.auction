@@ -20,9 +20,17 @@
     {% endblock %}
 
 {% block body %}
-{% raw %}
 
-<body ng-if="document_exists" ng-cloak>
+
+<body>
+    {% if unsupported_browser %}
+        <div class="container">
+            <div class="alert alert-danger" role="alert">Ваш переглядач застарів, і цей сайт може некоректно працювати. <a style="color: rgb(234, 4, 4); text-decoration: underline;" href="https://browser-update.org/uk/update.html">Дізнайтесь, як оновити Ваш браузер</a></div>
+        </div>
+    {% endif %}
+    {% raw %}
+    <div ng-if="document_exists" ng-cloak>
+
     <div class="container">
         <div class="header-auction navbar navbar-fixed-top" role="navigation">
             <div class="navbar-header header-auction-lining">
@@ -297,6 +305,7 @@
             </div>
         </div>
     </div>
+    </div>
     <!-- /.container -->
     <script type="text/ng-template" id="templates/growl/growl.html">
         <div class="growl-container" ng-class="wrapperClasses()">
@@ -365,8 +374,9 @@
         </ul>
 
     </script>
+    {% endraw %}
 </body>
-{% endraw %}
+
 <script type=text/javascript>
 var db_url = '{{ db_url }}';
 var auction_doc_id = '{{ auction_doc_id }}';
