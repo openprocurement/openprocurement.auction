@@ -68,7 +68,8 @@ angular.module('auction')
       'Login is currently closed.': 'Login is currently closed.',
       'Please try again later.': 'Please try again later.',
       'Cancel Bid': 'Cancel Bid',
-      'You are unauthorized. Please login again.': 'You are unauthorized. Please login again.'
+      'Ability to submit bids has been lost. Wait until page reloads, and retry.': 'Ability to submit bids has been lost. Wait until page reloads, and retry.',
+      'Ability to submit bids has been lost. Wait until page reloads.': 'Ability to submit bids has been lost. Wait until page reloads'
     });
 
     $translateProvider.translations('uk', {
@@ -138,7 +139,8 @@ angular.module('auction')
       'Login is currently closed.': 'Вхід на даний момент закритий.',
       'Please try again later.': 'Спробуйте пізніше.',
       'Cancel Bid': 'Відмінити заявку',
-      'You are unauthorized. Please login again.': 'Ви не авторизовані. Будь ласка, увійдіть знову.'
+      'Ability to submit bids has been lost. Wait until page reloads, and retry.': 'Втрачено можливість подавати заявки. Дочекайтесь перевантаження сторінки і повторіть спробу.',
+      'Ability to submit bids has been lost. Wait until page reloads.': 'Втрачено можливість подавати заявки. Дочекайтесь перевантаження сторінки.'
     });
 
     $translateProvider.translations('ru', {
@@ -208,6 +210,7 @@ angular.module('auction')
       'Login is currently closed.': 'Вход на данный момент закрыт.',
       'Please try again later.': 'Попробуйте позже.',
       'Cancel Bid': 'Отменить ставку',
-      'You are unauthorized. Please login again.': 'Вы не авторизованы. Пожалуйста, войдите снова.'
+      'Ability to submit bids has been lost. Wait until page reloads, and retry.': 'Потеряна возможность делать заявки. Подождите перезагрузки страницы и попробуйте еще раз.',
+      'Ability to submit bids has been lost. Wait until page reloads.': 'Потеряна возможность делать заявки. Подождите перезагрузки страницы.'
     });
   }]);
