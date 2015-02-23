@@ -268,7 +268,7 @@
         </div>
     </div>
     <div class="container-fluid">
-        <div ng-show="auction_doc.current_stage == -1" class="panel panel-default bg-warning fixed-bottom">
+        <div ng-show="((auction_doc.current_stage == -1)&&bidder_id)||follow_login_allowed" class="panel panel-default bg-warning fixed-bottom">
             <div class="panel-body bg-warning">
                 <div class="row">
                     <div class="col-xs-12">
