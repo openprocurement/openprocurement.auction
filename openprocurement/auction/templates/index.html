@@ -109,18 +109,18 @@
                 <div class="page-header">
                     <h2>{{ auction_doc.tenderID }}</h2>
                 </div>
-                <p ng-switch on="auction_doc.procuringEntity['name'+ lang] == undefined" class="lead">
-                    <span ng-switch-when="false">{{ auction_doc.procuringEntity['name'+ lang]}} </span>
+                <p ng-switch on="auction_doc.procuringEntity['name_'+ lang] == undefined" class="lead">
+                    <span ng-switch-when="false">{{ auction_doc.procuringEntity['name_'+ lang]}} </span>
                     <span ng-switch-when="true">{{ auction_doc.procuringEntity.name}}</span>
                 </p>
                 <ul>
                     <li ng-repeat="item in auction_doc.items">
-                        <span ng-switch on="item['description'+ lang] == undefined">
-                            <span ng-switch-when="false">{{item['description'+ lang] }}</span>
+                        <span ng-switch on="item['description_'+ lang] == undefined">
+                            <span ng-switch-when="false">{{item['description_'+ lang] }}</span>
                             <span ng-switch-when="true">{{item.description}}</span>
                         </span> - {{ item.quantity }} 
-                        <span ng-switch on="item.unit['name'+ lang] == undefined">
-                            <span ng-switch-when="false">{{item.unit['name'+ lang] }}</span>
+                        <span ng-switch on="lang == 'uk'">
+                            <span ng-switch-when="false">{{ item.unit['name_'+ lang] || "-" }}</span>
                             <span ng-switch-when="true">{{item.unit.name}}</span>
                         </span>
                     </li>
@@ -339,10 +339,11 @@
                         <span ng-switch-when="false">{{item['description_'+ lang] }}</span>
                         <span ng-switch-when="true">{{item.description}}</span>
                     </span> - {{ item.quantity|formatnumber }} 
-                    <span ng-switch on="item.unit['name_'+ lang] == undefined">
-                        <span ng-switch-when="false">{{item.unit['name_'+ lang] }}</span>
+                    <span ng-switch on="lang == 'uk'">
+                        <span ng-switch-when="false">{{item.unit['name_'+ lang] || '-' }}</span>
                         <span ng-switch-when="true">{{item.unit.name}}</span>
                     </span>
+
                 </p>
                 <p class="list-group-item-heading minimalStep" ng-if="auction_doc.minimalStep.amount"><span translate>Step reduction of Bid</span>: <strong>{{ auction_doc.minimalStep.amount|formatnumber }} {{ auction_doc.minimalStep.currency|translate }}</strong></p>
                 <p class="list-group-item-heading tenderValue" ng-if="auction_doc.value.amount"><span translate>Start value</span>: {{ auction_doc.value.amount|formatnumber }} {{ auction_doc.minimalStep.currency|translate }}</p>

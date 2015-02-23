@@ -45,6 +45,9 @@ from yaml import safe_dump as yaml_dump
 
 monkey.patch_all()
 
+MULTILINGUAL_FIELDS = ["title", "description"]
+ADDITIONAL_LANGUAGES = ["ru", "en"]
+
 ROUNDS = 3
 FIRST_PAUSE_SECONDS = 300
 PAUSE_SECONDS = 120
@@ -249,21 +252,26 @@ class Auction(object):
         self.get_auction_document()
         if not self.auction_document:
             self.auction_document = {}
-        # TODO: Get multilingual title and description
+
         self.auction_document.update(
             {"_id": self.auction_doc_id,
              "stages": [],
              "tenderID": self._auction_data["data"].get("tenderID", ""),
-             "title": self._auction_data["data"].get("title", ""),
-             "description": self._auction_data["data"].get("description", ""),
              "initial_bids": [],
              "current_stage": -1,
              "results": [],
              "minimalStep": self._auction_data["data"].get("minimalStep", {}),
              "procuringEntity": self._auction_data["data"].get("procuringEntity", {}),
-             "items": self._auction_data["data"].get("items", {}),
+             "items": self._auction_data["data"].get("items", []),
              "value": self._auction_data["data"].get("value", {})}
         )
+        for key in MULTILINGUAL_FIELDS:
+            for lang in ADDITIONAL_LANGUAGES:
+                lang_key = "{}_{}".format(key, lang)
+                if lang_key in self._auction_data["data"]:
+                    self.auction_document[lang_key] = self._auction_data["data"][lang_key]
+            self.auction_document[key] = self._auction_data["data"].get(key, "")
+
         # Initital Bids
         for bid_info in self._auction_data["data"]["bids"]:
             self.auction_document["initial_bids"].append(
