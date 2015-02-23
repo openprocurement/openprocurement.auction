@@ -127,7 +127,7 @@
                 </ul>
             </div>
         </div>
-        <div id="initial-bids-header" class="auction-round past-round">
+        <div id="initial-bids-header" class="auction-round past-round" ng-if="auction_doc.current_stage >= 0" >
             <div class="row">
                 <div class="col-xs-12 stage-item stage-round">
                     <div class="stage-item-lining">
@@ -268,15 +268,18 @@
         </div>
     </div>
     <div class="container-fluid">
-        <div ng-show="follow_login_allowed" class="panel panel-default bg-warning fixed-bottom">
+        <div ng-show="auction_doc.current_stage == -1" class="panel panel-default bg-warning fixed-bottom">
             <div class="panel-body bg-warning">
                 <div class="row">
                     <div class="col-xs-12">
-                        <div class="container text-center">
+                        <div ng-if="!bidder_id" class="container text-center">
                             <h4 translate ng-if="!follow_login">Login is currently closed.</h4>
                             <a ng-href="{{login_url}}" ng-if="!follow_login" translate>Please try again later.</a>
                             <a ng-href="{{login_url}}" class="btn btn-success btn-lg btn-block" ng-if="follow_login"><span  translate>Login</span></a>
 
+                        </div>
+                        <div ng-if="bidder_id" class="container text-center">
+                            <h4 translate ng-if="!follow_login">You are registered as a participant. Expect the start of the auction.</h4>
                         </div>
                     </div>
                 </div>
