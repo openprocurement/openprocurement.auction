@@ -107,22 +107,12 @@
         <div class="row">
             <div class="col-xs-12 hidden-xs">
                 <div class="page-header">
-                    <h2>{{ auction_doc.tenderID }}</h2>
+                    <h2>{{ auction_doc.tenderID||"-" }}</h2>
                 </div>
-                <p ng-switch on="auction_doc.procuringEntity['name_'+ lang] == undefined" class="lead">
-                    <span ng-switch-when="false">{{ auction_doc.procuringEntity['name_'+ lang]}} </span>
-                    <span ng-switch-when="true">{{ auction_doc.procuringEntity.name}}</span>
-                </p>
+                <span class="lead">{{ auction_doc.procuringEntity['name_'+ lang]|| auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-"}}</span>
                 <ul>
                     <li ng-repeat="item in auction_doc.items">
-                        <span ng-switch on="item['description_'+ lang] == undefined">
-                            <span ng-switch-when="false">{{item['description_'+ lang] }}</span>
-                            <span ng-switch-when="true">{{item.description}}</span>
-                        </span> - {{ item.quantity }} 
-                        <span ng-switch on="lang == 'uk'">
-                            <span ng-switch-when="false">{{ item.unit['name_'+ lang] || "-" }}</span>
-                            <span ng-switch-when="true">{{item.unit.name}}</span>
-                        </span>
+                        <span>{{ item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" }}</span> - {{ item.quantity }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
                     </li>
                 </ul>
             </div>
@@ -149,7 +139,7 @@
                     <i class="stage-icon"></i>
                     <div class="stage-info">
                         <div class="stage-info-lining">
-                            <span class="stage-info-item stage-label" ng-if="bid_info.bidder_id != bidder_id ">{{ bid_info.label[lang] }}</span>
+                            <span class="stage-info-item stage-label" ng-if="bid_info.bidder_id != bidder_id ">{{ bid_info.label[lang]||"-" }}</span>
                             <span class="stage-info-item stage-label" ng-if="bid_info.bidder_id == bidder_id " translate>You</span>
                             <span class="stage-info-item stage-amount" 
                                   ng-if="bid_info['amount']"
@@ -327,26 +317,12 @@
                 <h4>{{ auction_doc.tenderID }}</h4>
                 <p class="list-group-item-heading">
                     <strong ng-switch on="auction_doc.procuringEntity['name_'+ lang] == undefined" class="procuringEntity">
-                        <span ng-switch-when="false">{{ auction_doc.procuringEntity['name_'+ lang]}}</span>
-                        <span ng-switch-when="true">{{ auction_doc.procuringEntity.name}}</span></span><span ng-if="auction_doc.title" ng-switch on="auction_doc['title_'+ lang] == undefined" class="tenderTitle">:
-                        <span ng-switch-when="false">{{ auction_doc['title_'+ lang]}} </span>
-                        <span ng-switch-when="true">{{ auction_doc.title}}</span>
+                        <span>{{ auction_doc.procuringEntity['name_'+ lang]||auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-" }}</span><span class="tenderTitle"> : {{ auction_doc['title_'+ lang]||auction_doc.title||auction_doc.title_en||auction_doc.title_ru||"-"}}</span>
                     </strong>
                 </p>
-                <p class="text-muted tenderDescription" ng-if="auction_doc.description" ng-switch on="auction_doc['description_'+ lang] == undefined">
-                        <span ng-switch-when="false">{{ auction_doc['description_'+ lang]}} </span>
-                        <span ng-switch-when="true">{{ auction_doc.description}}</span>
-                </p>
+                <p class="text-muted tenderDescription"><span> {{ auction_doc['description_'+ lang]||auction_doc.description||auction_doc.description||auction_doc.description||""}} </span></p>
                 <p ng-repeat="item in auction_doc.items">
-                    <span ng-switch on="item['description_'+ lang] == undefined">
-                        <span ng-switch-when="false">{{item['description_'+ lang] }}</span>
-                        <span ng-switch-when="true">{{item.description}}</span>
-                    </span> - {{ item.quantity|formatnumber }} 
-                    <span ng-switch on="lang == 'uk'">
-                        <span ng-switch-when="false">{{item.unit['name_'+ lang] || '-' }}</span>
-                        <span ng-switch-when="true">{{item.unit.name}}</span>
-                    </span>
-
+                    <span>{{ item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" }}</span> - {{ item.quantity }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
                 </p>
                 <p class="list-group-item-heading minimalStep" ng-if="auction_doc.minimalStep.amount"><span translate>Step reduction of Bid</span>: <strong>{{ auction_doc.minimalStep.amount|formatnumber }} {{ auction_doc.minimalStep.currency|translate }}</strong></p>
                 <p class="list-group-item-heading tenderValue" ng-if="auction_doc.value.amount"><span translate>Start value</span>: {{ auction_doc.value.amount|formatnumber }} {{ auction_doc.minimalStep.currency|translate }}</p>
