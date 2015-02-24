@@ -342,6 +342,8 @@ body {
   height: 100%;
   border: none;
   border-radius: 0;
+  overflow: auto;
+  padding-bottom: 8em;
 }
 
 .modal-backdrop{
