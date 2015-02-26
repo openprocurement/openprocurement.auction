@@ -70,7 +70,8 @@ angular.module('auction')
       'Cancel Bid': 'Cancel Bid',
       'Ability to submit bids has been lost. Wait until page reloads, and retry.': 'Ability to submit bids has been lost. Wait until page reloads, and retry.',
       'Ability to submit bids has been lost. Wait until page reloads.': 'Ability to submit bids has been lost. Wait until page reloads',
-      'You are registered as a bidder. Wait for the start of the auction.': 'You are registered as a bidder. Wait for the start of the auction.'
+      'You are registered as a bidder. Wait for the start of the auction.': 'You are registered as a bidder. Wait for the start of the auction.',
+      'You are an observer and cannot bid.': 'You are an observer and cannot bid.'
     });
 
     $translateProvider.translations('uk', {
@@ -142,7 +143,8 @@ angular.module('auction')
       'Cancel Bid': 'Відмінити заявку',
       'Ability to submit bids has been lost. Wait until page reloads, and retry.': 'Втрачено можливість подавати заявки. Дочекайтесь перевантаження сторінки і повторіть спробу.',
       'Ability to submit bids has been lost. Wait until page reloads.': 'Втрачено можливість подавати заявки. Дочекайтесь перевантаження сторінки.',
-      'You are registered as a bidder. Wait for the start of the auction.': 'Ви зареєстровані як учасник. Очікуйте старту аукціону.'
+      'You are registered as a bidder. Wait for the start of the auction.': 'Ви зареєстровані як учасник. Очікуйте старту аукціону.',
+      'You are an observer and cannot bid.': 'Ви спостерігач і не можете робити ставки.'
     });
 
     $translateProvider.translations('ru', {
@@ -214,6 +216,7 @@ angular.module('auction')
       'Cancel Bid': 'Отменить ставку',
       'Ability to submit bids has been lost. Wait until page reloads, and retry.': 'Потеряна возможность делать заявки. Подождите перезагрузки страницы и попробуйте еще раз.',
       'Ability to submit bids has been lost. Wait until page reloads.': 'Потеряна возможность делать заявки. Подождите перезагрузки страницы.',
-      'You are registered as a bidder. Wait for the start of the auction.': 'Вы зарегистрированы как участник. Ожидайте старта аукциона.'
+      'You are registered as a bidder. Wait for the start of the auction.': 'Вы зарегистрированы как участник. Ожидайте старта аукциона.',
+      'You are an observer and cannot bid.': 'Вы наблюдатель и не можете делать ставки.'
     });
   }]);

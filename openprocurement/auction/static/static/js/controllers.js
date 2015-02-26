@@ -195,6 +195,7 @@ angular.module('auction').controller('AuctionController', [
         dataLayer.push({
           "event": "EventSource.Close"
         });
+        growl.info($filter('translate')('You are an observer and cannot bid.'), {ttl: -1, disableCountDown: true});
         $log.debug("You are must logout ");
         $scope.start_sync_event.resolve('start');
         evtSrc.close();
