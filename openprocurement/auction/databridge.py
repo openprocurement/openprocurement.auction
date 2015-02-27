@@ -79,7 +79,9 @@ class AuctionsDataBridge(object):
                             key=(mktime(date.timetuple()) + date.microsecond / 1E6) * 1000
                         )
                         if (datetime.now(self.tz) > date
-                                or item['id'] in [item.id for item in auctions_start_in_date.rows]):
+                                or [row.id
+                                    for row in auctions_start_in_date.rows
+                                    if row.id == item['id']]):
                             continue
                         if self.ignore_exists:
                             future_auctions = endDate_view(
