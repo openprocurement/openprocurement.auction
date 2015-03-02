@@ -107,12 +107,12 @@
         <div class="row">
             <div class="col-xs-12 hidden-xs">
                 <div class="page-header">
-                    <h2>{{ auction_doc.tenderID||"-" }}</h2>
+                    <h2>{{ auction_doc.tenderID||"-" }}: {{ auction_doc['title_'+ lang]||auction_doc['title']||auction_doc['title_en']||auction_doc['title_ru']||"" }}</h2>
                 </div>
                 <span class="lead">{{ auction_doc.procuringEntity['name_'+ lang]|| auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-"}}</span>
                 <ul>
                     <li ng-repeat="item in auction_doc.items">
-                        <span>{{ item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" }}</span> - {{ item.quantity }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
+                        <span>{{ item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" }}</span> - {{ item.quantity|formatnumber }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
                     </li>
                 </ul>
             </div>
@@ -263,13 +263,13 @@
                 <div class="row">
                     <div class="col-xs-12">
                         <div ng-if="!bidder_id" class="container text-center">
-                            <h4 translate ng-if="!follow_login">Login is currently closed.</h4>
+                            <h4 id="wait-to-login-msg" translate ng-if="!follow_login">Login is currently closed.</h4>
                             <a ng-href="{{login_url}}" ng-if="!follow_login" translate>Please try again later.</a>
                             <a ng-href="{{login_url}}" class="btn btn-success btn-lg btn-block" ng-if="follow_login"><span  translate>Login</span></a>
 
                         </div>
                         <div ng-if="bidder_id" class="container text-center">
-                            <h4 translate ng-if="!follow_login">You are registered as a bidder. Wait for the start of the auction.</h4>
+                            <h4 id="registered-bidder-msg" translate ng-if="!follow_login">You are registered as a bidder. Wait for the start of the auction.</h4>
                         </div>
                     </div>
                 </div>
@@ -280,15 +280,15 @@
                 <div class="row">
                     <div class="col-xs-12">
                         <div class="container">
-                            <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert(alert.msg_id)">{{ alert.msg | translate }}</alert>
+                            <alert ng-repeat="alert in alerts" type="{{alert.type}}" class="bids-form-alert" close="closeAlert(alert.msg_id)"><span class="bids-form-alert-msg">{{ alert.msg | translate }}</span></alert>
                             <form id="BidsForm" name="form.BidsForm" role="form">
                                 <label for="bid"><span translate>Your proposal</span>:</label><span> {{ max_bid_amount()|formatnumber }} {{'or lower'|translate}}</span>
                                 <div class="input-group">
-                                    <input ng-disabled="!allow_bidding" min="0" class="form-control" id="bid" name="bid" ng-model="form.bid" required format="formatnumber">
+                                    <input id="bid-amount-input" ng-disabled="!allow_bidding" min="0" class="form-control" id="bid" name="bid" ng-model="form.bid" required format="formatnumber">
                                     <div class="input-group-btn">
-                                        <button type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" ng-class="{'active': form.active}" translate>Place a bid</button>
-                                        <button type="submit" ng-hide="allow_bidding" ng-click="post_bid(-1)" class="btn btn-success" ng-class="{'active': form.active}" translate>Cancel Bid</button>
-                                        <button type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-link" translate>Edit</button>
+                                        <button id="place-bid-button" type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" ng-class="{'active': form.active}" translate>Place a bid</button>
+                                        <button id="cancel-bid-button" type="submit" ng-hide="allow_bidding" ng-click="post_bid(-1)" class="btn btn-success" ng-class="{'active': form.active}" translate>Cancel Bid</button>
+                                        <button id="edit-bid-button" type="submit" ng-hide="allow_bidding" ng-click="edit_bid()" class="btn btn-link" translate>Edit</button>
                                     </div>
                                 </div>
                             </form>
@@ -322,7 +322,7 @@
                 </p>
                 <p class="text-muted tenderDescription"><span> {{ auction_doc['description_'+ lang]||auction_doc.description||auction_doc.description||auction_doc.description||""}} </span></p>
                 <p ng-repeat="item in auction_doc.items">
-                    <span>{{ item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" }}</span> - {{ item.quantity }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
+                    <span>{{ item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" }}</span> - {{ item.quantity|formatnumber }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
                 </p>
                 <p class="list-group-item-heading minimalStep" ng-if="auction_doc.minimalStep.amount"><span translate>Step reduction of Bid</span>: <strong>{{ auction_doc.minimalStep.amount|formatnumber }} {{ auction_doc.minimalStep.currency|translate }}</strong></p>
                 <p class="list-group-item-heading tenderValue" ng-if="auction_doc.value.amount"><span translate>Start value</span>: {{ auction_doc.value.amount|formatnumber }} {{ auction_doc.minimalStep.currency|translate }}</p>
