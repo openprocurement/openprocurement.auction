@@ -185,18 +185,17 @@ angular.module('auction')
           }; 
         }
         if (round_elem) {
-          $log.debug('Scroll to:', round_elem);
-          round_elem.scrollIntoView();
           var round_elem_dimensions = round_elem.getBoundingClientRect();
-          $window.scrollBy(0, round_elem_dimensions.top - 75);
-
           if (($window.innerHeight - 169) < round_elem_dimensions.height) {
             var stage_elem = document.getElementById('stage-' + auction_doc.current_stage.toString());
             if (stage_elem){
-              stage_elem.scrollIntoView(false);
+              stage_elem.scrollIntoView(true);
               var stage_elem_dimensions = stage_elem.getBoundingClientRect();
-              $window.scrollBy(0, stage_elem_dimensions.top + 96);
+              $window.scrollBy(0, stage_elem_dimensions.top - 96);
             }
+          } else {
+            round_elem.scrollIntoView();
+            $window.scrollBy(0, round_elem_dimensions.top - 75);
           }
         }
       }, 0);
