@@ -104,17 +104,9 @@ angular.module('auction')
     }
 
     function prepare_title_ending_data(auction, lang) {
-      var ending = auction.tenderID + " - ";
-      for (var i in auction.items) {
-        ending += auction.items[i]['description_'+ lang]||auction.items[i]['description']||"";
-        ending += ": ";
-        ending += auction.items[i].quantity;
-        ending += " ";
-        ending += auction.items[i]['unit']['name_'+ lang]||auction.items[i]['unit']['name']||"";
-
-      };
+      var ending = auction.tenderID + " - " + (auction['title_'+ lang]||auction['title']||auction['title_en']||auction['title_ru']||"");
       ending += " - ";
-      ending += auction.procuringEntity['name_'+ lang]||auction.procuringEntity['name'];
+      ending += auction.procuringEntity['name_'+ lang]||auction.procuringEntity['name']||auction.procuringEntity['name_en']||auction.procuringEntity['name_ru']||"";
       return ending;
     }
       // Get bidder_id from query
