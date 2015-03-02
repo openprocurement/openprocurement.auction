@@ -21,10 +21,10 @@ logger = logging.getLogger(__name__)
 
 class AuctionsDataBridge(object):
     """docstring for AuctionsDataBridge"""
-    def __init__(self, config, ignore_exists):
+    def __init__(self, config):
         super(AuctionsDataBridge, self).__init__()
         self.config = config
-        self.ignore_exists = ignore_exists
+
         self.tenders_url = urljoin(
             self.config_get('tenders_api_server'),
             '/api/{}/tenders'.format(
@@ -45,7 +45,7 @@ class AuctionsDataBridge(object):
     def tender_url(self, tender_id):
         return urljoin(self.tenders_url, 'tenders/{}/auction'.format(tender_id))
 
-    def get_teders_list(self):
+    def get_teders_list(self, re_planning=False):
         while True:
             params = {'offset': self.offset,
                       'opt_fields': 'status,auctionPeriod',
@@ -78,22 +78,18 @@ class AuctionsDataBridge(object):
                             self.db,
                             key=(mktime(date.timetuple()) + date.microsecond / 1E6) * 1000
                         )
-                        if (datetime.now(self.tz) > date
-                                or [row.id
-                                    for row in auctions_start_in_date.rows
-                                    if row.id == item['id']]):
+                        if datetime.now(self.tz) > date:
+                            logger.info("Tender {} start date in past. Skip it for planning".format(item['id']))
                             continue
-                        if self.ignore_exists:
-                            future_auctions = endDate_view(
-                                self.db, startkey=time() * 1000
-                            )
-                            if item["id"] in [i.id for i in future_auctions]:
-                                logger.warning(
-                                    "Tender with id {} already scheduled".format(item["id"]),
-                                    extra={"JOURNAL_REQUEST_ID": request_id}
-                                )
+                        if re_planning and item['id'] in self.tenders_ids_list:
+                            logger.info("Tender {} already planned while replanning".format(item['id']))
+                            continue
+                        else:
+                            if [row.id for row in auctions_start_in_date.rows if row.id == item['id']]:
+                                logger.info("Tender {} already planned on same date".format(item['id']))
                                 continue
                         yield item
+
                     if item['status'] == "cancelled":
                         future_auctions = endDate_view(
                             self.db, startkey=time() * 1000
@@ -115,7 +111,7 @@ class AuctionsDataBridge(object):
                 )
                 self.offset = response_json['next_page']['offset']
             else:
-                sleep(2)
+                sleep(10)
 
     def start_auction_worker(self, tender_item):
         result = do_until_success(
@@ -124,7 +120,7 @@ class AuctionsDataBridge(object):
                    'planning', str(tender_item['id']),
                    self.config_get('auction_worker_config')],),
         )
-        logger.info("Auction planning: {}".format(result))
+        logger.info("Auction planning command result: {}".format(result))
 
     def run(self):
         logger.info('Start Auctions Bridge')
@@ -132,25 +128,40 @@ class AuctionsDataBridge(object):
         while True:
             logger.info('Start data sync...')
             for tender_item in self.get_teders_list():
-                logger.debug('Item {}'.format(tender_item))
+                logger.debug('Tender {} selected for planning'.format(tender_item))
                 self.start_auction_worker(tender_item)
-                sleep(3)
-            logger.info('Wait...')
+                sleep(2)
+            logger.info('Sleep...')
             sleep(100)
+
+    def run_re_planning(self):
+        self.re_planning = True
+        self.tenders_ids_list = []
+        self.offset = ''
+        logger.info('Start Auctions Bridge for re-planning...')
+        for tender_item in self.get_teders_list(re_planning=True):
+            logger.debug('Tender {} selected for re-planning'.format(tender_item))
+            self.start_auction_worker(tender_item)
+            self.tenders_ids_list.append(tender_item['id'])
+            sleep(1)
+        logger.info("Re-planning auctions finished")
 
 
 def main():
     parser = argparse.ArgumentParser(description='---- Auctions Bridge ----')
     parser.add_argument('config', type=str, help='Path to configuration file')
     parser.add_argument(
-        '--ignore-exists', action='store_false', default=True,
+        '--re-planning', action='store_true', default=False,
         help='Not ignore auctions which already scheduled')
     params = parser.parse_args()
     if os.path.isfile(params.config):
         with open(params.config) as config_file_obj:
             config = load(config_file_obj.read())
         logging.config.dictConfig(config)
-        AuctionsDataBridge(config, params.ignore_exists).run()
+        if params.re_planning:
+            AuctionsDataBridge(config).run_re_planning()
+        else:
+            AuctionsDataBridge(config).run()
 
 
 ##############################################################
