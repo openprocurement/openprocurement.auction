@@ -7,7 +7,7 @@ from time import sleep, mktime
 from urlparse import urljoin
 
 from datetime import datetime
-from pytz import timezone
+from dateutil.tz import tzlocal
 from subprocess import check_output
 from couchdb.client import Database
 from time import time
@@ -31,7 +31,7 @@ class AuctionsDataBridge(object):
                 self.config_get('tenders_api_version')
             )
         )
-        self.tz = timezone('Europe/Kiev')
+        self.tz = tzlocal()
         self.couch_url = urljoin(
             self.config_get('couch_url'),
             self.config_get('auctions_db')
@@ -72,13 +72,13 @@ class AuctionsDataBridge(object):
                             and 'endDate' not in item['auctionPeriod'] \
                             and item['status'] == "active.auction":
 
-                        date = iso8601.parse_date(item['auctionPeriod']['startDate'])
-                        date = date.astimezone(self.tz)
+                        start_date = iso8601.parse_date(item['auctionPeriod']['startDate'])
+                        start_date = start_date.astimezone(self.tz)
                         auctions_start_in_date = startDate_view(
                             self.db,
-                            key=(mktime(date.timetuple()) + date.microsecond / 1E6) * 1000
+                            key=(mktime(start_date.timetuple()) + start_date.microsecond / 1E6) * 1000
                         )
-                        if datetime.now(self.tz) > date:
+                        if datetime.now(self.tz) > start_date:
                             logger.info("Tender {} start date in past. Skip it for planning".format(item['id']))
                             continue
                         if re_planning and item['id'] in self.tenders_ids_list:

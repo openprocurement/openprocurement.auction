@@ -107,9 +107,9 @@
         <div class="row">
             <div class="col-xs-12 hidden-xs">
                 <div class="page-header">
-                    <h2>{{ auction_doc.tenderID||"-" }}: {{ auction_doc['title_'+ lang]||auction_doc['title']||auction_doc['title_en']||auction_doc['title_ru']||"" }}</h2>
+                    <h2>{{ auction_doc.tenderID||"-" }}</h2>
                 </div>
-                <span class="lead">{{ auction_doc.procuringEntity['name_'+ lang]|| auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-"}}</span>
+                <span class="lead">{{ auction_doc.procuringEntity['name_'+ lang]|| auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-"}} : {{ auction_doc['title_'+ lang]||auction_doc['title']||auction_doc['title_en']||auction_doc['title_ru']||"" }}</span>
                 <ul>
                     <li ng-repeat="item in auction_doc.items">
                         <span>{{ item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" }}</span> - {{ item.quantity|formatnumber }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
