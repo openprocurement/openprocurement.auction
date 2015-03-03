@@ -11,7 +11,9 @@ from wsgiproxy import HostProxy
 import couchdb
 import time
 from sse import Sse as PySse
+from webob.exc import HTTPNotFound
 from pkg_resources import parse_version
+from requests.exceptions import ConnectionError
 
 monkey.patch_all()
 
@@ -21,9 +23,14 @@ class AuctionsHostProxy(HostProxy):
     def process_request(self, uri, method, headers, environ):
         headers["X-Forwarded-Path"] = request.url
         headers["X-Request-ID"] = environ.get("x_request_id", "")
-        return super(AuctionsHostProxy, self).process_request(
-            uri, method, headers, environ
-        )
+        try:
+            return super(AuctionsHostProxy, self).process_request(
+                uri, method, headers, environ
+            )
+        except ConnectionError, e:
+            auctions_server.logger.warning("Error on request to {} with msg {}".format(uri, e))
+            # status, location, headerslist, app_iter
+            return (404, uri, {}, [])
 
 auctions_server = Flask(
     __name__,

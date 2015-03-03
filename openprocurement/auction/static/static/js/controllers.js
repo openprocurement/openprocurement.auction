@@ -115,7 +115,7 @@ angular.module('auction').controller('AuctionController', [
         });
       }, 15000);
       evtSrc = new EventSource(window.location.href.replace(window.location.search, '') + '/event_source');
-      $scope.restart_retries_events = 5;
+      $scope.restart_retries_events = 3;
       evtSrc.addEventListener('ClientsList', function(e) {
         var data = angular.fromJson(e.data);
         $log.debug("New ClientsList: ", data);
@@ -138,7 +138,7 @@ angular.module('auction').controller('AuctionController', [
         });
       }, false);
       evtSrc.addEventListener('Tick', function(e) {
-        $scope.restart_retries_events = 5;
+        $scope.restart_retries_events = 3;
         var data = angular.fromJson(e.data);
         $scope.last_sync = new Date(data.time);
         $log.debug("Tick: ", data);
@@ -211,6 +211,7 @@ angular.module('auction').controller('AuctionController', [
         if ($scope.restart_retries_events === 0) {
           evtSrc.close();
           $log.debug("EventSource Stoped.", e);
+          growl.info($filter('translate')('You are an observer and cannot bid.'), {ttl: -1, disableCountDown: true});
         }
         return true;
       };
