@@ -179,23 +179,33 @@ angular.module('auction')
         }
         if (auction_doc.current_stage >= 0) {
           if (current_round){
-            var round_elem = document.getElementById('round-header-' + current_round.toString());
+            var scroll_tag_id = 'round-header-' + current_round.toString();
+            var round_elem = document.getElementById(scroll_tag_id);
           } else {
-            var round_elem = document.getElementById('results-header');
+            var scroll_tag_id = 'results-header'
+            var round_elem = document.getElementById(scroll_tag_id);
           }; 
         }
         if (round_elem) {
           var round_elem_dimensions = round_elem.getBoundingClientRect();
           if (($window.innerHeight - 169) < round_elem_dimensions.height) {
-            var stage_elem = document.getElementById('stage-' + auction_doc.current_stage.toString());
+            if(current_round){
+              var scroll_tag_id = 'stage-' + auction_doc.current_stage.toString();
+            } else {
+              var scroll_tag_id = 'results-header'
+            }
+            var stage_elem = document.getElementById(scroll_tag_id);
+            $log.debug("scroll to stage:", scroll_tag_id);
             if (stage_elem){
               stage_elem.scrollIntoView(true);
               var stage_elem_dimensions = stage_elem.getBoundingClientRect();
               $window.scrollBy(0, stage_elem_dimensions.top - 96);
             }
           } else {
-            round_elem.scrollIntoView();
-            $window.scrollBy(0, round_elem_dimensions.top - 75);
+            $log.debug("scroll to round:", scroll_tag_id);
+            round_elem.scrollIntoView(true);
+            var round_elem_dimensions = document.getElementById(scroll_tag_id).getBoundingClientRect()
+            $window.scrollBy(0, round_elem_dimensions.top - 96);
           }
         }
       }, 0);
