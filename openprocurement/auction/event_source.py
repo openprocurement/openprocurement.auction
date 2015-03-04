@@ -74,6 +74,10 @@ def set_sse_timeout():
 
 @sse.route("/event_source")
 def event_source():
+    current_app.logger.info(
+        'Handle event_source request with session {}'.format(repr(dict(session))),
+        extra=prepare_extra_journal_fields(request.headers)
+    )
     if 'remote_oauth' in session and 'client_id' in session:
         resp = current_app.remote_oauth.get('me')
         if resp.status == 200:
