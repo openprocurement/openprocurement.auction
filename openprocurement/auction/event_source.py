@@ -5,6 +5,7 @@ from gevent.queue import Queue
 from gevent import spawn, sleep
 import logging
 from datetime import datetime
+from openprocurement.auction.utils import prepare_extra_journal_fields
 
 LOGGER = logging.getLogger(__name__)
 CHUNK = ' ' * 2048 + '\n'
@@ -50,20 +51,25 @@ class SseStream(object):
 sse = Blueprint('sse', __name__)
 
 
-@sse.route("/set_sse_timeout")
+@sse.route("/set_sse_timeout", methods=['POST'])
 def set_sse_timeout():
+    current_app.logger.info(
+        'Handle set_sse_timeout request with session {}'.format(repr(dict(session))),
+        extra=prepare_extra_journal_fields(request.headers)
+    )
     if 'remote_oauth' in session and 'client_id' in session:
         resp = current_app.remote_oauth.get('me')
         if resp.status == 200:
             bidder = resp.data['bidder_id']
-            if 'timeout' in request.args:
-                session["sse_timeout"] = int(request.args['timeout'])
+            if 'timeout' in request.json:
+                session["sse_timeout"] = int(request.json['timeout'])
                 send_event_to_client(
                     bidder, session['client_id'], '',
                     event='StopSSE'
                 )
                 return jsonify({'timeout': session["sse_timeout"]})
-    return abort(404)
+
+    return abort(401)
 
 
 @sse.route("/event_source")
@@ -89,7 +95,10 @@ def event_source():
                     'User-Agent': request.headers.get('User-Agent'),
                 }
                 current_app.auction_bidders[bidder]["channels"][client_hash] = Queue()
-            current_app.logger.debug('Send identification')
+            current_app.logger.info(
+                'Send identification for bidder: {} with client_hash {}'.format(bidder, client_hash),
+                extra=prepare_extra_journal_fields(request.headers)
+            )
             send_event_to_client(bidder, client_hash,
                                  {"bidder_id": bidder,
                                   "client_id": client_hash,
@@ -102,12 +111,13 @@ def event_source():
                 current_app.logger.debug('Send RestoreBidAmount')
                 del session['amount']
 
-            current_app.logger.debug('Send ClientsList')
-            send_event(
-                bidder,
-                current_app.auction_bidders[bidder]["clients"],
-                "ClientsList"
-            )
+            if not session.get("sse_timeout", 0):
+                current_app.logger.debug('Send ClientsList')
+                send_event(
+                    bidder,
+                    current_app.auction_bidders[bidder]["clients"],
+                    "ClientsList"
+                )
             return Response(
                 SseStream(
                     current_app.auction_bidders[bidder]["channels"][client_hash],
@@ -120,7 +130,10 @@ def event_source():
                 content_type='text/event-stream'
             )
 
-    current_app.logger.debug('Disable event_source for anonimous.')
+    current_app.logger.info(
+        'Disable event_source for unauthorized user.',
+        extra=prepare_extra_journal_fields(request.headers)
+    )
     events_close = PySse()
     events_close.add_message("Close", "Disable")
     return Response(
