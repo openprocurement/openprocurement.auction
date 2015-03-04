@@ -171,7 +171,8 @@ def make_auctions_app(global_conf,
                       auctions_db='auctions',
                       hash_secret_key='',
                       timezone='Europe/Kiev',
-                      preferred_url_scheme='http'
+                      preferred_url_scheme='http',
+                      debug=False
                       ):
     """
     [app:main]
@@ -209,5 +210,5 @@ def make_auctions_app(global_conf,
     )
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
-    # auctions_server.config['ASSETS_DEBUG'] = True
+    auctions_server.config['ASSETS_DEBUG'] = True if debug else False
     return auctions_server
