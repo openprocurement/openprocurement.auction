@@ -102,7 +102,7 @@ angular.module('auction').controller('AuctionController', [
         "event": "EventSource.Start"
       });
       response_timeout = $timeout(function() {
-        $http.get('./set_sse_timeout', {
+        $http.post('./set_sse_timeout', {
           timeout: '7'
         }).success(function(data) {
           dataLayer.push({
@@ -136,6 +136,7 @@ angular.module('auction').controller('AuctionController', [
           }
           $scope.clients = data;
         });
+
       }, false);
       evtSrc.addEventListener('Tick', function(e) {
         $scope.restart_retries_events = 3;
@@ -247,7 +248,7 @@ angular.module('auction').controller('AuctionController', [
     };
 
     $scope.sync_times_with_server = function(start) {
-      $http.get('/get_current_server_time').success(function(data) {
+      $http.get('/get_current_server_time', {'params':{'_nonce': Math.random().toString()}}).success(function(data) {
         $scope.last_sync = new Date(data);
         $rootScope.info_timer = AuctionUtils.prepare_info_timer_data($scope.last_sync, $scope.auction_doc, $scope.bidder_id, $scope.Rounds);
         $log.debug("Info timer data:", $rootScope.info_timer);
@@ -421,11 +422,11 @@ angular.module('auction').controller('AuctionController', [
         return 0;
       }
       $scope.title_ending = AuctionUtils.prepare_title_ending_data(doc, $scope.lang);
-      $scope.start_subscribe();
       $scope.replace_document(doc);
       $scope.document_exists = true;
       $scope.scroll_to_stage();
       if ($scope.auction_doc.current_stage != ($scope.auction_doc.stages.length - 1)) {
+        $scope.start_subscribe();
         $scope.restart_retries = AuctionConfig.restart_retries;
         $scope.start_sync_event.promise.then(function() {$scope.sync = $scope.start_sync()});
       }
