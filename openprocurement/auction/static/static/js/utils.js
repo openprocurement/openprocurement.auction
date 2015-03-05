@@ -102,11 +102,11 @@ angular.module('auction')
       };
 
     }
-
+// characters 100 true
     function prepare_title_ending_data(auction, lang) {
-      var ending = auction.tenderID + " - " + (auction['title_'+ lang]||auction['title']||auction['title_en']||auction['title_ru']||"");
+      var ending = auction.tenderID + " - " + $filter('characters')((auction['title_'+ lang]||auction['title']||auction['title_en']||auction['title_ru']||""), 50, true);
       ending += " - ";
-      ending += auction.procuringEntity['name_'+ lang]||auction.procuringEntity['name']||auction.procuringEntity['name_en']||auction.procuringEntity['name_ru']||"";
+      ending += $filter('characters')(auction.procuringEntity['name_'+ lang]||auction.procuringEntity['name']||auction.procuringEntity['name_en']||auction.procuringEntity['name_ru']||"", 50, true);
       return ending;
     }
       // Get bidder_id from query
@@ -192,7 +192,7 @@ angular.module('auction')
             if(current_round){
               var scroll_tag_id = 'stage-' + auction_doc.current_stage.toString();
             } else {
-              var scroll_tag_id = 'results-header'
+              var scroll_tag_id = 'results-header';
             }
             var stage_elem = document.getElementById(scroll_tag_id);
             $log.debug("scroll to stage:", scroll_tag_id);

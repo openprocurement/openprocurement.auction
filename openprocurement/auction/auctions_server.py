@@ -1,6 +1,6 @@
 from datetime import datetime
 from design import sync_design, endDate_view
-from flask import Flask, render_template, request, abort, url_for, redirect, Response
+from flask import Flask, render_template, request, abort, url_for, redirect, Response, make_response
 from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
 from gevent import monkey
@@ -52,6 +52,7 @@ js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
             "vendor/angular-cookies/angular-cookies.min.js",
             "vendor/pouchdb/dist/pouchdb.js",
             "vendor/angular-bootstrap/ui-bootstrap-tpls.min.js",
+            "vendor/angular-ellipses/src/truncate.js",
             "vendor/angular-timer/dist/angular-timer.min.js",
             "vendor/angular-translate/angular-translate.min.js",
             "vendor/angular-translate-storage-cookie/angular-translate-storage-cookie.min.js",
@@ -86,7 +87,7 @@ def after_request(response):
 def auction_url(auction_doc_id):
     unsupported_browser = False
     if request.user_agent.browser == 'msie':
-        if parse_version(request.user_agent.version) < parse_version('9'):
+        if parse_version(request.user_agent.version) <= parse_version('9'):
             unsupported_browser = True
     elif request.user_agent.browser == 'opera':
         if 'Opera Mini' in request.user_agent.string:

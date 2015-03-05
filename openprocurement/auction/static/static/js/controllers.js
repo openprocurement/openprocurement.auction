@@ -114,7 +114,7 @@ angular.module('auction').controller('AuctionController', [
           "event": "EventSource.ResponseTimeout"
         });
       }, 15000);
-      evtSrc = new EventSource(window.location.href.replace(window.location.search, '') + '/event_source');
+      evtSrc = new EventSource(window.location.href.replace(window.location.search, '') + '/event_source', {'withCredentials': true});
       $scope.restart_retries_events = 3;
       evtSrc.addEventListener('ClientsList', function(e) {
         var data = angular.fromJson(e.data);
@@ -196,7 +196,9 @@ angular.module('auction').controller('AuctionController', [
         dataLayer.push({
           "event": "EventSource.Close"
         });
-        growl.info($filter('translate')('You are an observer and cannot bid.'), {ttl: -1, disableCountDown: true});
+        if (! $scope.follow_login_allowed){
+          growl.info($filter('translate')('You are an observer and cannot bid.'), {ttl: -1, disableCountDown: true});
+        }
         $log.debug("You are must logout ");
         $scope.start_sync_event.resolve('start');
         evtSrc.close();
@@ -212,7 +214,9 @@ angular.module('auction').controller('AuctionController', [
         if ($scope.restart_retries_events === 0) {
           evtSrc.close();
           $log.debug("EventSource Stoped.", e);
-          growl.info($filter('translate')('You are an observer and cannot bid.'), {ttl: -1, disableCountDown: true});
+          if ( !$scope.follow_login_allowed){
+            growl.info($filter('translate')('You are an observer and cannot bid.'), {ttl: -1, disableCountDown: true});
+          }
         }
         return true;
       };
@@ -257,7 +261,6 @@ angular.module('auction').controller('AuctionController', [
         var params = AuctionUtils.parseQueryString(location.search);
         if ($scope.auction_doc.current_stage === -1 && params.wait) {
           $scope.follow_login_allowed = true;
-          console.log($rootScope.progres_timer.countdown_seconds);
           if ($rootScope.progres_timer.countdown_seconds < 900) {
             $scope.follow_login = true;
           } else {
@@ -421,6 +424,12 @@ angular.module('auction').controller('AuctionController', [
         $log.error('Error:', err);
         return 0;
       }
+      var params = AuctionUtils.parseQueryString(location.search);
+      if (doc.current_stage === -1 && params.wait) {
+        $scope.follow_login_allowed = true;
+      } else {
+        $scope.follow_login_allowed = false;
+      };
       $scope.title_ending = AuctionUtils.prepare_title_ending_data(doc, $scope.lang);
       $scope.replace_document(doc);
       $scope.document_exists = true;
