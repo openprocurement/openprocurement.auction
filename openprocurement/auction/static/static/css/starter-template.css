@@ -324,10 +324,10 @@ body {
 
 .ng-aside.horizontal .modal-dialog {
   position: fixed;
-  top: 70px;
+  top: 69px;
   height: 100%;
   margin: 0;
-  padding: 0;
+  padding: 0 0 69px;
   transition: none;
   -webkit-transition: none;
   transform: none;
@@ -343,7 +343,6 @@ body {
   border: none;
   border-radius: 0;
   overflow: auto;
-  padding-bottom: 8em;
 }
 
 .modal-backdrop{
