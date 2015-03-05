@@ -109,10 +109,10 @@
                 <div class="page-header">
                     <h2>{{ auction_doc.tenderID||"-" }}</h2>
                 </div>
-                <span class="lead">{{ auction_doc.procuringEntity['name_'+ lang]|| auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-"}} : {{ auction_doc['title_'+ lang]||auction_doc['title']||auction_doc['title_en']||auction_doc['title_ru']||"" }}</span>
+                <span class="lead">{{ ( auction_doc.procuringEntity['name_'+ lang]|| auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-" ) | characters:100 :true }} : {{ (auction_doc['title_'+ lang]||auction_doc['title']||auction_doc['title_en']||auction_doc['title_ru']||"") | characters:300 :true }}</span>
                 <ul>
                     <li ng-repeat="item in auction_doc.items">
-                        <span>{{ item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" }}</span> - {{ item.quantity|formatnumber }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
+                        <span>{{ ( item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" ) | characters:500 :true  }}</span> - {{ item.quantity|formatnumber }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
                     </li>
                 </ul>
             </div>
@@ -317,12 +317,12 @@
                 <h4>{{ auction_doc.tenderID }}</h4>
                 <p class="list-group-item-heading">
                     <strong ng-switch on="auction_doc.procuringEntity['name_'+ lang] == undefined" class="procuringEntity">
-                        <span>{{ auction_doc.procuringEntity['name_'+ lang]||auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-" }}</span><span class="tenderTitle"> : {{ auction_doc['title_'+ lang]||auction_doc.title||auction_doc.title_en||auction_doc.title_ru||"-"}}</span>
+                        <span>{{ (auction_doc.procuringEntity['name_'+ lang]||auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-") | characters:100 :true }}</span><span class="tenderTitle"> : {{ (auction_doc['title_'+ lang]||auction_doc.title||auction_doc.title_en||auction_doc.title_ru||"-") | characters:100 :true}}</span>
                     </strong>
                 </p>
-                <p class="text-muted tenderDescription"><span> {{ auction_doc['description_'+ lang]||auction_doc.description||auction_doc.description||auction_doc.description||""}} </span></p>
+                <p class="text-muted tenderDescription"><span> {{ ( auction_doc['description_'+ lang]||auction_doc.description||auction_doc.description||auction_doc.description||"" ) | characters:500 :true }} </span></p>
                 <p ng-repeat="item in auction_doc.items">
-                    <span>{{ item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" }}</span> - {{ item.quantity|formatnumber }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
+                    <span>{{ ( item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" ) | characters:100 :true }}</span> - {{ item.quantity|formatnumber }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
                 </p>
                 <p class="list-group-item-heading minimalStep" ng-if="auction_doc.minimalStep.amount"><span translate>Step reduction of Bid</span>: <strong>{{ auction_doc.minimalStep.amount|formatnumber }} {{ auction_doc.minimalStep.currency|translate }}</strong></p>
                 <p class="list-group-item-heading tenderValue" ng-if="auction_doc.value.amount"><span translate>Start value</span>: {{ auction_doc.value.amount|formatnumber }} {{ auction_doc.minimalStep.currency|translate }}</p>
