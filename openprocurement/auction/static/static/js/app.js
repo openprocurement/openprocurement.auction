@@ -1,4 +1,4 @@
-var app = angular.module('auction', ['ui.bootstrap', 'ngCookies', 'pascalprecht.translate', 'timer', 'angular-growl']);
+var app = angular.module('auction', ['ui.bootstrap', 'ngCookies', 'pascalprecht.translate', 'timer', 'angular-growl', 'angular-ellipses']);
 var db = {};
 var bidder_id = "0";
 var auction_doc_id = auction_doc_id||"";
