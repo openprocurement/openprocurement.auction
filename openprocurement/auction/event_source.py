@@ -53,7 +53,7 @@ sse = Blueprint('sse', __name__)
 
 @sse.route("/set_sse_timeout", methods=['POST'])
 def set_sse_timeout():
-    current_app.logger.info(
+    current_app.logger.debug(
         'Handle set_sse_timeout request with session {}'.format(repr(dict(session))),
         extra=prepare_extra_journal_fields(request.headers)
     )
@@ -74,7 +74,7 @@ def set_sse_timeout():
 
 @sse.route("/event_source")
 def event_source():
-    current_app.logger.info(
+    current_app.logger.debug(
         'Handle event_source request with session {}'.format(repr(dict(session))),
         extra=prepare_extra_journal_fields(request.headers)
     )
@@ -134,7 +134,7 @@ def event_source():
                 content_type='text/event-stream'
             )
 
-    current_app.logger.info(
+    current_app.logger.debug(
         'Disable event_source for unauthorized user.',
         extra=prepare_extra_journal_fields(request.headers)
     )
