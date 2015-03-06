@@ -21,3 +21,4 @@ graft openprocurement/auction/static/vendor/angular-translate
 graft openprocurement/auction/static/vendor/bootstrap/dist
 graft openprocurement/auction/static/vendor/moment/locale
 graft openprocurement/auction/static/vendor/moment/min
+graft openprocurement/auction/static/vendor/angular-ellipses/src
