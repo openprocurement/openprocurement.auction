@@ -8,7 +8,7 @@ endDate_view = ViewDefinition(
     "auctions",
     "by_endDate",
     ''' function(doc) {
-            var end = new Date(doc.endDate).getTime()
+            var end = new Date(doc.endDate||doc.stages[0].start).getTime()
             emit(end, null);
         }
     '''
