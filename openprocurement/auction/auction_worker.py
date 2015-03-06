@@ -242,6 +242,48 @@ class Auction(object):
         for index, uid in enumerate(self.bidders):
             self.mapping[uid] = str(index + 1)
 
+    def prepare_auction_stages(self):
+        # Initital Bids
+        for bid_info in self._auction_data["data"]["bids"]:
+            self.auction_document["initial_bids"].append(
+                json.loads(INITIAL_BIDS_TEMPLATE.render(
+                    time="",
+                    bidder_id=bid_info["id"],
+                    bidder_name=self.mapping[bid_info["id"]],
+                    amount="null"
+                ))
+            )
+        self.auction_document['stages'] = []
+        next_stage_timedelta = self.startDate
+        for round_id in xrange(ROUNDS):
+            # Schedule PAUSE Stage
+            pause_stage = json.loads(PAUSE_TEMPLATE.render(
+                start=next_stage_timedelta.isoformat()
+            ))
+            self.auction_document['stages'].append(pause_stage)
+            if round_id == 0:
+                next_stage_timedelta += timedelta(seconds=FIRST_PAUSE_SECONDS)
+            else:
+                next_stage_timedelta += timedelta(seconds=PAUSE_SECONDS)
+
+            # Schedule BIDS Stages
+            for index in xrange(self.bidders_count):
+                bid_stage = json.loads(BIDS_TEMPLATE.render(
+                    start=next_stage_timedelta.isoformat(),
+                    bidder_id="",
+                    bidder_name="",
+                    amount="null",
+                    time=""
+                ))
+                self.auction_document['stages'].append(bid_stage)
+                next_stage_timedelta += timedelta(seconds=BIDS_SECONDS)
+
+        announcement = json.loads(ANNOUNCEMENT_TEMPLATE.render(
+            start=next_stage_timedelta.isoformat()
+        ))
+        self.auction_document['stages'].append(announcement)
+        self.auction_document['endDate'] = next_stage_timedelta.isoformat()
+
     ###########################################################################
     #                       Planing methods
     ###########################################################################
@@ -272,45 +314,9 @@ class Auction(object):
                     self.auction_document[lang_key] = self._auction_data["data"][lang_key]
             self.auction_document[key] = self._auction_data["data"].get(key, "")
 
-        # Initital Bids
-        for bid_info in self._auction_data["data"]["bids"]:
-            self.auction_document["initial_bids"].append(
-                json.loads(INITIAL_BIDS_TEMPLATE.render(
-                    time="",
-                    bidder_id=bid_info["id"],
-                    bidder_name=self.mapping[bid_info["id"]],
-                    amount="null"
-                ))
-            )
-        next_stage_timedelta = self.startDate
-        for round_id in xrange(ROUNDS):
-            # Schedule PAUSE Stage
-            pause_stage = json.loads(PAUSE_TEMPLATE.render(
-                start=next_stage_timedelta.isoformat()
-            ))
-            self.auction_document['stages'].append(pause_stage)
-            if round_id == 0:
-                next_stage_timedelta += timedelta(seconds=FIRST_PAUSE_SECONDS)
-            else:
-                next_stage_timedelta += timedelta(seconds=PAUSE_SECONDS)
-
-            # Schedule BIDS Stages
-            for index in xrange(self.bidders_count):
-                bid_stage = json.loads(BIDS_TEMPLATE.render(
-                    start=next_stage_timedelta.isoformat(),
-                    bidder_id="",
-                    bidder_name="",
-                    amount="null",
-                    time=""
-                ))
-                self.auction_document['stages'].append(bid_stage)
-                next_stage_timedelta += timedelta(seconds=BIDS_SECONDS)
-
-        announcement = json.loads(ANNOUNCEMENT_TEMPLATE.render(
-            start=next_stage_timedelta.isoformat()
-        ))
-        self.auction_document['stages'].append(announcement)
-        self.auction_document['endDate'] = next_stage_timedelta.isoformat()
+        self.auction_document['stages'].append(json.loads(PAUSE_TEMPLATE.render(
+            start=self.startDate.isoformat()
+        )))
         self.save_auction_document()
         if not self.debug:
             self.set_auction_and_participation_urls()
@@ -419,6 +425,8 @@ class Auction(object):
         self.get_auction_info()
         self.prepare_audit()
         self.get_auction_document()
+        self.prepare_auction_stages()
+        self.save_auction_document()
         round_number = 0
         SCHEDULER.add_job(
             self.start_auction, 'date',
