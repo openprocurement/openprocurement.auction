@@ -25,7 +25,12 @@
 <body>
     {% if unsupported_browser %}
         <div class="container">
-            <div class="alert alert-danger" role="alert">Ваш переглядач застарів, і цей сайт може некоректно працювати. <a style="color: rgb(234, 4, 4); text-decoration: underline;" href="https://browser-update.org/uk/update.html">Дізнайтесь, як оновити Ваш браузер</a></div>
+            <div ng-hide="unsupported_browser" class="alert alert-danger" role="alert">Ваш переглядач застарів, і цей сайт може некоректно працювати. <a style="color: rgb(234, 4, 4); text-decoration: underline;" href="https://browser-update.org/uk/update.html">Дізнайтесь, як оновити Ваш браузер</a></div>
+            {% raw %}
+                <script type=text/javascript>
+                    var unsupported_browser = true;
+                </script>
+            {% endraw %}
         </div>
     {% endif %}
     {% raw %}
