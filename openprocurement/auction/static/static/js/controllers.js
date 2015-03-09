@@ -68,7 +68,8 @@ angular.module('auction').controller('AuctionController', [
           });
         };
         $timeout(function() {
-          $scope.time_in_title = event.targetScope.hours ? (AuctionUtils.pad(event.targetScope.hours) + ":") : "";
+          $scope.time_in_title = event.targetScope.days ? (event.targetScope.days + $filter('translate')('days') +" ") : "";
+          $scope.time_in_title += event.targetScope.hours ? (AuctionUtils.pad(event.targetScope.hours) + ":") : "";
           $scope.time_in_title += (AuctionUtils.pad(event.targetScope.minutes) + ":");
           $scope.time_in_title += (AuctionUtils.pad(event.targetScope.seconds) + " ");
         }, 10);
