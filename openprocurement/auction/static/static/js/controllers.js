@@ -285,13 +285,23 @@ angular.module('auction').controller('AuctionController', [
       });
     };
     $scope.post_bid = function(bid) {
+      if (parseFloat($rootScope.form.bid) == -1){
+        msg_id = Math.random();
+        $rootScope.alerts.push({
+          msg_id: msg_id,
+          type: 'danger',
+          msg: 'To low value'
+        });
+        $scope.auto_close_alert(msg_id);
+        return 0;
+      }
       if ($rootScope.form.BidsForm.$valid) {
         $rootScope.form.active = true;
         $timeout(function() {
           $rootScope.form.active = false;
         }, 5000);
         $http.post('./postbid', {
-            'bid': bid || $rootScope.form.bid,
+            'bid': parseFloat(bid) || parseFloat($rootScope.form.bid) || 0,
             'bidder_id': $scope.bidder_id || bidder_id || "0"
           }).success(function(data) {
             $rootScope.form.active = false;
@@ -309,7 +319,8 @@ angular.module('auction').controller('AuctionController', [
                 }
               }
             } else {
-              if (($rootScope.form.bid <= ($scope.max_bid_amount() * 0.1)) && (bid != -1)) {
+              var bid = data.data.bid;
+              if ((bid <= ($scope.max_bid_amount() * 0.1)) && (bid != -1)) {
                 msg_id = Math.random();
                 $rootScope.alerts.push({
                   msg_id: msg_id,
