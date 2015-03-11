@@ -98,6 +98,7 @@ angular.module('auction').controller('AuctionController', [
 
 
     $scope.start_subscribe = function(argument) {
+      var unsupported_browser = unsupported_browser|| null;
       if (unsupported_browser){
         $timeout(function() {
           $scope.unsupported_browser = true;

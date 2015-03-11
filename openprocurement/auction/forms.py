@@ -12,7 +12,7 @@ def validate_bid_value(form, field):
     """
     Bid must be greater then 0
     """
-    if field.data <= 0.0 and field.data != -1:
+    if field.data <= 0.0:
         raise ValidationError(u'To low value')
 
 
