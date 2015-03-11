@@ -178,31 +178,31 @@ def post_bid():
                 if form.validate():
                     # write data
                     auction.add_bid(form.document['current_stage'],
-                                    {'amount': request.json['bid'],
-                                     'bidder_id': request.json['bidder_id'],
+                                    {'amount': form.data['bid'],
+                                     'bidder_id': form.data['bidder_id'],
                                      'time': current_time.isoformat()})
-                    if request.json['bid'] == -1:
+                    if form.data['bid'] == -1.0:
                         app.logger.info("Bidder {} with client_id {} canceled bids in stage {} in {}".format(
-                            request.json['bidder_id'], session['client_id'],
+                            form.data['bidder_id'], session['client_id'],
                             form.document['current_stage'], current_time.isoformat()
                         ), extra=prepare_extra_journal_fields(request.headers))
                     else:
                         app.logger.info("Bidder {} with client_id {} placed bid {} in {}".format(
-                            request.json['bidder_id'], session['client_id'],
-                            request.json['bid'], current_time.isoformat()
+                            form.data['bidder_id'], session['client_id'],
+                            form.data['bid'], current_time.isoformat()
                         ), extra=prepare_extra_journal_fields(request.headers))
-                    response = {'status': 'ok', 'data': request.json}
+                    response = {'status': 'ok', 'data': form.data}
                 else:
                     response = {'status': 'failed', 'errors': form.errors}
                     app.logger.info("Bidder {} with client_id {} wants place bid {} in {} with errors {}".format(
-                        request.json['bidder_id'], session['client_id'],
-                        request.json['bid'], current_time.isoformat(),
+                        request.json.get('bidder_id', 'None'), session['client_id'],
+                        request.json.get('bid', 'None'), current_time.isoformat(),
                         repr(form.errors)
                     ), extra=prepare_extra_journal_fields(request.headers))
                 return jsonify(response)
         else:
             app.logger.warning("Client with client id: {} and bidder_id {} wants post bid but response status from Oauth is {}".format(
-                session.get('client_id', ''), request.json.get('bidder_id', ''), resp.status
+                session.get('client_id', 'None'), request.json.get('bidder_id', 'None'), resp.status
             ))
     abort(401)
 
