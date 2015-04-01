@@ -13,9 +13,8 @@
     <title ng-bind-template="{{ time_in_title }} {{ info_timer.msg|translate}} - {{ title_ending }}" ng-if="!info_timer.start_time" >     
         Аукціон
     </title>
-    <title ng-bind-template="{{ info_timer.msg|translate}} {{ format_date(info_timer.start_time, lang,'Do MMMM YYYY') }} {{'at'|translate}} {{ format_date(info_timer.start_time, lang,'HH:mm') }} - {{ title_ending }}" ng-if="!info_timer.countdown" >     
-        
-    </title>
+    <title ng-bind-template="{{ info_timer.msg|translate}} {{ format_date(info_timer.start_time, lang,'Do MMMM YYYY') }} {{'at'|translate}} {{ format_date(info_timer.start_time, lang,'HH:mm') }} - {{ title_ending }}" ng-if="(!info_timer.countdown)&&(info_timer.start_time != true)" ></title>
+    <title ng-bind-template="{{ info_timer.msg|translate}} - {{ title_ending }}" ng-if="(!info_timer.countdown)&&(info_timer.start_time == true)" ></title>
     {% endraw %}     
     {% endblock %}
 
@@ -71,7 +70,7 @@
                             <span ng-if="$parent.info_timer.msg">
                                 {{ info_timer.msg|translate}}
                             </span>
-                            <span ng-if="info_timer.start_time != true">
+                            <span ng-if="$parent.info_timer.start_time != true">
                               {{ format_date(info_timer.start_time, lang,'Do MMMM YYYY') }} {{'at'|translate}} {{ format_date(info_timer.start_time, lang,'HH:mm') }}
                             </span>
                         </span>
