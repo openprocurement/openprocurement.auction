@@ -74,24 +74,34 @@ def get_time(item):
 def sorting_by_amount(bids, reverse=True):
     """
     >>> bids = [
-    ...     {"bidder_id": "1", "amount": 100},
-    ...     {"bidder_id": "1", "amount": 200},
-    ...     {"bidder_id": "2", "amount": 101}
+    ...     {'amount': 3955.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:30.723296+03:00'},
+    ...     {'amount': 3966.0, 'bidder_id': 'df2', 'time': '2015-04-24T11:07:30.723296+03:00'},
+    ...     {'amount': 3955.0, 'bidder_id': 'df4', 'time': '2015-04-23T15:48:41.971644+03:00'},
     ... ]
     >>> sorting_by_amount(bids)  # doctest: +NORMALIZE_WHITESPACE
-    [{'amount': 200, 'bidder_id': '1'},
-     {'amount': 101, 'bidder_id': '2'},
-     {'amount': 100, 'bidder_id': '1'}]
+    [{'amount': 3966.0, 'bidder_id': 'df2', 'time': '2015-04-24T11:07:30.723296+03:00'},
+     {'amount': 3955.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:30.723296+03:00'},
+     {'amount': 3955.0, 'bidder_id': 'df4', 'time': '2015-04-23T15:48:41.971644+03:00'}]
 
-    >>> sorting_by_amount(bids, reverse=False)  # doctest: +NORMALIZE_WHITESPACE
-    [{'amount': 100, 'bidder_id': '1'},
-     {'amount': 101, 'bidder_id': '2'},
-     {'amount': 200, 'bidder_id': '1'}]
+    >>> bids = [
+    ...     {'amount': 3966.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:20+03:00'},
+    ...     {'amount': 3966.0, 'bidder_id': 'df2', 'time': '2015-04-24T11:07:30+03:00'},
+    ...     {'amount': 3966.0, 'bidder_id': 'df4', 'time': '2015-04-24T11:07:40+03:00'},
+    ... ]
+    >>> sorting_by_amount(bids)  # doctest: +NORMALIZE_WHITESPACE
+    [{'amount': 3966.0, 'bidder_id': 'df4', 'time': '2015-04-24T11:07:40+03:00'},
+     {'amount': 3966.0, 'bidder_id': 'df2', 'time': '2015-04-24T11:07:30+03:00'},
+     {'amount': 3966.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:20+03:00'}]
     """
-    def get_amount(item):
-        return item['amount']
+    def bids_compare(bid1, bid2):
+        if bid1["amount"] == bid2["amount"]:
+            time_of_bid1 = get_time(bid1)
+            time_of_bid2 = get_time(bid2)
+            return - cmp(time_of_bid2, time_of_bid1)
+        else:
+            return cmp(bid1["amount"], bid2["amount"])
 
-    return sorted(bids, key=get_amount, reverse=reverse)
+    return sorted(bids, reverse=reverse, cmp=bids_compare)
 
 
 def sorting_start_bids_by_amount(bids, reverse=True):
