@@ -409,13 +409,19 @@ class Auction(object):
             "Start timer",
             extra={"JOURNAL_REQUEST_ID": self.request_id}
         )
+        timer_file = 'auction_' + '.'.join([self.auction_doc_id, 'timer'])
         response = call(['/usr/bin/systemctl', '--user',
-                         'reload-or-restart', 'auction_' + '.'.join([self.auction_doc_id, 'timer'])])
+                         'reload-or-restart', timer_file])
         logger.info(
-            "Systemctl return code: {}".format(response),
+            "Systemctl 'reload-or-restart' return code: {}".format(response),
             extra={"JOURNAL_REQUEST_ID": self.request_id}
         )
-
+        response = call(['/usr/bin/systemctl', '--user',
+                         'enable', timer_file])
+        logger.info(
+            "Systemctl 'enable' return code: {}".format(response),
+            extra={"JOURNAL_REQUEST_ID": self.request_id}
+        )
     ###########################################################################
     #                       Runtime methods
     ###########################################################################
