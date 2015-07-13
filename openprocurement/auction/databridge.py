@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 class AuctionsDataBridge(object):
+
     """docstring for AuctionsDataBridge"""
+
     def __init__(self, config):
         super(AuctionsDataBridge, self).__init__()
         self.config = config
@@ -84,10 +86,9 @@ class AuctionsDataBridge(object):
                         if re_planning and item['id'] in self.tenders_ids_list:
                             logger.info("Tender {} already planned while replanning".format(item['id']))
                             continue
-                        else:
-                            if [row.id for row in auctions_start_in_date.rows if row.id == item['id']]:
-                                logger.info("Tender {} already planned on same date".format(item['id']))
-                                continue
+                        elif not re_planning and [row.id for row in auctions_start_in_date.rows if row.id == item['id']]:
+                            logger.info("Tender {} already planned on same date".format(item['id']))
+                            continue
                         yield item
 
                     if item['status'] == "cancelled":
