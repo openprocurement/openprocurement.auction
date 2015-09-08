@@ -41,7 +41,8 @@ setup(name='openprocurement.auction',
           'cssmin',
           'jsmin',
           'PyYAML',
-          'request_id_middleware'
+          'request_id_middleware',
+          'restkit'
       ],
       entry_points={
           'console_scripts': [

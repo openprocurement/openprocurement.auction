@@ -1,36 +1,45 @@
+from gevent import monkey
+monkey.patch_all()
+
 from datetime import datetime
 from design import sync_design, endDate_view
-from flask import Flask, render_template, request, abort, url_for, redirect, Response, make_response
+from flask import Flask, render_template, request, abort, url_for, redirect, Response
 from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
-from gevent import monkey
 from paste.proxy import make_proxy
 from pytz import timezone as tz
 from urlparse import urljoin
-from wsgiproxy import HostProxy
 import couchdb
 import time
 from sse import Sse as PySse
-from webob.exc import HTTPNotFound
 from pkg_resources import parse_version
-from requests.exceptions import ConnectionError
+from restkit.contrib.wsgi_proxy import HostProxy
+from restkit.conn import Connection
+from socketpool import ConnectionPool
+from .utils import StreamWrapper
 
-monkey.patch_all()
 
-
-class AuctionsHostProxy(HostProxy):
-
-    def process_request(self, uri, method, headers, environ):
-        headers["X-Forwarded-Path"] = request.url
-        headers["X-Request-ID"] = environ.get("x_request_id", "")
+class StreamProxy(HostProxy):
+    def __call__(self, environ, start_response):
+        header_map = {
+            'HTTP_HOST': 'X_FORWARDED_SERVER',
+            'SCRIPT_NAME': 'X_FORWARDED_SCRIPT_NAME',
+            'wsgi.url_scheme': 'X_FORWARDED_SCHEME',
+            'REMOTE_ADDR': 'X_FORWARDED_FOR',
+        }
+        for key, dest in header_map.items():
+            value = environ.get(key)
+            if value:
+                environ['HTTP_%s' % dest] = value
+        environ['HTTP_X-Forwarded-Path'] = request.url
         try:
-            return super(AuctionsHostProxy, self).process_request(
-                uri, method, headers, environ
+            response = super(StreamProxy, self).__call__(environ, start_response)
+            return StreamWrapper(response.resp, response.connection)
+        except Exception, e:
+            auctions_server.logger.warning(
+                "Error on request to {} with msg {}".format(request.url, e)
             )
-        except ConnectionError, e:
-            auctions_server.logger.warning("Error on request to {} with msg {}".format(uri, e))
-            # status, location, headerslist, app_iter
-            return (404, uri, {}, [])
+            return (404, request.url, {}, [])
 
 auctions_server = Flask(
     __name__,
@@ -137,7 +146,10 @@ def auctions_proxy(auction_doc_id, path):
     if proxy_path:
         request.environ['PATH_INFO'] = '/' + path
         auctions_server.logger.debug('Start proxy to path: {}'.format(path))
-        return AuctionsHostProxy(proxy_path, client='requests', chunk_size=1)
+        return StreamProxy(
+            proxy_path, pool=auctions_server.proxy_connection_pool,
+            backend="gevent"
+        )
     elif path == 'login' and auction_doc_id in auctions_server.db:
         return redirect((
             url_for('auction_url', auction_doc_id=auction_doc_id,
@@ -187,6 +199,10 @@ def make_auctions_app(global_conf,
     auctions_db = auction
     timezone = Europe/Kiev
     """
+    auctions_server.proxy_connection_pool = ConnectionPool(
+        factory=Connection, max_size=1, backend="gevent"
+    )
+
     auctions_server.config['PREFERRED_URL_SCHEME'] = preferred_url_scheme
     auctions_server.config['REDIS_URL'] = redis_url
     auctions_server.config['EXT_COUCH_DB'] = urljoin(

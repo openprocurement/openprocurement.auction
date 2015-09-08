@@ -12,13 +12,18 @@ from gevent.baseserver import parse_address
 from redis import Redis
 import uuid
 
+from restkit.wrappers import BodyWrapper
+
+
 EXTRA_LOGGING_VALUES = {
     'X-Request-ID': 'JOURNAL_REQUEST_ID',
     'X-Clint-Request-ID': 'JOURNAL_CLIENT_REQUEST_ID'
 }
 
+
 def generate_request_id(prefix=b'auction-req-'):
     return prefix + str(uuid.uuid4()).encode('ascii')
+
 
 def filter_by_bidder_id(bids, bidder_id):
     """
@@ -299,3 +304,21 @@ def prepare_extra_journal_fields(headers):
         if key in headers:
             extra[EXTRA_LOGGING_VALUES[key]] = headers[key]
     return extra
+
+
+class StreamWrapper(BodyWrapper):
+    """Stream Wrapper fot Proxy Reponse"""
+    def __init__(self, resp, connection):
+        super(StreamWrapper, self).__init__(resp, connection)
+
+    def close(self):
+        """ release connection """
+        if self._closed:
+            return
+        self.eof = True
+        self.resp.should_close = True
+
+        if not self.eof:
+            self.body.read()
+        self.connection.release(True)
+        self._closed = True
