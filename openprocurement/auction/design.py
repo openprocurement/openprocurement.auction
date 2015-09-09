@@ -32,7 +32,7 @@ def sync_design(db):
     updated = False
     while not updated:
         design = db.get('_design/auctions')
-        design['validate_doc_update'] = """
+        validate_doc_update = """
         function(newDoc, oldDoc, userCtx, secObj) {
             if (userCtx.roles.indexOf('_admin') !== -1) {
                 return true;
@@ -41,7 +41,8 @@ def sync_design(db):
             }
         }
         """
-        try:
-            return db.save(design)
-        except HTTPError, e:
-            sleep(randint(0, 2000) / 1000.0)
+        if validate_doc_update != design['validate_doc_update']:
+            try:
+                return db.save(design)
+            except HTTPError, e:
+                sleep(randint(0, 2000) / 1000.0)
