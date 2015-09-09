@@ -1,7 +1,7 @@
 from gevent import monkey
 monkey.patch_all()
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from design import sync_design, endDate_view
 from flask import Flask, render_template, request, abort, url_for, redirect, Response
 from flask.ext.assets import Environment, Bundle
@@ -17,9 +17,25 @@ from restkit.contrib.wsgi_proxy import HostProxy
 from restkit.conn import Connection
 from socketpool import ConnectionPool
 from .utils import StreamWrapper
+from collections import deque
 
 
 class StreamProxy(HostProxy):
+
+    def __init__(self, uri, event_sources_pool,
+                 event_source_connection_limit=1000,
+                 **kwargs):
+        super(StreamProxy, self).__init__(uri, **kwargs)
+        self.event_source_connection_limit = event_source_connection_limit
+        self.event_sources = event_sources_pool
+
+    def add_event_source(self, stream_response):
+        self.event_sources.append(stream_response)
+        while len(self.event_sources) > self.event_source_connection_limit:
+            ev_connection = self.event_sources.popleft()
+            if not ev_connection._closed:
+                ev_connection.close()
+
     def __call__(self, environ, start_response):
         header_map = {
             'HTTP_HOST': 'X_FORWARDED_SERVER',
@@ -34,7 +50,10 @@ class StreamProxy(HostProxy):
         environ['HTTP_X-Forwarded-Path'] = request.url
         try:
             response = super(StreamProxy, self).__call__(environ, start_response)
-            return StreamWrapper(response.resp, response.connection)
+            stream_response = StreamWrapper(response.resp, response.connection)
+            if 'event_source' in stream_response.resp.request.url:
+                self.add_event_source(stream_response)
+            return stream_response
         except Exception, e:
             auctions_server.logger.warning(
                 "Error on request to {} with msg {}".format(request.url, e)
@@ -147,7 +166,9 @@ def auctions_proxy(auction_doc_id, path):
         request.environ['PATH_INFO'] = '/' + path
         auctions_server.logger.debug('Start proxy to path: {}'.format(path))
         return StreamProxy(
-            proxy_path, pool=auctions_server.proxy_connection_pool,
+            proxy_path,
+            event_sources_pool=auctions_server.event_sources_pool,
+            pool=auctions_server.proxy_connection_pool,
             backend="gevent"
         )
     elif path == 'login' and auction_doc_id in auctions_server.db:
@@ -200,9 +221,9 @@ def make_auctions_app(global_conf,
     timezone = Europe/Kiev
     """
     auctions_server.proxy_connection_pool = ConnectionPool(
-        factory=Connection, max_size=1, backend="gevent"
+        factory=Connection, max_size=20, backend="gevent"
     )
-
+    auctions_server.event_sources_pool = deque([])
     auctions_server.config['PREFERRED_URL_SCHEME'] = preferred_url_scheme
     auctions_server.config['REDIS_URL'] = redis_url
     auctions_server.config['EXT_COUCH_DB'] = urljoin(

@@ -5,7 +5,7 @@ from gevent.queue import Queue
 from gevent import spawn, sleep
 import logging
 from datetime import datetime
-from openprocurement.auction.utils import prepare_extra_journal_fields
+from openprocurement.auction.utils import prepare_extra_journal_fields, get_bidder_id
 
 LOGGER = logging.getLogger(__name__)
 CHUNK = ' ' * 2048 + '\n'
@@ -58,9 +58,11 @@ def set_sse_timeout():
         extra=prepare_extra_journal_fields(request.headers)
     )
     if 'remote_oauth' in session and 'client_id' in session:
-        resp = current_app.remote_oauth.get('me')
-        if resp.status == 200:
-            bidder = resp.data['bidder_id']
+        # resp = current_app.remote_oauth.get('me')
+        # if resp.status == 200:
+        bidder_data = get_bidder_id(current_app, session)
+        if bidder_data:
+            bidder = bidder_data['bidder_id']
             if 'timeout' in request.json:
                 session["sse_timeout"] = int(request.json['timeout'])
                 send_event_to_client(
@@ -79,9 +81,11 @@ def event_source():
         extra=prepare_extra_journal_fields(request.headers)
     )
     if 'remote_oauth' in session and 'client_id' in session:
-        resp = current_app.remote_oauth.get('me')
-        if resp.status == 200:
-            bidder = resp.data['bidder_id']
+        # resp = current_app.remote_oauth.get('me')
+        # if resp.status == 200:
+        bidder_data = get_bidder_id(current_app, session)
+        if bidder_data:
+            bidder = bidder_data['bidder_id']
             client_hash = session['client_id']
             if bidder not in current_app.auction_bidders:
                 current_app.auction_bidders[bidder] = {
@@ -99,6 +103,7 @@ def event_source():
                     'User-Agent': request.headers.get('User-Agent'),
                 }
                 current_app.auction_bidders[bidder]["channels"][client_hash] = Queue()
+
             current_app.logger.info(
                 'Send identification for bidder: {} with client_hash {}'.format(bidder, client_hash),
                 extra=prepare_extra_journal_fields(request.headers)
@@ -122,6 +127,7 @@ def event_source():
                     current_app.auction_bidders[bidder]["clients"],
                     "ClientsList"
                 )
+
             return Response(
                 SseStream(
                     current_app.auction_bidders[bidder]["channels"][client_hash],
