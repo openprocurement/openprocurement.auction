@@ -1,7 +1,7 @@
 from gevent import monkey
 monkey.patch_all()
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from design import sync_design, endDate_view
 from flask import Flask, render_template, request, abort, url_for, redirect, Response
 from flask.ext.assets import Environment, Bundle
@@ -168,6 +168,7 @@ def auctions_proxy(auction_doc_id, path):
         return StreamProxy(
             proxy_path,
             event_sources_pool=auctions_server.event_sources_pool,
+            event_source_connection_limit=auctions_server.config['event_source_connection_limit'],
             pool=auctions_server.proxy_connection_pool,
             backend="gevent"
         )
@@ -209,7 +210,8 @@ def make_auctions_app(global_conf,
                       hash_secret_key='',
                       timezone='Europe/Kiev',
                       preferred_url_scheme='http',
-                      debug=False
+                      debug=False,
+                      event_source_connection_limit=1000
                       ):
     """
     [app:main]
@@ -226,6 +228,7 @@ def make_auctions_app(global_conf,
     auctions_server.event_sources_pool = deque([])
     auctions_server.config['PREFERRED_URL_SCHEME'] = preferred_url_scheme
     auctions_server.config['REDIS_URL'] = redis_url
+    auctions_server.config['event_source_connection_limit'] = int(event_source_connection_limit)
     auctions_server.config['EXT_COUCH_DB'] = urljoin(
         external_couch_url,
         auctions_db
