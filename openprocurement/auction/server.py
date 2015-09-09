@@ -11,7 +11,7 @@ import errno
 from datetime import datetime, timedelta
 from pytz import timezone
 from openprocurement.auction.forms import BidsForm
-from openprocurement.auction.utils import get_lisener, create_mapping, prepare_extra_journal_fields
+from openprocurement.auction.utils import get_lisener, create_mapping, prepare_extra_journal_fields, get_bidder_id
 from openprocurement.auction.event_source import (
     sse, send_event, send_event_to_client, remove_client,
     push_timestamps_events, check_clients
@@ -25,6 +25,7 @@ app = Flask(__name__, static_url_path='', template_folder='static')
 app.auction_bidders = {}
 app.register_blueprint(sse)
 app.secret_key = os.urandom(24)
+app.logins_cache = {}
 
 INVALIDATE_GRANT = timedelta(0, 230)
 
@@ -47,7 +48,6 @@ class AuctionsWSGIHandler(WSGIHandler):
         try:
             return super(AuctionsWSGIHandler, self).run_application()
         except socket.error as ex:
-            # Broken pipe, connection reset by peer
             if ex.args[0] in (errno.EPIPE, errno.ECONNRESET):
                 self.close_connection = True
             else:
@@ -129,12 +129,13 @@ def relogin():
 @app.route('/check_authorization', methods=['POST'])
 def check_authorization():
     if 'remote_oauth' in session and 'client_id' in session:
-        resp = app.remote_oauth.get('me')
-        if resp.status == 200:
-            grant_timeout = iso8601.parse_date(resp.data[u'expires']) - datetime.now(tzlocal())
+        # resp = app.remote_oauth.get('me')
+        bidder_data = get_bidder_id(app, session)
+        if bidder_data:
+            grant_timeout = iso8601.parse_date(bidder_data[u'expires']) - datetime.now(tzlocal())
             if grant_timeout > INVALIDATE_GRANT:
                 app.logger.info("Bidder {} with client_id {} pass check_authorization".format(
-                                resp.data['bidder_id'], session['client_id'],
+                                bidder_data['bidder_id'], session['client_id'],
                                 ), extra=prepare_extra_journal_fields(request.headers))
                 return jsonify({'status': 'ok'})
             else:
@@ -151,12 +152,12 @@ def check_authorization():
 @app.route('/logout')
 def logout():
     if 'remote_oauth' in session and 'client_id' in session:
-        resp = app.remote_oauth.get('me')
-        if resp.status == 200:
-            remove_client(resp.data['bidder_id'], session['client_id'])
+        bidder_data = get_bidder_id(app, session)
+        if bidder_data:
+            remove_client(bidder_data['bidder_id'], session['client_id'])
             send_event(
-                resp.data['bidder_id'],
-                app.auction_bidders[resp.data['bidder_id']]["clients"],
+                bidder_data['bidder_id'],
+                app.auction_bidders[bidder_data['bidder_id']]["clients"],
                 "ClientsList"
             )
     session.clear()
@@ -169,8 +170,8 @@ def logout():
 def post_bid():
     auction = app.config['auction']
     if 'remote_oauth' in session and 'client_id' in session:
-        resp = app.remote_oauth.get('me')
-        if resp.status == 200 and resp.data['bidder_id'] == request.json['bidder_id']:
+        bidder_data = get_bidder_id(app, session)
+        if bidder_data and bidder_data['bidder_id'] == request.json['bidder_id']:
             with auction.bids_actions:
                 form = BidsForm.from_json(request.json)
                 form.document = auction.db.get(auction.auction_doc_id)
@@ -201,8 +202,8 @@ def post_bid():
                     ), extra=prepare_extra_journal_fields(request.headers))
                 return jsonify(response)
         else:
-            app.logger.warning("Client with client id: {} and bidder_id {} wants post bid but response status from Oauth is {}".format(
-                session.get('client_id', 'None'), request.json.get('bidder_id', 'None'), resp.status
+            app.logger.warning("Client with client id: {} and bidder_id {} wants post bid but response status from Oauth".format(
+                session.get('client_id', 'None'), request.json.get('bidder_id', 'None')
             ))
     abort(401)
 
@@ -213,9 +214,9 @@ def kickclient():
         auction = app.config['auction']
         with auction.bids_actions:
             data = request.json
-            resp = app.remote_oauth.get('me')
-            if resp.status == 200:
-                data['bidder_id'] = resp.data['bidder_id']
+            bidder_data = get_bidder_id(app, session)
+            if bidder_data:
+                data['bidder_id'] = bidder_data['bidder_id']
                 if 'client_id' in data:
                     send_event_to_client(
                         data['bidder_id'], data['client_id'], {
@@ -234,6 +235,7 @@ def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
     app.config['auction'] = auction
     app.config['timezone'] = tz(timezone)
     app.config['SESSION_COOKIE_PATH'] = '/tenders/{}'.format(auction.auction_doc_id)
+    app.config['SESSION_COOKIE_NAME'] = 'auction_session'
     app.oauth = OAuth(app)
     app.remote_oauth = app.oauth.remote_app(
         'remote',

@@ -308,6 +308,8 @@ def prepare_extra_journal_fields(headers):
 
 class StreamWrapper(BodyWrapper):
     """Stream Wrapper fot Proxy Reponse"""
+    stop_stream = False
+
     def __init__(self, resp, connection):
         super(StreamWrapper, self).__init__(resp, connection)
 
@@ -322,3 +324,23 @@ class StreamWrapper(BodyWrapper):
             self.body.read()
         self.connection.release(True)
         self._closed = True
+
+    def next(self):
+        if not self.stop_stream:
+            try:
+                return super(StreamWrapper, self).next()
+            except Exception, e:
+                raise StopIteration
+
+
+def get_bidder_id(app, session):
+    if 'remote_oauth' in session and 'client_id' in session:
+        if session['remote_oauth'] in app.logins_cache:
+            return app.logins_cache[session['remote_oauth']]
+        else:
+            resp = app.remote_oauth.get('me')
+            if resp.status == 200:
+                app.logins_cache[session['remote_oauth']] = resp.data
+                return resp.data
+            else:
+                return False
