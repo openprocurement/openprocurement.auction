@@ -29,8 +29,7 @@ def sync_design(db):
     views = [endDate_view, startDate_view]
     for view in views:
         view.sync(db)
-    updated = False
-    while not updated:
+    while True:
         design = db.get('_design/auctions')
         validate_doc_update = """
         function(newDoc, oldDoc, userCtx, secObj) {
@@ -46,3 +45,5 @@ def sync_design(db):
                 return db.save(design)
             except HTTPError, e:
                 sleep(randint(0, 2000) / 1000.0)
+        else:
+            return
