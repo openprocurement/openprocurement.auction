@@ -361,7 +361,7 @@
 </body>
 
 <script type=text/javascript>
-var db_url = '{{ db_url }}';
+var db_url = location.protocol + '//' + location.host + '/auctions';
 var auction_doc_id = '{{ auction_doc_id }}';
 </script>
 {% assets "all_js" %}
