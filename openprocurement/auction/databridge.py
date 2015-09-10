@@ -123,17 +123,41 @@ class AuctionsDataBridge(object):
         )
         logger.info("Auction planning command result: {}".format(result))
 
+    def planning_with_couch(self):
+        logger.info('Start Auctions Bridge with feed to couchdb')
+        logger.info('Start data sync...')
+        planned_tenders = {}
+        last_seq_id = 0
+        while True:
+            for tender_item in self.db.changes(
+                    feed='continuous', filter="auctions/by_startDate",
+                    since=last_seq_id, include_docs=True):
+                if 'id' in tender_item:
+                    start_date = tender_item['doc']['stages'][0]['start']
+                    if tender_item['id'] in planned_tenders and \
+                            planned_tenders[tender_item['id']] == start_date:
+                        logger.info('Tender {} filtered'.format(tender_item['id']))
+                        continue
+                    logger.info('Tender {} selected for planning'.format(tender_item['id']))
+                    # self.start_auction_worker(tender_item)
+                    planned_tenders[tender_item['id']] = start_date
+                elif 'last_seq' in tender_item:
+                    last_seq_id = tender_item['last_seq']
+
+            logger.info('Resume data sync...')
+
     def run(self):
         logger.info('Start Auctions Bridge')
         self.offset = ''
+        logger.info('Start data sync...')
         while True:
-            logger.info('Start data sync...')
             for tender_item in self.get_teders_list():
                 logger.debug('Tender {} selected for planning'.format(tender_item))
                 self.start_auction_worker(tender_item)
                 sleep(2)
             logger.info('Sleep...')
             sleep(100)
+            logger.info('Resume data sync...')
 
     def run_re_planning(self):
         self.re_planning = True
@@ -154,12 +178,17 @@ def main():
     parser.add_argument(
         '--re-planning', action='store_true', default=False,
         help='Not ignore auctions which already scheduled')
+    parser.add_argument(
+        '--planning-with-couch', action='store_true', default=False,
+        help='Use couchdb for tenders feed')
     params = parser.parse_args()
     if os.path.isfile(params.config):
         with open(params.config) as config_file_obj:
             config = load(config_file_obj.read())
         logging.config.dictConfig(config)
-        if params.re_planning:
+        if params.planning_with_couch:
+            AuctionsDataBridge(config).planning_with_couch()
+        elif params.re_planning:
             AuctionsDataBridge(config).run_re_planning()
         else:
             AuctionsDataBridge(config).run()
