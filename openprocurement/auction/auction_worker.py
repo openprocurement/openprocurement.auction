@@ -48,6 +48,10 @@ monkey.patch_all()
 MULTILINGUAL_FIELDS = ["title", "description"]
 ADDITIONAL_LANGUAGES = ["ru", "en"]
 
+PLANNING_FULL = "full"
+PLANNING_PARTIAL_DB = "partial_db"
+PLANNING_PARTIAL_CRON = "partial_cron"
+
 ROUNDS = 3
 FIRST_PAUSE_SECONDS = 300
 PAUSE_SECONDS = 120
@@ -843,8 +847,16 @@ def main():
         auction.wait_to_end()
         SCHEDULER.shutdown()
     elif args.cmd == 'planning':
-        auction.prepare_auction_document()
-        if not auction.debug:
+        planning_procerude = worker_defaults.get('planning_procerude', PLANNING_FULL)
+        if planning_procerude == PLANNING_FULL:
+            auction.prepare_auction_document()
+            if not auction.debug:
+                auction.prepare_tasks()
+        elif planning_procerude == PLANNING_PARTIAL_DB:
+            auction.prepare_auction_document()
+        elif planning_procerude == PLANNING_PARTIAL_CRON:
+            auction.generate_request_id()
+            auction.get_auction_info(prepare=True)
             auction.prepare_tasks()
     elif args.cmd == 'cleanup':
         cleanup()
