@@ -254,7 +254,8 @@ def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = 'true'
 
     # Start server on unused port
-    lisener = get_lisener(auction.worker_defaults["STARTS_PORT"])
+    lisener = get_lisener(auction.worker_defaults["STARTS_PORT"],
+                          host=auction.worker_defaults.get("WORKER_BIND_IP", ""))
     app.logger.info(
         "Start server on {0}:{1}".format(*lisener.getsockname()),
         extra={"JOURNAL_REQUEST_ID": auction.request_id}
