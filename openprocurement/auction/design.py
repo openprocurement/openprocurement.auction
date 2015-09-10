@@ -40,7 +40,20 @@ def sync_design(db):
             }
         }
         """
-        if validate_doc_update != design['validate_doc_update']:
+        start_date_filter = """function(doc, req) {
+            var now = new Date();
+            var start = new Date(((doc.stages||[])[0]||{}).start || "2000");
+            if (start > now){
+                return true;
+            }
+            return false;
+        }
+        """
+        if validate_doc_update != design['validate_doc_update'] or \
+                start_date_filter != design.get("filters", {}).get("by_startDate"):
+            design['validate_doc_update'] = validate_doc_update
+            design['filters'] = design.get("filters", {})
+            design['filters']['by_startDate'] = start_date_filter
             try:
                 return db.save(design)
             except HTTPError, e:
