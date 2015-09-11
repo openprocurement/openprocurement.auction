@@ -139,7 +139,7 @@ class AuctionsDataBridge(object):
                         logger.info('Tender {} filtered'.format(tender_item['id']))
                         continue
                     logger.info('Tender {} selected for planning'.format(tender_item['id']))
-                    # self.start_auction_worker(tender_item)
+                    self.start_auction_worker(tender_item)
                     planned_tenders[tender_item['id']] = start_date
                 elif 'last_seq' in tender_item:
                     last_seq_id = tender_item['last_seq']
