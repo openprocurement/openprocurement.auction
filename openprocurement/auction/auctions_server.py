@@ -68,12 +68,13 @@ auctions_server = Flask(
 
 ################################################################################
 assets = Environment(auctions_server)
+assets.manifest = "json:manifest.json"
+
 css = Bundle("vendor/bootstrap/dist/css/bootstrap.min.css",
              "vendor/angular-growl-2/build/angular-growl.min.css",
              "static/css/starter-template.css",
              filters='cssmin,datauri', output='min/styles_%(version)s.css')
 assets.register('all_css', css)
-
 js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
             "vendor/moment/min/moment.min.js",
             "vendor/angular/angular.min.js",
