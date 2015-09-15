@@ -41,14 +41,21 @@ class StreamProxy(HostProxy):
         header_map = {
             'HTTP_HOST': 'X_FORWARDED_SERVER',
             'SCRIPT_NAME': 'X_FORWARDED_SCRIPT_NAME',
-            'wsgi.url_scheme': 'X_FORWARDED_SCHEME',
-            'REMOTE_ADDR': 'X_FORWARDED_FOR',
+            'wsgi.url_scheme': 'X_FORWARDED_SCHEME'
         }
         for key, dest in header_map.items():
             value = environ.get(key)
             if value:
                 environ['HTTP_%s' % dest] = value
         environ['HTTP_X-Forwarded-Path'] = request.url
+        if 'HTTP_X_FORWARDED_FOR' in environ:
+            environ['HTTP_X_FORWARDED_FOR'] = ", ".join(
+                [ip
+                 for ip in environ['HTTP_X_FORWARDED_FOR'].split(", ")
+                 if not ip.startswith("172.")]
+            )
+        else:
+            environ['HTTP_X_FORWARDED_FOR'] = environ['REMOTE_ADDR']
         try:
             response = super(StreamProxy, self).__call__(environ, start_response)
             stream_response = StreamWrapper(response.resp, response.connection)
