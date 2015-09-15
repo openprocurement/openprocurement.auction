@@ -130,11 +130,17 @@ def auction_url(auction_doc_id):
     elif request.user_agent.browser == 'opera':
         if 'Opera Mini' in request.user_agent.string:
             unsupported_browser = True
+    request_base = request.url + '/'
+    if request_base.startswith("https:"):
+        request_base = request_base[6:]
+    else:
+        request_base = request_base[5:]
     return render_template(
         'index.html',
         db_url=auctions_server.config.get('EXT_COUCH_DB'),
         auction_doc_id=auction_doc_id,
-        unsupported_browser=unsupported_browser
+        unsupported_browser=unsupported_browser,
+        request_base=request_base
     )
 
 
