@@ -18,6 +18,7 @@ from restkit.conn import Connection
 from socketpool import ConnectionPool
 from .utils import StreamWrapper
 from collections import deque
+from werkzeug.exceptions import NotFound
 
 
 class StreamProxy(HostProxy):
@@ -58,7 +59,7 @@ class StreamProxy(HostProxy):
             auctions_server.logger.warning(
                 "Error on request to {} with msg {}".format(request.url, e)
             )
-            return (404, request.url, {}, [])
+            return NotFound()(environ, start_response)
 
 auctions_server = Flask(
     __name__,
@@ -70,14 +71,12 @@ auctions_server = Flask(
 assets = Environment(auctions_server)
 assets.manifest = "json:manifest.json"
 
-css = Bundle("vendor/bootstrap/dist/css/bootstrap.min.css",
-             "vendor/angular-growl-2/build/angular-growl.min.css",
+
+css = Bundle("vendor/angular-growl-2/build/angular-growl.min.css",
              "static/css/starter-template.css",
              filters='cssmin,datauri', output='min/styles_%(version)s.css')
 assets.register('all_css', css)
 js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
-            "vendor/moment/min/moment.min.js",
-            "vendor/angular/angular.min.js",
             "vendor/angular-cookies/angular-cookies.min.js",
             "vendor/pouchdb/dist/pouchdb.js",
             "vendor/angular-bootstrap/ui-bootstrap-tpls.min.js",
@@ -212,6 +211,7 @@ def make_auctions_app(global_conf,
                       timezone='Europe/Kiev',
                       preferred_url_scheme='http',
                       debug=False,
+                      auto_build=False,
                       event_source_connection_limit=1000
                       ):
     """
@@ -256,4 +256,5 @@ def make_auctions_app(global_conf,
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
     auctions_server.config['ASSETS_DEBUG'] = True if debug else False
+    assets.auto_build = True if auto_build else False
     return auctions_server

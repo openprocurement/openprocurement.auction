@@ -6,6 +6,7 @@
           display: none !important;
         }
     </style>
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     {% assets "all_css" %}
         <link href="{{ ASSET_URL }}" rel="stylesheet">
     {% endassets %}
@@ -364,6 +365,8 @@
 var db_url = location.protocol + '//' + location.host + '/auctions';
 var auction_doc_id = '{{ auction_doc_id }}';
 </script>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.8/angular.min.js"></script>
 {% assets "all_js" %}
     <script src="{{ ASSET_URL }}"></script>
 {% endassets %}
