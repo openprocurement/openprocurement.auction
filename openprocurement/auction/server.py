@@ -57,9 +57,11 @@ class AuctionsWSGIHandler(WSGIHandler):
         log = self.server.log
         if log:
             extra = prepare_extra_journal_fields(self.headers)
+            real_ip = self.environ.get('HTTP_X_REAL_IP', '')
+            if real_ip.startswith('172.'):
+                real_ip = ''
             extra['JOURNAL_REMOTE_ADDR'] = ','.join(
-                [self.environ.get('HTTP_X_FORWARDED_FOR', ''),
-                 self.environ.get('HTTP_X_REAL_IP', '')]
+                [self.environ.get('HTTP_X_FORWARDED_FOR', ''), real_ip]
             )
             extra['JOURNAL_USER_AGENT'] = self.environ.get('HTTP_USER_AGENT', '')
 

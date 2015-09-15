@@ -94,11 +94,12 @@ def event_source():
                 }
 
             if client_hash not in current_app.auction_bidders[bidder]:
-
+                real_ip = request.environ.get('HTTP_X_REAL_IP', '')
+                if real_ip.startswith('172.'):
+                    real_ip = ''
                 current_app.auction_bidders[bidder]["clients"][client_hash] = {
                     'ip': ','.join(
-                        [request.headers.get('X-Forwarded-For', ''),
-                         request.environ.get('HTTP_X_REAL_IP', '')]
+                        [request.headers.get('X-Forwarded-For', ''), real_ip]
                     ),
                     'User-Agent': request.headers.get('User-Agent'),
                 }
