@@ -19,14 +19,17 @@ from socketpool import ConnectionPool
 from .utils import StreamWrapper
 from collections import deque
 from werkzeug.exceptions import NotFound
+from memoize import Memoizer
 
 
 class StreamProxy(HostProxy):
 
     def __init__(self, uri, event_sources_pool,
+                 auction_doc_id="",
                  event_source_connection_limit=1000,
                  **kwargs):
         super(StreamProxy, self).__init__(uri, **kwargs)
+        self.auction_doc_id = auction_doc_id
         self.event_source_connection_limit = event_source_connection_limit
         self.event_sources = event_sources_pool
 
@@ -66,6 +69,7 @@ class StreamProxy(HostProxy):
             auctions_server.logger.warning(
                 "Error on request to {} with msg {}".format(request.url, e)
             )
+            auctions_server.proxy_mappings.expire(str(self.auction_doc_id))
             return NotFound()(environ, start_response)
 
 auctions_server = Flask(
@@ -85,8 +89,6 @@ css = Bundle("vendor/angular-growl-2/build/angular-growl.min.css",
 assets.register('all_css', css)
 js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
             "vendor/angular-cookies/angular-cookies.min.js",
-            "vendor/pouchdb/dist/pouchdb.js",
-            "vendor/angular-bootstrap/ui-bootstrap-tpls.min.js",
             "vendor/angular-ellipses/src/truncate.js",
             "vendor/angular-timer/dist/angular-timer.min.js",
             "vendor/angular-translate/angular-translate.min.js",
@@ -173,13 +175,18 @@ def auction_list_index():
                        methods=['GET', 'POST'])
 def auctions_proxy(auction_doc_id, path):
     auctions_server.logger.debug('Auction_doc_id: {}'.format(auction_doc_id))
-    proxy_path = auctions_server.redis.get(auction_doc_id)
+    proxy_path = auctions_server.proxy_mappings.get(
+        str(auction_doc_id),
+        auctions_server.redis.get,
+        (str(auction_doc_id), ), max_age=60
+    )
     auctions_server.logger.debug('Proxy path: {}'.format(proxy_path))
     if proxy_path:
         request.environ['PATH_INFO'] = '/' + path
         auctions_server.logger.debug('Start proxy to path: {}'.format(path))
         return StreamProxy(
             proxy_path,
+            auction_doc_id=str(auction_doc_id),
             event_sources_pool=auctions_server.event_sources_pool,
             event_source_connection_limit=auctions_server.config['event_source_connection_limit'],
             pool=auctions_server.proxy_connection_pool,
@@ -198,6 +205,7 @@ def auctions_proxy(auction_doc_id, path):
             mimetype='text/event-stream',
             content_type='text/event-stream'
         )
+
     return abort(404)
 
 
@@ -239,6 +247,7 @@ def make_auctions_app(global_conf,
     auctions_server.proxy_connection_pool = ConnectionPool(
         factory=Connection, max_size=20, backend="gevent"
     )
+    auctions_server.proxy_mappings = Memoizer({})
     auctions_server.event_sources_pool = deque([])
     auctions_server.config['PREFERRED_URL_SCHEME'] = preferred_url_scheme
     auctions_server.config['REDIS_URL'] = redis_url

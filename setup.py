@@ -42,7 +42,8 @@ setup(name='openprocurement.auction',
           'jsmin',
           'PyYAML',
           'request_id_middleware',
-          'restkit'
+          'restkit',
+          'PyMemoize'
       ],
       entry_points={
           'console_scripts': [
