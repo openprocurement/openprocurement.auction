@@ -259,8 +259,8 @@ angular.module('auction').controller('AuctionController', [
     };
 
     $scope.sync_times_with_server = function(start) {
-      $http.get('/get_current_server_time', {'params':{'_nonce': Math.random().toString()}}).success(function(data) {
-        $scope.last_sync = new Date(data);
+      $http.get('/get_current_server_time', {'params':{'_nonce': Math.random().toString()}}).success(function(data, status, headers, config) {
+        $scope.last_sync = new Date(new Date(headers().date));
         $rootScope.info_timer = AuctionUtils.prepare_info_timer_data($scope.last_sync, $scope.auction_doc, $scope.bidder_id, $scope.Rounds);
         $log.debug("Info timer data:", $rootScope.info_timer);
         $rootScope.progres_timer = AuctionUtils.prepare_progress_timer_data($scope.last_sync, $scope.auction_doc);
