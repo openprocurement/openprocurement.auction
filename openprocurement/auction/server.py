@@ -106,7 +106,7 @@ def authorized():
         session['client_id'] = os.urandom(16).encode('hex')
     app.logger.debug("Session: {}".format(repr(session)))
     return redirect(
-        urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
+        urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/') + "?loggedin=1"
     )
 
 
