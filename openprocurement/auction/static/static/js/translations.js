@@ -73,7 +73,8 @@ angular.module('auction')
       'You are registered as a bidder. Wait for the start of the auction.': 'You are registered as a bidder. Wait for the start of the auction.',
       'You are an observer and cannot bid.': 'You are an observer and cannot bid.',
       'Your browser is out of date, and this site may not work properly.': 'Your browser is out of date, and this site may not work properly.',
-      'Learn how to update your browser.': 'Learn how to update your browser.'
+      'Learn how to update your browser.': 'Learn how to update your browser.',
+      'Not Found': 'Not Found'
     });
 
     $translateProvider.translations('uk', {
@@ -148,7 +149,8 @@ angular.module('auction')
       'You are registered as a bidder. Wait for the start of the auction.': 'Ви зареєстровані як учасник. Очікуйте старту аукціону.',
       'You are an observer and cannot bid.': 'Ви спостерігач і не можете робити ставки.',
       'Your browser is out of date, and this site may not work properly.': 'Ваш переглядач застарів, і цей сайт може некоректно працювати.',
-      'Learn how to update your browser.': 'Дізнайтесь, як оновити Ваш браузер.'
+      'Learn how to update your browser.': 'Дізнайтесь, як оновити Ваш браузер.',
+      'Not Found': 'Аукціону із даною Id не знайдено'
     });
 
     $translateProvider.translations('ru', {
@@ -223,6 +225,7 @@ angular.module('auction')
       'You are registered as a bidder. Wait for the start of the auction.': 'Вы зарегистрированы как участник. Ожидайте старта аукциона.',
       'You are an observer and cannot bid.': 'Вы наблюдатель и не можете делать ставки.',
       'Your browser is out of date, and this site may not work properly.': 'Ваш браузер устарел, и этот сайт может некорректно работать.',
-      'Learn how to update your browser.': 'Узнайте, как обновить Ваш браузер.'
+      'Learn how to update your browser.': 'Узнайте, как обновить Ваш браузер.',
+      'Not Found': 'Аукциона по данной Id не найдена'
     });
   }]);
