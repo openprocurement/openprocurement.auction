@@ -34,6 +34,9 @@
         </div>
     {% endif %}
     {% raw %}
+    <div ng-if="document_not_found" translate ng-cloak>
+        Not Found
+    </div>
     <div ng-if="document_exists" ng-cloak>
 
     <div class="container">
