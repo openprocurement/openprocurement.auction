@@ -8,7 +8,6 @@ from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
 from paste.proxy import make_proxy
 from pytz import timezone as tz
-from urlparse import urljoin
 import couchdb
 import time
 from sse import Sse as PySse
@@ -20,6 +19,7 @@ from .utils import StreamWrapper
 from collections import deque
 from werkzeug.exceptions import NotFound
 from memoize import Memoizer
+from urlparse import urlparse, urljoin
 
 
 class StreamProxy(HostProxy):
@@ -69,7 +69,7 @@ class StreamProxy(HostProxy):
             auctions_server.logger.warning(
                 "Error on request to {} with msg {}".format(request.url, e)
             )
-            auctions_server.proxy_mappings.expire(str(self.auction_doc_id))
+            auctions_server.proxy_mappings.expire(str(self.auction_doc_id), 0)
             return NotFound()(environ, start_response)
 
 auctions_server = Flask(
@@ -132,11 +132,8 @@ def auction_url(auction_doc_id):
     elif request.user_agent.browser == 'opera':
         if 'Opera Mini' in request.user_agent.string:
             unsupported_browser = True
-    request_base = request.url + '/'
-    if request_base.startswith("https:"):
-        request_base = request_base[6:]
-    else:
-        request_base = request_base[5:]
+    url_obj = urlparse(request.url)
+    request_base = u'//' + url_obj.netloc + url_obj.path + u'/'
     return render_template(
         'index.html',
         db_url=auctions_server.config.get('EXT_COUCH_DB'),
@@ -217,6 +214,14 @@ def auctions_server_current_server_time():
 
 
 def couch_server_proxy(path):
+    """USED FOR DEBUG ONLY"""
+    return make_proxy(
+        {}, auctions_server.config['PROXY_COUCH_URL'], allowed_request_methods="",
+        suppress_http_headers="")
+
+
+def auth_couch_server_proxy(path):
+    """USED FOR DEBUG ONLY"""
     return make_proxy(
         {}, auctions_server.config['PROXY_COUCH_URL'], allowed_request_methods="",
         suppress_http_headers="")
@@ -266,6 +271,18 @@ def make_auctions_app(global_conf,
         'couch_server_proxy',
         couch_server_proxy,
         methods=['GET'], defaults={'path': ''})
+
+    auctions_server.add_url_rule(
+        '/' + auctions_db + '_secured/<path:path>',
+        'auth_couch_server_proxy',
+        auth_couch_server_proxy,
+        methods=['GET'])
+    auctions_server.add_url_rule(
+        '/' + auctions_db + '_secured/',
+        'auth_couch_server_proxy',
+        auth_couch_server_proxy,
+        methods=['GET'], defaults={'path': ''})
+
     auctions_server.config['INT_COUCH_URL'] = internal_couch_url
     auctions_server.config['PROXY_COUCH_URL'] = proxy_internal_couch_url
     auctions_server.config['COUCH_DB'] = auctions_db
