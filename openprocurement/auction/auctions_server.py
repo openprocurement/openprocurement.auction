@@ -20,6 +20,21 @@ from collections import deque
 from werkzeug.exceptions import NotFound
 from memoize import Memoizer
 from urlparse import urlparse, urljoin
+from http_parser.util import IOrderedDict
+
+
+def start_response_decorated(start_response_decorated):
+    def inner(status, headers):
+        headers_obj = IOrderedDict(headers)
+        if 'Set-Cookie' in headers_obj and ', ' in headers_obj['Set-Cookie']:
+            set_cookie = headers_obj['Set-Cookie']
+            del headers_obj['Set-Cookie']
+            headers_list = headers_obj.items()
+            headers_list += [('Set-Cookie', item)
+                             for item in set_cookie.split(', ')]
+            headers = headers_list
+        return start_response_decorated(status, headers)
+    return inner
 
 
 class StreamProxy(HostProxy):
@@ -60,7 +75,9 @@ class StreamProxy(HostProxy):
         else:
             environ['HTTP_X_FORWARDED_FOR'] = environ['REMOTE_ADDR']
         try:
-            response = super(StreamProxy, self).__call__(environ, start_response)
+            response = super(StreamProxy, self).__call__(
+                environ, start_response_decorated(start_response)
+            )
             stream_response = StreamWrapper(response.resp, response.connection)
             if 'event_source' in stream_response.resp.request.url:
                 self.add_event_source(stream_response)
