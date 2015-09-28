@@ -4,11 +4,11 @@ var dataLayer = dataLayer || [];
 
 angular.module('auction').controller('AuctionController', [
   '$scope', 'AuctionConfig', 'AuctionUtils',
-  '$timeout', '$http', '$log', '$cookies', '$window',
+  '$timeout', '$http', '$log', '$cookies', '$cookieStore', '$window',
   '$rootScope', '$location', '$translate', '$filter', 'growl', 'growlMessages', 'aside', '$q',
   function(
     $scope, AuctionConfig, AuctionUtils,
-    $timeout, $http, $log, $cookies, $window,
+    $timeout, $http, $log, $cookies, $cookieStore, $window,
     $rootScope, $location, $translate, $filter, growl, growlMessages, $aside, $q
   ) {
     if (AuctionUtils.inIframe()) {
@@ -27,7 +27,7 @@ angular.module('auction').controller('AuctionController', [
     $scope.http_error_timeout = $scope.default_http_error_timeout;
     $scope.start = function() {
       var params = AuctionUtils.parseQueryString(location.search);
-      if (params.loggedin) {
+      if ($cookies.auctions_loggedin) {
         AuctionConfig.remote_db = AuctionConfig.remote_db + "_secured";
       }
 
@@ -315,7 +315,7 @@ angular.module('auction').controller('AuctionController', [
           }
           $scope.login_params = params;
           delete $scope.login_params.wait;
-          $scope.login_url = AuctionConfig.auction_doc_id + '/login?' + AuctionUtils.stringifyQueryString($scope.login_params);
+          $scope.login_url = './login?' + AuctionUtils.stringifyQueryString($scope.login_params);
         } else {
           $scope.follow_login_allowed = false;
         }
@@ -513,7 +513,7 @@ angular.module('auction').controller('AuctionController', [
         $scope.document_exists = true;
         $scope.scroll_to_stage();
         if ($scope.auction_doc.current_stage != ($scope.auction_doc.stages.length - 1)) {
-          if (params.loggedin) {
+          if ($cookieStore.get('auctions_loggedin')) {
             $scope.start_subscribe();
           } else {
             $log.debug("Start anonimous")
@@ -530,7 +530,8 @@ angular.module('auction').controller('AuctionController', [
             $scope.sync = $scope.start_sync()
           });
         } else {
-          if (params.loggedin) {
+          if ($cookieStore.get('auctions_loggedin')) {
+            $cookieStore.remove('auctions_loggedin');
             $timeout(function() {
               window.location.replace(window.location.protocol + '//' + window.location.host + window.location.pathname);
             }, 1000);
