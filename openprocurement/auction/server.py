@@ -105,9 +105,14 @@ def authorized():
         session['remote_oauth'] = (resp['access_token'], '')
         session['client_id'] = os.urandom(16).encode('hex')
     app.logger.debug("Session: {}".format(repr(session)))
-    return redirect(
-        urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/') + "?loggedin=1"
+    response = redirect(
+        urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
     )
+    response.set_cookie('auctions_loggedin', '1',
+                        path=app.config['SESSION_COOKIE_PATH'],
+                        secure=False, httponly=False
+                        )
+    return response
 
 
 @app.route('/relogin')
