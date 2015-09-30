@@ -21,17 +21,22 @@ from werkzeug.exceptions import NotFound
 from memoize import Memoizer
 from urlparse import urlparse, urljoin
 from http_parser.util import IOrderedDict
+from Cookie import SimpleCookie
 
 
 def start_response_decorated(start_response_decorated):
     def inner(status, headers):
         headers_obj = IOrderedDict(headers)
         if 'Set-Cookie' in headers_obj and ', ' in headers_obj['Set-Cookie']:
-            set_cookie = headers_obj['Set-Cookie']
+            cookie = SimpleCookie()
+            cookie.load(headers_obj['Set-Cookie'])
             del headers_obj['Set-Cookie']
             headers_list = headers_obj.items()
-            headers_list += [('Set-Cookie', item)
-                             for item in set_cookie.split(', ')]
+            for key in ("auctions_loggedin", "auction_session"):
+                if key in cookie:
+                    headers_list += [
+                        ('Set-Cookie', cookie[key].output(header="").lstrip().rstrip(','))
+                    ]
             headers = headers_list
         return start_response_decorated(status, headers)
     return inner
