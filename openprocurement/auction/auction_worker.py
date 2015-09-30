@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from gevent import monkey
+monkey.patch_all()
+
 import argparse
 import logging
 import logging.config
@@ -40,10 +43,9 @@ from .templates import (
     generate_bids_stage,
     get_template
 )
-from gevent import monkey
+
 from yaml import safe_dump as yaml_dump
 
-monkey.patch_all()
 
 MULTILINGUAL_FIELDS = ["title", "description"]
 ADDITIONAL_LANGUAGES = ["ru", "en"]
