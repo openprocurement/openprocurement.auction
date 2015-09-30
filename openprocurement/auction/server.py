@@ -110,7 +110,7 @@ def authorized():
     )
     response.set_cookie('auctions_loggedin', '1',
                         path=app.config['SESSION_COOKIE_PATH'],
-                        secure=False, httponly=False
+                        secure=False, httponly=False, max_age=36000
                         )
     return response
 
@@ -250,7 +250,6 @@ def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
         consumer_secret=app.config['OAUTH_CLIENT_SECRET'],
         request_token_params={'scope': 'email'},
         base_url=app.config['OAUTH_BASE_URL'],
-        request_token_url=app.config['OAUTH_REQUEST_TOKEN_URL'],
         access_token_url=app.config['OAUTH_ACCESS_TOKEN_URL'],
         authorize_url=app.config['OAUTH_AUTHORIZE_URL']
     )

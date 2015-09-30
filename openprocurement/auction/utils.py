@@ -12,7 +12,9 @@ from gevent.baseserver import parse_address
 from redis import Redis
 import uuid
 
+from pkg_resources import parse_version
 from restkit.wrappers import BodyWrapper
+from barbecue import chef
 
 
 EXTRA_LOGGING_VALUES = {
@@ -109,7 +111,7 @@ def sorting_by_amount(bids, reverse=True):
     return sorted(bids, reverse=reverse, cmp=bids_compare)
 
 
-def sorting_start_bids_by_amount(bids, reverse=True):
+def sorting_start_bids_by_amount(bids, features=None, reverse=True):
     """
     >>> from json import load
     >>> import os
@@ -128,7 +130,8 @@ def sorting_start_bids_by_amount(bids, reverse=True):
     def get_amount(item):
         return item['value']['amount']
 
-    return sorted(bids, key=get_amount, reverse=reverse)
+    # return sorted(bids, key=get_amount, reverse=reverse)
+    return chef(bids, features=features)
 
 
 def sorting_by_time(bids, reverse=True):
@@ -344,3 +347,16 @@ def get_bidder_id(app, session):
                 return resp.data
             else:
                 return False
+
+
+def unsuported_browser(request):
+    if request.user_agent.browser == 'msie':
+        if parse_version(request.user_agent.version) <= parse_version('9'):
+            return True
+        # Add to blacklist IE11
+        if parse_version(request.user_agent.version) >= parse_version('11'):
+            return True
+    elif request.user_agent.browser == 'opera':
+        if 'Opera Mini' in request.user_agent.string:
+            return True
+    return False

@@ -11,7 +11,7 @@ INITIAL_BIDS_TEMPLATE = Template(u'''{
     "label": {"en": "Bidder #{{ bidder_name }}",
               "ru": "Участник №{{ bidder_name }}",
               "uk": "Учасник №{{ bidder_name }}"},
-    "amount": {{ amount }}
+    "amount": "{{ amount }}"
 }''')
 
 PAUSE_TEMPLATE = Template(u'''{
@@ -32,7 +32,7 @@ BIDS_TEMPLATE = Template(u'''{
               "ru": "",
               "uk": ""},
     {% endif %}
-    "amount": {{ amount }},
+    "amount": "{{ amount }}",
     "time": "{{ time }}"
 }''')
 
@@ -47,7 +47,7 @@ RESULTS_TEMPLATE = Template(u'''{
     "label": {"en": "Bidder #{{ bidder_name }}",
               "ru": "Участник №{{ bidder_name }}",
               "uk": "Учасник №{{ bidder_name }}"},
-    "amount": {{ amount }},
+    "amount": "{{ amount }}",
     "time": "{{ time }}"
 }''')
 

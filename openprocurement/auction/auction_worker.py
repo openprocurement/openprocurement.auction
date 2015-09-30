@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from gevent import monkey
+monkey.patch_all()
+##################################
 import argparse
 import logging
 import logging.config
@@ -40,10 +43,9 @@ from .templates import (
     generate_bids_stage,
     get_template
 )
-from gevent import monkey
-from yaml import safe_dump as yaml_dump
 
-monkey.patch_all()
+from yaml import safe_dump as yaml_dump
+from barbecue import chef, cooking, calculate_coeficients
 
 MULTILINGUAL_FIELDS = ["title", "description"]
 ADDITIONAL_LANGUAGES = ["ru", "en"]
@@ -243,6 +245,15 @@ class Auction(object):
                 self.rounds_stages.append(stage)
         self.bidders = [bid["id"] for bid in self._auction_data["data"]["bids"]]
         self.mapping = {}
+        if "features" in self._auction_data["data"]:
+            self.bidders_features = {}
+            self.features = self._auction_data["data"]["features"]
+            for bid in self._auction_data["data"]["bids"]:
+                self.bidders_features[bid["id"]] = bid["parameters"]
+        else:
+            self.bidders_features = None
+            self.features = None
+
         for index, uid in enumerate(self.bidders):
             self.mapping[uid] = str(index + 1)
 
@@ -501,13 +512,20 @@ class Auction(object):
         # Initital Bids
         bids = deepcopy(self._auction_data['data']['bids'])
         self.auction_document["initial_bids"] = []
-        bids_info = sorting_start_bids_by_amount(bids)
+        bids_info = sorting_start_bids_by_amount(bids, features=self.features)
         for index, bid in enumerate(bids_info):
+            if self.bidders_features:
+                amount = cooking(
+                    bid["value"]["amount"],
+                    self.features, self.bidders_features[bid["id"]]
+                )
+            else:
+                amount = bid["value"]["amount"]
             self.audit['timeline']['auction_start']['initial_bids'].append(
                 {
                     "bidder": bid["id"],
                     "date": bid["date"],
-                    "amount": bid["value"]["amount"]
+                    "amount": str(amount)
                 }
             )
 
@@ -516,7 +534,7 @@ class Auction(object):
                     time=bid["date"] if "date" in bid else self.startDate,
                     bidder_id=bid["id"],
                     bidder_name=self.mapping[bid["id"]],
-                    amount=bid["value"]["amount"]
+                    amount=str(amount)
                 ))
             )
 

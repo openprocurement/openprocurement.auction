@@ -43,7 +43,8 @@ setup(name='openprocurement.auction',
           'PyYAML',
           'request_id_middleware',
           'restkit',
-          'PyMemoize'
+          'PyMemoize',
+          'barbecue'
       ],
       entry_points={
           'console_scripts': [

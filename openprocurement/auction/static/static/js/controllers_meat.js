@@ -31,7 +31,9 @@ angular.module('auction').controller('AuctionController', [
         AuctionConfig.remote_db = AuctionConfig.remote_db + "_secured";
       }
 
-      new PouchDB(AuctionConfig.remote_db).then(function(db) {
+      new PouchDB(AuctionConfig.remote_db, {
+        skipSetup: true
+      }).then(function(db) {
         $scope.db = db;
         $scope.http_error_timeout = $scope.default_http_error_timeout;
         $scope.start_auction_process();
@@ -39,7 +41,7 @@ angular.module('auction').controller('AuctionController', [
         $log.debug("Error", err);
         $scope.http_error_timeout = $scope.http_error_timeout * 2;
         $timeout(function() {
-          $scope.start();
+          $scope.get_database();
         }, $scope.http_error_timeout);
       });
     }
@@ -169,7 +171,7 @@ angular.module('auction').controller('AuctionController', [
         var data = angular.fromJson(e.data);
         $scope.last_sync = new Date(data.time);
         $log.debug("Tick: ", data);
-        if ($scope.auction_doc.current_stage > -1) {
+        if ($scope.auction_doc.stage > -1) {
           $rootScope.info_timer = AuctionUtils.prepare_info_timer_data($scope.last_sync, $scope.auction_doc, $scope.bidder_id, $scope.Rounds);
           $log.debug("Info timer data:", $rootScope.info_timer);
           $rootScope.progres_timer = AuctionUtils.prepare_progress_timer_data($scope.last_sync, $scope.auction_doc);
@@ -429,20 +431,29 @@ angular.module('auction').controller('AuctionController', [
     $scope.calculate_minimal_bid_amount = function() {
       if ((angular.isObject($scope.auction_doc)) && (angular.isArray($scope.auction_doc.stages)) && (angular.isArray($scope.auction_doc.initial_bids))) {
         var bids = [];
+
+
         filter_func = function(item, index) {
           if (!angular.isUndefined(item.amount)) {
-            bids.push(item);
+            bids.push(item.amount);
+
+            console.log(item)
           }
         };
-        
+
+
         $scope.auction_doc.stages.forEach(filter_func);
         $scope.auction_doc.initial_bids.forEach(filter_func);
         $scope.minimal_bid = bids.sort(function(a, b) {
-            if ( a.amount == b.amount ) {
-                return Date.parse(a.time||"") - Date.parse(b.time||"");
-            }
-            return a.amount - b.amount;
+          return math.fraction(a) - math.fraction(b);
+          // return a - b;
         })[0];
+
+
+        console.log(bids)
+
+
+
       }
     };
     $scope.start_sync = function() {
@@ -532,13 +543,12 @@ angular.module('auction').controller('AuctionController', [
             $scope.sync = $scope.start_sync()
           });
         } else {
-          // if ($cookieStore.get('auctions_loggedin')) {
-          //   $cookieStore.remove('auctions_loggedin');
-          //   $log.debug('Refresh page');
-          //   $timeout(function() {
-          //     window.location.replace(window.location.protocol + '//' + window.location.host + window.location.pathname);
-          //   }, 1000);
-          // }
+          if ($cookieStore.get('auctions_loggedin')) {
+            $cookieStore.remove('auctions_loggedin');
+            $timeout(function() {
+              window.location.replace(window.location.protocol + '//' + window.location.host + window.location.pathname);
+            }, 1000);
+          }
         }
       });
     };
@@ -648,3 +658,15 @@ angular.module('auction')
       replace: true
     };
   });
+
+angular.module('auction')
+  .filter('fraction', ['$filter',
+    function(filter) {
+      return function(val) {
+        var format_function = function(val) {
+          return (filter('number')(val, 2) || "").replace(/,/g, " ") || "";
+        }
+        return format_function(math.eval(math.format(math.fraction(val))).toFixed(2))
+      }
+    }
+  ]);

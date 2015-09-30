@@ -9,7 +9,7 @@ app.constant('AuctionConfig', {
     remote_db: db_url,
     restart_retries: 10,
     default_lang: 'uk',
-    debug: false
+    debug: true
 });
 
 app.filter('formatnumber', ['$filter',
