@@ -74,7 +74,8 @@ angular.module('auction')
       'You are an observer and cannot bid.': 'You are an observer and cannot bid.',
       'Your browser is out of date, and this site may not work properly.': 'Your browser is out of date, and this site may not work properly.',
       'Learn how to update your browser.': 'Learn how to update your browser.',
-      'Not Found': 'Not Found'
+      'Not Found': 'Not Found',
+      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.':'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.'
     });
 
     $translateProvider.translations('uk', {
@@ -150,7 +151,8 @@ angular.module('auction')
       'You are an observer and cannot bid.': 'Ви спостерігач і не можете робити ставки.',
       'Your browser is out of date, and this site may not work properly.': 'Ваш переглядач застарів, і цей сайт може некоректно працювати.',
       'Learn how to update your browser.': 'Дізнайтесь, як оновити Ваш браузер.',
-      'Not Found': 'Аукціону із даною Id не знайдено'
+      'Not Found': 'Аукціону із даною Id не знайдено',
+      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.':'Подана вами пропозиція співпадає з пропозицією іншого учасника. Його пропозиція розглядатиметься першою, оскільки вона подана раніше.'
     });
 
     $translateProvider.translations('ru', {
@@ -226,6 +228,7 @@ angular.module('auction')
       'You are an observer and cannot bid.': 'Вы наблюдатель и не можете делать ставки.',
       'Your browser is out of date, and this site may not work properly.': 'Ваш браузер устарел, и этот сайт может некорректно работать.',
       'Learn how to update your browser.': 'Узнайте, как обновить Ваш браузер.',
-      'Not Found': 'Аукциона по данной Id не найдена'
+      'Not Found': 'Аукциона по данной Id не найдена',
+      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.':'Поданное вами предложение совпадает с предложением другого участника. Его предложение будет рассматриваться первым, поскольку оно подано раньше.'
     });
   }]);

@@ -41,10 +41,10 @@ angular.module('auction').controller('AuctionController', [
         $log.debug("Error", err);
         $scope.http_error_timeout = $scope.http_error_timeout * 2;
         $timeout(function() {
-          $scope.get_database();
+          $scope.start();
         }, $scope.http_error_timeout);
       });
-    }
+    };
 
 
 
@@ -171,7 +171,7 @@ angular.module('auction').controller('AuctionController', [
         var data = angular.fromJson(e.data);
         $scope.last_sync = new Date(data.time);
         $log.debug("Tick: ", data);
-        if ($scope.auction_doc.stage > -1) {
+        if ($scope.auction_doc.current_stage > -1) {
           $rootScope.info_timer = AuctionUtils.prepare_info_timer_data($scope.last_sync, $scope.auction_doc, $scope.bidder_id, $scope.Rounds);
           $log.debug("Info timer data:", $rootScope.info_timer);
           $rootScope.progres_timer = AuctionUtils.prepare_progress_timer_data($scope.last_sync, $scope.auction_doc);
@@ -335,6 +335,16 @@ angular.module('auction').controller('AuctionController', [
         return 0;
       }
       if ($rootScope.form.BidsForm.$valid) {
+        $rootScope.alerts = [];
+        var bid_amount = parseFloat(bid) || parseFloat($rootScope.form.bid) || 0;
+        if ( bid_amount == $scope.minimal_bid.amount) {
+            msg_id = Math.random();
+            $rootScope.alerts.push({
+              msg_id: msg_id,
+              type: 'danger',
+              msg: 'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.'
+            });
+        } 
         $rootScope.form.active = true;
         $timeout(function() {
           $rootScope.form.active = false;
@@ -370,6 +380,7 @@ angular.module('auction').controller('AuctionController', [
               msg_id = Math.random();
 
               if (bid == -1) {
+                $rootScope.alerts = [];
                 $scope.allow_bidding = true;
                 $rootScope.alerts.push({
                   msg_id: msg_id,
@@ -433,13 +444,16 @@ angular.module('auction').controller('AuctionController', [
         var bids = [];
         filter_func = function(item, index) {
           if (!angular.isUndefined(item.amount)) {
-            bids.push(item.amount);
+            bids.push(item);
           }
         };
         $scope.auction_doc.stages.forEach(filter_func);
         $scope.auction_doc.initial_bids.forEach(filter_func);
         $scope.minimal_bid = bids.sort(function(a, b) {
-          return a - b;
+          if (a.amount == b.amount) {
+            return Date.parse(a.time || "") - Date.parse(b.time || "");
+          }
+          return a.amount - b.amount;
         })[0];
       }
     };
@@ -530,12 +544,13 @@ angular.module('auction').controller('AuctionController', [
             $scope.sync = $scope.start_sync()
           });
         } else {
-          if ($cookieStore.get('auctions_loggedin')) {
-            $cookieStore.remove('auctions_loggedin');
-            $timeout(function() {
-              window.location.replace(window.location.protocol + '//' + window.location.host + window.location.pathname);
-            }, 1000);
-          }
+          // TODO: CLEAR COOKIE
+          // if ($cookieStore.get('auctions_loggedin')) {
+          //   $cookieStore.remove('auctions_loggedin');
+          //   $timeout(function() {
+          //     window.location.replace(window.location.protocol + '//' + window.location.host + window.location.pathname);
+          //   }, 1000);
+          // }
         }
       });
     };

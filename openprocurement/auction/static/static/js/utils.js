@@ -17,7 +17,7 @@ angular.module('auction')
       }
       if (auction.current_stage === -1) {
         return {
-          'countdown': ((new Date(auction.stages[0].start) - current_time) / 1000),
+          'countdown': ((new Date(auction.stages[0].start) - current_time) / 1000) + Math.random(),
           'start_time': false,
           'msg': 'until the auction starts'
         };
@@ -37,7 +37,7 @@ angular.module('auction')
       if (bidder_id) {
         if (auction.stages[auction.current_stage].bidder_id === bidder_id) {
           return {
-            'countdown': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
+            'countdown': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000) + Math.random(),
             'start_time': false,
             'msg': 'until your turn ends'
           };
@@ -48,7 +48,7 @@ angular.module('auction')
             for (var index = auction.current_stage; index <= all_rounds[i]; index++) {
               if ((auction.stages[index].bidder_id) && (auction.stages[index].bidder_id === bidder_id)) {
                 return {
-                  'countdown': ((new Date(auction.stages[index].start) - current_time) / 1000),
+                  'countdown': ((new Date(auction.stages[index].start) - current_time) / 1000) + Math.random(),
                   'start_time': false,
                   'msg': 'until your turn'
                 };
@@ -61,14 +61,14 @@ angular.module('auction')
       for (i in Rounds) {
         if (auction.current_stage == Rounds[i]) {
           return {
-            'countdown': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
+            'countdown': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000) + Math.random(),
             'start_time': false,
             'msg': 'until the round starts'
           };
         }
         if (auction.current_stage < Rounds[i]) {
           return {
-            'countdown': ((new Date(auction.stages[Rounds[i]].start) - current_time) / 1000),
+            'countdown': ((new Date(auction.stages[Rounds[i]].start) - current_time) / 1000) + Math.random(),
             'start_time': false,
             'msg': 'until the round ends'
           };
@@ -76,7 +76,7 @@ angular.module('auction')
       }
       if (auction.current_stage < (auction.stages.length - 1)) {
         return {
-          'countdown': ((new Date(auction.stages[auction.stages.length - 1].start) - current_time) / 1000),
+          'countdown': ((new Date(auction.stages[auction.stages.length - 1].start) - current_time) / 1000) + Math.random(),
           'start_time': false,
           'msg': 'until the results announcement'
         };
@@ -92,12 +92,12 @@ angular.module('auction')
       }
       if (auction.current_stage === -1) {
         return {
-          'countdown_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000),
+          'countdown_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000) + Math.random(),
           'rounds_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000),
         };
       }
       return {
-        'countdown_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000),
+        'countdown_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000) + Math.random(),
         'rounds_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - new Date(auction.stages[auction.current_stage].start)) / 1000),
       };
 
