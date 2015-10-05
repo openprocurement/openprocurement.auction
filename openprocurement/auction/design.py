@@ -31,6 +31,8 @@ def sync_design(db):
         view.sync(db)
     while True:
         design = db.get('_design/auctions')
+        if not design:
+            design = {'_id': '_design/auctions'}
         validate_doc_update = """
         function(newDoc, oldDoc, userCtx, secObj) {
             if (userCtx.roles.indexOf('_admin') !== -1) {
@@ -49,7 +51,8 @@ def sync_design(db):
             return false;
         }
         """
-        if validate_doc_update != design['validate_doc_update'] or \
+        if 'validate_doc_update' not in design or \
+                validate_doc_update != design['validate_doc_update'] or \
                 start_date_filter != design.get("filters", {}).get("by_startDate"):
             design['validate_doc_update'] = validate_doc_update
             design['filters'] = design.get("filters", {})
