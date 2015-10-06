@@ -105,6 +105,9 @@ class Auction(object):
         while retries:
             try:
                 self.auction_document = self.db.get(self.auction_doc_id)
+                if self.auction_document:
+                    logger.info("Get auction document {0[_id]} with rev {0[_rev]}".format(self.auction_document),
+                                extra={"JOURNAL_REQUEST_ID": self.request_id})
                 return
             except HTTPError, e:
                 logger.error("Error while get document: {}".format(e))
@@ -114,7 +117,11 @@ class Auction(object):
         retries = 10
         while retries:
             try:
-                return self.db.save(self.auction_document)
+                response = self.db.save(self.auction_document)
+                if len(response) == 2:
+                    logger.info("Saved auction document {0} with rev {1}".format(*response),
+                                extra={"JOURNAL_REQUEST_ID": self.request_id})
+                return response
             except HTTPError, e:
                 logger.error("Error while save document: {}".format(e))
             new_doc = self.auction_document
@@ -231,8 +238,9 @@ class Auction(object):
                         self.auction_doc_id
                     ), extra={"JOURNAL_REQUEST_ID": self.request_id})
                 sys.exit(1)
-
         self.bidders_count = len(self._auction_data["data"]["bids"])
+        logger.info("Bidders count: {}".format(self.bidders_count),
+                    extra={"JOURNAL_REQUEST_ID": self.request_id})
         self.rounds_stages = []
         for stage in range((self.bidders_count + 1) * ROUNDS + 1):
             if (stage + self.bidders_count) % (self.bidders_count + 1) == 0:
