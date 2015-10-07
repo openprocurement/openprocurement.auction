@@ -1,21 +1,20 @@
+from gevent import monkey
+monkey.patch_all()
+
 from datetime import datetime
 from design import sync_design, endDate_view
-from flask import Flask, render_template, request, abort, url_for, redirect, Response, make_response
+from flask import Flask, render_template, request, abort, url_for, redirect, Response
 from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
-from gevent import monkey
 from paste.proxy import make_proxy
 from pytz import timezone as tz
 from urlparse import urljoin
 from wsgiproxy import HostProxy
-import couchdb
+from couchdb.client import Database, Session
 import time
 from sse import Sse as PySse
-from webob.exc import HTTPNotFound
 from pkg_resources import parse_version
 from requests.exceptions import ConnectionError
-
-monkey.patch_all()
 
 
 class AuctionsHostProxy(HostProxy):
@@ -208,9 +207,10 @@ def make_auctions_app(global_conf,
     auctions_server.config['COUCH_DB'] = auctions_db
     auctions_server.config['TIMEZONE'] = tz(timezone)
     auctions_server.redis = Redis(auctions_server)
-    auctions_server.db = couchdb.client.Database(
+    auctions_server.db = Database(
         urljoin(auctions_server.config.get('INT_COUCH_URL'),
-                auctions_server.config['COUCH_DB'])
+                auctions_server.config['COUCH_DB']),
+        session=Session(retry_delays=range(10))
     )
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)

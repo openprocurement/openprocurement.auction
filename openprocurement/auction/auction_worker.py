@@ -12,7 +12,7 @@ from dateutil.tz import tzlocal
 from copy import deepcopy
 from datetime import timedelta, datetime
 from pytz import timezone
-from couchdb.client import Database
+from couchdb.client import Database, Session
 from couchdb.http import HTTPError
 from gevent.event import Event
 from gevent.coros import BoundedSemaphore
@@ -94,7 +94,8 @@ class Auction(object):
         self.bids_actions = BoundedSemaphore()
         self.worker_defaults = worker_defaults
         self._bids_data = {}
-        self.db = Database(str(self.worker_defaults["COUCH_DATABASE"]))
+        self.db = Database(str(self.worker_defaults["COUCH_DATABASE"]),
+                           session=Session(retry_delays=range(10)))
         self.retries = 10
 
     def generate_request_id(self):
