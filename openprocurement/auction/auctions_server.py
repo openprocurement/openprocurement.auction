@@ -10,7 +10,7 @@ from paste.proxy import make_proxy
 from pytz import timezone as tz
 from urlparse import urljoin
 from wsgiproxy import HostProxy
-from couchdb.client import Database, Session
+from couchdb import Database, Session
 import time
 from sse import Sse as PySse
 from pkg_resources import parse_version

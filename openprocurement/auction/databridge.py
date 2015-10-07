@@ -9,7 +9,7 @@ from urlparse import urljoin
 from datetime import datetime
 from dateutil.tz import tzlocal
 from subprocess import check_output
-from couchdb.client import Database, Session
+from couchdb import Database, Session
 from time import time
 import iso8601
 from .design import endDate_view, startDate_view
