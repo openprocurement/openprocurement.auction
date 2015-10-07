@@ -12,12 +12,13 @@ from dateutil.tz import tzlocal
 from copy import deepcopy
 from datetime import timedelta, datetime
 from pytz import timezone
-from couchdb.client import Database, Session
+from couchdb import Database, Session
 from couchdb.http import HTTPError
 from gevent.event import Event
 from gevent.coros import BoundedSemaphore
 from gevent.subprocess import call
 from apscheduler.schedulers.gevent import GeventScheduler
+from apscheduler.jobstores.memory import MemoryJobStore
 from pkg_resources import parse_version
 from .server import run_server
 from .utils import (
@@ -30,6 +31,7 @@ from .utils import (
     delete_mapping,
     generate_request_id
 )
+from .executor import AuctionsExecutor
 
 from .templates import (
     INITIAL_BIDS_TEMPLATE,
@@ -65,10 +67,12 @@ TIMER_STAMP = re.compile(
     r"-(?P<mon>[0-9][0-9])-(?P<day>[0123][0-9]) "
     r"(?P<hour>[0-2][0-9]):(?P<min>[0-5][0-9]):(?P<sec>[0-5][0-9])"
 )
-SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100})
-SCHEDULER.timezone = timezone('Europe/Kiev')
-
 logger = logging.getLogger('Auction Worker')
+
+SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100},
+                            executors={'default': AuctionsExecutor()},
+                            logger=logger)
+SCHEDULER.timezone = timezone('Europe/Kiev')
 
 
 class Auction(object):
@@ -443,7 +447,8 @@ class Auction(object):
             run_date=self.convert_datetime(
                 self.auction_document['stages'][0]['start']
             ),
-            name="Start of Auction"
+            name="Start of Auction",
+            id="Start of Auction"
         )
         round_number += 1
 
@@ -452,8 +457,8 @@ class Auction(object):
             run_date=self.convert_datetime(
                 self.auction_document['stages'][1]['start']
             ),
-            name="End of Pause Stage: [0 -> 1]"
-
+            name="End of Pause Stage: [0 -> 1]",
+            id="End of Pause Stage: [0 -> 1]"
         )
         round_number += 1
 
@@ -465,7 +470,8 @@ class Auction(object):
                     run_date=self.convert_datetime(
                         self.auction_document['stages'][index]['start']
                     ),
-                    name="End of Bids Stage: [{} -> {}]".format(index - 1, index)
+                    name="End of Bids Stage: [{} -> {}]".format(index - 1, index),
+                    id="End of Bids Stage: [{} -> {}]".format(index - 1, index)
                 )
             elif self.auction_document['stages'][index - 1]['type'] == 'pause':
                 SCHEDULER.add_job(
@@ -474,7 +480,8 @@ class Auction(object):
                     run_date=self.convert_datetime(
                         self.auction_document['stages'][index]['start']
                     ),
-                    name="End of Pause Stage: [{} -> {}]".format(index - 1, index)
+                    name="End of Pause Stage: [{} -> {}]".format(index - 1, index),
+                    id="End of Pause Stage: [{} -> {}]".format(index - 1, index)
                 )
             round_number += 1
         logger.info(
