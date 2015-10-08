@@ -314,6 +314,9 @@ class Auction(object):
         if not self.auction_document:
             self.auction_document = {}
 
+        if self.debug:
+            self.auction_document['mode'] = 'test'
+
         self.auction_document.update(
             {"_id": self.auction_doc_id,
              "stages": [],

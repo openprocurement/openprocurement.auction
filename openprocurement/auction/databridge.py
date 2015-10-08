@@ -135,9 +135,14 @@ class AuctionsDataBridge(object):
                     since=last_seq_id, include_docs=True):
                 if 'id' in tender_item:
                     start_date = tender_item['doc']['stages'][0]['start']
+
+                    if tender_item.get("mode", "") == "test":
+                        logger.info('Sciped test auction {}'.format(tender_item['id']))
+                        continue
+
                     if tender_item['id'] in planned_tenders and \
                             planned_tenders[tender_item['id']] == start_date:
-                        logger.info('Tender {} filtered'.format(tender_item['id']))
+                        logger.debug('Tender {} filtered'.format(tender_item['id']))
                         continue
                     logger.info('Tender {} selected for planning'.format(tender_item['id']))
                     self.start_auction_worker(tender_item)
