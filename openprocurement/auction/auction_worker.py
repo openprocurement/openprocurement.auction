@@ -21,8 +21,6 @@ from gevent.event import Event
 from gevent.coros import BoundedSemaphore
 from gevent.subprocess import call
 from apscheduler.schedulers.gevent import GeventScheduler
-from apscheduler.jobstores.memory import MemoryJobStore
-from pkg_resources import parse_version
 from .server import run_server
 from .utils import (
     sorting_by_amount,
@@ -344,12 +342,6 @@ class Auction(object):
             self.set_auction_and_participation_urls()
 
     def set_auction_and_participation_urls(self):
-        if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.6'):
-            logger.info(
-                "Version of API not support setup auction url.",
-                extra={"JOURNAL_REQUEST_ID": self.request_id}
-            )
-            return None
         auction_url = self.worker_defaults["AUCTIONS_URL"].format(
             auction_id=self.auction_doc_id
         )
@@ -509,6 +501,8 @@ class Auction(object):
 
     def wait_to_end(self):
         self._end_auction_event.wait()
+        logger.info("Stop auction worker",
+                    extra={"JOURNAL_REQUEST_ID": self.request_id})
 
     def start_auction(self, switch_to_round=None):
         self.generate_request_id()
@@ -724,25 +718,25 @@ class Auction(object):
     def put_auction_data(self):
         doc_id = None
         self.approve_audit_info_on_announcement()
-        if parse_version(self.worker_defaults['TENDERS_API_VERSION']) > parse_version('0.6'):
-            files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
-            response = patch_tender_data(
-                self.tender_url + '/documents', files=files,
-                user=self.worker_defaults["TENDERS_API_TOKEN"],
-                method='post', request_id=self.request_id,
-                retry_count=2
+
+        files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
+        response = patch_tender_data(
+            self.tender_url + '/documents', files=files,
+            user=self.worker_defaults["TENDERS_API_TOKEN"],
+            method='post', request_id=self.request_id,
+            retry_count=2
+        )
+        if response:
+            doc_id = response["data"]['id']
+            logger.info(
+                "Audit log approved. Document id: {}".format(doc_id),
+                extra={"JOURNAL_REQUEST_ID": self.request_id}
             )
-            if response:
-                doc_id = response["data"]['id']
-                logger.info(
-                    "Audit log approved. Document id: {}".format(doc_id),
-                    extra={"JOURNAL_REQUEST_ID": self.request_id}
-                )
-            else:
-                logger.warning(
-                    "Audit log not approved.",
-                    extra={"JOURNAL_REQUEST_ID": self.request_id}
-                )
+        else:
+            logger.warning(
+                "Audit log not approved.",
+                extra={"JOURNAL_REQUEST_ID": self.request_id}
+            )
 
         all_bids = self.auction_document["results"]
         logger.info(
@@ -757,16 +751,10 @@ class Auction(object):
 
         # clear data
         data = {'data': {'bids': self._auction_data["data"]['bids']}}
-
-        if parse_version(self.worker_defaults['TENDERS_API_VERSION']) < parse_version('0.6'):
-            results_submit_method = 'patch'
-        else:
-            results_submit_method = 'post'
-
         results = patch_tender_data(
             self.tender_url + '/auction', data=data,
             user=self.worker_defaults["TENDERS_API_TOKEN"],
-            method=results_submit_method,
+            method='post',
             request_id=self.request_id
         )
         if results:
@@ -779,7 +767,7 @@ class Auction(object):
                         self.auction_document[section][index]["label"]["ru"] = bids_dict[stage['bidder_id']][0]["name"]
                         self.auction_document[section][index]["label"]["en"] = bids_dict[stage['bidder_id']][0]["name"]
 
-            if (doc_id)and(parse_version(self.worker_defaults['TENDERS_API_VERSION']) > parse_version('0.6')):
+            if doc_id:
                 self.approve_audit_info_on_announcement(approved=bids_dict)
                 files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
                 response = patch_tender_data(
