@@ -1,27 +1,28 @@
 from gevent import monkey
 monkey.patch_all()
 
+import time
+from collections import deque
+from Cookie import SimpleCookie
+from couchdb import Database, Session
 from datetime import datetime
 from design import sync_design, endDate_view
 from flask import Flask, render_template, request, abort, url_for, redirect, Response
 from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
-from paste.proxy import make_proxy
-from pytz import timezone as tz
-import couchdb
-import time
-from sse import Sse as PySse
-from pkg_resources import parse_version
-from restkit.contrib.wsgi_proxy import HostProxy
-from restkit.conn import Connection
-from socketpool import ConnectionPool
-from .utils import StreamWrapper
-from collections import deque
-from werkzeug.exceptions import NotFound
-from memoize import Memoizer
-from urlparse import urlparse, urljoin
 from http_parser.util import IOrderedDict
-from Cookie import SimpleCookie
+from memoize import Memoizer
+from paste.proxy import make_proxy
+from pkg_resources import parse_version
+from pytz import timezone as tz
+from restkit.conn import Connection
+from restkit.contrib.wsgi_proxy import HostProxy
+from socketpool import ConnectionPool
+from sse import Sse as PySse
+from urlparse import urlparse, urljoin
+from werkzeug.exceptions import NotFound
+
+from .utils import StreamWrapper
 
 
 def start_response_decorated(start_response_decorated):
@@ -43,7 +44,6 @@ def start_response_decorated(start_response_decorated):
 
 
 class StreamProxy(HostProxy):
-
     def __init__(self, uri, event_sources_pool,
                  auction_doc_id="",
                  event_source_connection_limit=1000,
@@ -310,9 +310,10 @@ def make_auctions_app(global_conf,
     auctions_server.config['COUCH_DB'] = auctions_db
     auctions_server.config['TIMEZONE'] = tz(timezone)
     auctions_server.redis = Redis(auctions_server)
-    auctions_server.db = couchdb.client.Database(
+    auctions_server.db = Database(
         urljoin(auctions_server.config.get('INT_COUCH_URL'),
-                auctions_server.config['COUCH_DB'])
+                auctions_server.config['COUCH_DB']),
+        session=Session(retry_delays=range(10))
     )
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)

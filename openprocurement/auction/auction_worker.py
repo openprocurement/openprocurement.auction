@@ -15,12 +15,13 @@ from dateutil.tz import tzlocal
 from copy import deepcopy
 from datetime import timedelta, datetime
 from pytz import timezone
-from couchdb.client import Database
+from couchdb import Database, Session
 from couchdb.http import HTTPError
 from gevent.event import Event
 from gevent.coros import BoundedSemaphore
 from gevent.subprocess import call
 from apscheduler.schedulers.gevent import GeventScheduler
+from apscheduler.jobstores.memory import MemoryJobStore
 from pkg_resources import parse_version
 from .server import run_server
 from .utils import (
@@ -33,6 +34,7 @@ from .utils import (
     delete_mapping,
     generate_request_id
 )
+from .executor import AuctionsExecutor
 
 from .templates import (
     INITIAL_BIDS_TEMPLATE,
@@ -71,10 +73,12 @@ TIMER_STAMP = re.compile(
     r"-(?P<mon>[0-9][0-9])-(?P<day>[0123][0-9]) "
     r"(?P<hour>[0-2][0-9]):(?P<min>[0-5][0-9]):(?P<sec>[0-5][0-9])"
 )
-SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100})
-SCHEDULER.timezone = timezone('Europe/Kiev')
-
 logger = logging.getLogger('Auction Worker')
+
+SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100},
+                            executors={'default': AuctionsExecutor()},
+                            logger=logger)
+SCHEDULER.timezone = timezone('Europe/Kiev')
 
 
 class Auction(object):
@@ -100,7 +104,8 @@ class Auction(object):
         self.bids_actions = BoundedSemaphore()
         self.worker_defaults = worker_defaults
         self._bids_data = {}
-        self.db = Database(str(self.worker_defaults["COUCH_DATABASE"]))
+        self.db = Database(str(self.worker_defaults["COUCH_DATABASE"]),
+                           session=Session(retry_delays=range(10)))
         self.retries = 10
 
     def generate_request_id(self):
@@ -111,6 +116,9 @@ class Auction(object):
         while retries:
             try:
                 self.auction_document = self.db.get(self.auction_doc_id)
+                if self.auction_document:
+                    logger.info("Get auction document {0[_id]} with rev {0[_rev]}".format(self.auction_document),
+                                extra={"JOURNAL_REQUEST_ID": self.request_id})
                 return
             except HTTPError, e:
                 logger.error("Error while get document: {}".format(e))
@@ -120,7 +128,11 @@ class Auction(object):
         retries = 10
         while retries:
             try:
-                return self.db.save(self.auction_document)
+                response = self.db.save(self.auction_document)
+                if len(response) == 2:
+                    logger.info("Saved auction document {0} with rev {1}".format(*response),
+                                extra={"JOURNAL_REQUEST_ID": self.request_id})
+                return response
             except HTTPError, e:
                 logger.error("Error while save document: {}".format(e))
             new_doc = self.auction_document
@@ -237,8 +249,9 @@ class Auction(object):
                         self.auction_doc_id
                     ), extra={"JOURNAL_REQUEST_ID": self.request_id})
                 sys.exit(1)
-
         self.bidders_count = len(self._auction_data["data"]["bids"])
+        logger.info("Bidders count: {}".format(self.bidders_count),
+                    extra={"JOURNAL_REQUEST_ID": self.request_id})
         self.rounds_stages = []
         for stage in range((self.bidders_count + 1) * ROUNDS + 1):
             if (stage + self.bidders_count) % (self.bidders_count + 1) == 0:
@@ -446,7 +459,8 @@ class Auction(object):
             run_date=self.convert_datetime(
                 self.auction_document['stages'][0]['start']
             ),
-            name="Start of Auction"
+            name="Start of Auction",
+            id="Start of Auction"
         )
         round_number += 1
 
@@ -455,8 +469,8 @@ class Auction(object):
             run_date=self.convert_datetime(
                 self.auction_document['stages'][1]['start']
             ),
-            name="End of Pause Stage: [0 -> 1]"
-
+            name="End of Pause Stage: [0 -> 1]",
+            id="End of Pause Stage: [0 -> 1]"
         )
         round_number += 1
 
@@ -468,7 +482,8 @@ class Auction(object):
                     run_date=self.convert_datetime(
                         self.auction_document['stages'][index]['start']
                     ),
-                    name="End of Bids Stage: [{} -> {}]".format(index - 1, index)
+                    name="End of Bids Stage: [{} -> {}]".format(index - 1, index),
+                    id="End of Bids Stage: [{} -> {}]".format(index - 1, index)
                 )
             elif self.auction_document['stages'][index - 1]['type'] == 'pause':
                 SCHEDULER.add_job(
@@ -477,7 +492,8 @@ class Auction(object):
                     run_date=self.convert_datetime(
                         self.auction_document['stages'][index]['start']
                     ),
-                    name="End of Pause Stage: [{} -> {}]".format(index - 1, index)
+                    name="End of Pause Stage: [{} -> {}]".format(index - 1, index),
+                    id="End of Pause Stage: [{} -> {}]".format(index - 1, index)
                 )
             round_number += 1
         logger.info(

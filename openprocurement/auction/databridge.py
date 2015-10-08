@@ -9,7 +9,7 @@ from urlparse import urljoin
 from datetime import datetime
 from dateutil.tz import tzlocal
 from subprocess import check_output
-from couchdb.client import Database
+from couchdb import Database, Session
 from time import time
 import iso8601
 from .design import endDate_view, startDate_view
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class AuctionsDataBridge(object):
 
-    """docstring for AuctionsDataBridge"""
+    """AuctionsDataBridge"""
 
     def __init__(self, config):
         super(AuctionsDataBridge, self).__init__()
@@ -38,7 +38,8 @@ class AuctionsDataBridge(object):
             self.config_get('couch_url'),
             self.config_get('auctions_db')
         )
-        self.db = Database(self.couch_url)
+        self.db = Database(self.couch_url,
+                           session=Session(retry_delays=range(10)))
         self.url = self.tenders_url
 
     def config_get(self, name):

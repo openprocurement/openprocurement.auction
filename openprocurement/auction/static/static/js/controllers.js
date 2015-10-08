@@ -341,10 +341,10 @@ angular.module('auction').controller('AuctionController', [
             msg_id = Math.random();
             $rootScope.alerts.push({
               msg_id: msg_id,
-              type: 'danger',
+              type: 'warning',
               msg: 'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.'
             });
-        } 
+        }
         $rootScope.form.active = true;
         $timeout(function() {
           $rootScope.form.active = false;
