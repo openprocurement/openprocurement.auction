@@ -135,8 +135,10 @@ class AuctionsDataBridge(object):
                     since=last_seq_id, include_docs=True):
                 if 'id' in tender_item:
                     start_date = tender_item['doc']['stages'][0]['start']
+                    if tender_item['doc'].get("current_stage", "") == -100:
+                        continue
 
-                    if tender_item.get("mode", "") == "test":
+                    if tender_item['doc'].get("mode", "") == "test":
                         logger.info('Sciped test auction {}'.format(tender_item['id']))
                         continue
 
