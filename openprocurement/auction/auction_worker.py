@@ -393,7 +393,7 @@ class Auction(object):
             )
             service_file.write(
                 template.render(cmd=' '.join(cmd),
-                                description='Auction ' + self._auction_data["data"]['tenderID'],
+                                description='Auction ' + tenderID,
                                 id='auction_' + self.auction_doc_id + '.service'),
             )
 
@@ -420,7 +420,7 @@ class Auction(object):
             )
             timer_file.write(template.render(
                 timestamp=start_time.strftime("%Y-%m-%d %H:%M:%S"),
-                description='Auction ' + self._auction_data["data"]['tenderID'])
+                description='Auction ' + tenderID)
             )
         logger.info(
             "Reload Systemd",
