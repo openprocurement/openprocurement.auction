@@ -45,7 +45,11 @@ setup(name='openprocurement.auction',
           'PyYAML',
           'request_id_middleware',
           'restkit',
-          'PyMemoize'
+          'PyMemoize',
+          # ssl warning
+          'pyopenssl',
+          'ndg-httpsclient',
+          'pyasn1'
       ],
       entry_points={
           'console_scripts': [

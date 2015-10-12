@@ -1,3 +1,9 @@
+try:
+    import urllib3.contrib.pyopenssl
+    urllib3.contrib.pyopenssl.inject_into_urllib3()
+except ImportError:
+    pass
+
 import argparse
 import logging
 import logging.config

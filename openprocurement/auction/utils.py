@@ -1,3 +1,9 @@
+try:
+    import urllib3.contrib.pyopenssl
+    urllib3.contrib.pyopenssl.inject_into_urllib3()
+except ImportError:
+    pass
+
 import iso8601
 from datetime import MINYEAR, datetime
 from pytz import timezone
@@ -249,8 +255,6 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
         logging.info("Wait before retry...",
                      extra={"JOURNAL_REQUEST_ID": request_id})
         sleep(pow(iteration, 2))
-
-
 
 
 def do_until_success(func, args=(), kw={}, repeat=10, sleep_seconds=10):
