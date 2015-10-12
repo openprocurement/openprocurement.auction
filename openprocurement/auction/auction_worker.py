@@ -16,7 +16,7 @@ from copy import deepcopy
 from datetime import timedelta, datetime
 from pytz import timezone
 from couchdb import Database, Session
-from couchdb.http import HTTPError
+from couchdb.http import HTTPError, RETRYABLE_ERRORS
 from gevent.event import Event
 from gevent.coros import BoundedSemaphore
 from gevent.subprocess import call
@@ -120,6 +120,12 @@ class Auction(object):
                 return
             except HTTPError, e:
                 logger.error("Error while get document: {}".format(e))
+            except Exception, e:
+                ecode = e.args[0]
+                if ecode in RETRYABLE_ERRORS:
+                    logger.error("Error while save document: {}".format(e))
+                else:
+                    logger.critical("Unhandled error: {}".format(e))
             retries -= 1
 
     def save_auction_document(self):
@@ -133,6 +139,12 @@ class Auction(object):
                 return response
             except HTTPError, e:
                 logger.error("Error while save document: {}".format(e))
+            except Exception, e:
+                ecode = e.args[0]
+                if ecode in RETRYABLE_ERRORS:
+                    logger.error("Error while save document: {}".format(e))
+                else:
+                    logger.critical("Unhandled error: {}".format(e))
             new_doc = self.auction_document
             if "_rev" in new_doc:
                 del new_doc["_rev"]
@@ -366,7 +378,7 @@ class Auction(object):
                           user=self.worker_defaults["TENDERS_API_TOKEN"],
                           request_id=self.request_id)
 
-    def prepare_tasks(self):
+    def prepare_tasks(self, tenderID, startDate):
         cmd = deepcopy(sys.argv)
         cmd[0] = os.path.abspath(cmd[0])
         cmd[1] = 'run'
@@ -385,7 +397,7 @@ class Auction(object):
                                 id='auction_' + self.auction_doc_id + '.service'),
             )
 
-        start_time = (self.startDate - timedelta(minutes=15)).astimezone(tzlocal())
+        start_time = (startDate - timedelta(minutes=15)).astimezone(tzlocal())
         extra_start_time = datetime.now(tzlocal()) + timedelta(seconds=15)
         if extra_start_time > start_time:
             logger.warning(
@@ -393,7 +405,7 @@ class Auction(object):
                 extra={"JOURNAL_REQUEST_ID": self.request_id}
             )
             start_time = extra_start_time
-            if start_time > self.startDate:
+            if start_time > startDate:
                 logger.error(
                     'We not have a time to start auction',
                     extra={"JOURNAL_REQUEST_ID": self.request_id}
@@ -436,6 +448,18 @@ class Auction(object):
             "Systemctl 'enable' return code: {}".format(response),
             extra={"JOURNAL_REQUEST_ID": self.request_id}
         )
+
+    def prepare_systemd_units(self):
+        self.generate_request_id()
+        self.get_auction_document()
+        if len(self.auction_document['stages']) >= 1:
+            self.prepare_tasks(
+                self.auction_document['tenderID'],
+                self.convert_datetime(self.auction_document['stages'][0]['start'])
+            )
+        else:
+            logger.error("Not valid auction_document")
+
     ###########################################################################
     #                       Runtime methods
     ###########################################################################
@@ -860,13 +884,14 @@ def main():
         if planning_procerude == PLANNING_FULL:
             auction.prepare_auction_document()
             if not auction.debug:
-                auction.prepare_tasks()
+                auction.prepare_tasks(
+                    auction._auction_data["data"]['tenderID'],
+                    auction.startDate
+                )
         elif planning_procerude == PLANNING_PARTIAL_DB:
             auction.prepare_auction_document()
         elif planning_procerude == PLANNING_PARTIAL_CRON:
-            auction.generate_request_id()
-            auction.get_auction_info(prepare=True)
-            auction.prepare_tasks()
+            auction.prepare_systemd_units()
     elif args.cmd == 'cleanup':
         cleanup()
 
