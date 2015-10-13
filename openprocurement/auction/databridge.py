@@ -133,32 +133,35 @@ class AuctionsDataBridge(object):
     def planning_with_couch(self):
         logger.info('Start Auctions Bridge with feed to couchdb')
         logger.info('Start data sync...')
-        planned_tenders = {}
-        last_seq_id = 0
+        self.planned_tenders = {}
+        self.last_seq_id = 0
         while True:
-            for tender_item in self.db.changes(
-                    feed='continuous', filter="auctions/by_startDate",
-                    since=last_seq_id, include_docs=True):
-                if 'id' in tender_item:
-                    start_date = tender_item['doc']['stages'][0]['start']
-                    if tender_item['doc'].get("current_stage", "") == -100:
-                        continue
+            do_until_success(self.handle_continuous_feed)
 
-                    if tender_item['doc'].get("mode", "") == "test":
-                        logger.info('Sciped test auction {}'.format(tender_item['id']))
-                        continue
+    def handle_continuous_feed(self):
+        change = self.db.changes(feed='continuous', filter="auctions/by_startDate",
+                                 since=self.last_seq_id, include_docs=True)
+        for tender_item in change:
+            if 'id' in tender_item:
+                start_date = tender_item['doc']['stages'][0]['start']
+                if tender_item['doc'].get("current_stage", "") == -100:
+                    continue
 
-                    if tender_item['id'] in planned_tenders and \
-                            planned_tenders[tender_item['id']] == start_date:
-                        logger.debug('Tender {} filtered'.format(tender_item['id']))
-                        continue
-                    logger.info('Tender {} selected for planning'.format(tender_item['id']))
-                    self.start_auction_worker(tender_item)
-                    planned_tenders[tender_item['id']] = start_date
-                elif 'last_seq' in tender_item:
-                    last_seq_id = tender_item['last_seq']
+                if tender_item['doc'].get("mode", "") == "test":
+                    logger.info('Sciped test auction {}'.format(tender_item['id']))
+                    continue
 
-            logger.info('Resume data sync...')
+                if tender_item['id'] in self.planned_tenders and \
+                        self.planned_tenders[tender_item['id']] == start_date:
+                    logger.debug('Tender {} filtered'.format(tender_item['id']))
+                    continue
+                logger.info('Tender {} selected for planning'.format(tender_item['id']))
+                self.start_auction_worker(tender_item)
+                self.planned_tenders[tender_item['id']] = start_date
+            elif 'last_seq' in tender_item:
+                self.last_seq_id = tender_item['last_seq']
+
+        logger.info('Resume data sync...')
 
     def run(self):
         logger.info('Start Auctions Bridge')
