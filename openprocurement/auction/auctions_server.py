@@ -178,6 +178,13 @@ def archive_tenders_list_index():
     )
 
 
+@auctions_server.route('/health')
+def health():
+    if auctions_server.db.info():
+        return 'Ok'
+    abort(500)
+
+
 @auctions_server.route('/archive')
 def auction_list_index():
     return render_template(
