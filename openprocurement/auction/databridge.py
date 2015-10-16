@@ -22,7 +22,7 @@ from .design import endDate_view, startDate_view
 from .utils import do_until_success, generate_request_id
 from yaml import load
 import uuid
-from systemd_log_msg import (
+from systemd_msgs_ids import (
     DATA_BRIDGE_RE_PLANNING,
     DATA_DATA_BRIDGE_PLANNING,
     DATA_DATA_BRIDGE_PLANNING_PROCESS
