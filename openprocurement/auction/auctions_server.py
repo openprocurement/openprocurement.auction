@@ -4,7 +4,8 @@ monkey.patch_all()
 import time
 from collections import deque
 from Cookie import SimpleCookie
-from couchdb import Database, Session
+from json import dumps
+from couchdb import Server, Session
 from datetime import datetime
 from design import sync_design, endDate_view
 from flask import Flask, render_template, request, abort, url_for, redirect, Response
@@ -180,9 +181,11 @@ def archive_tenders_list_index():
 
 @auctions_server.route('/health')
 def health():
-    if auctions_server.db.info():
-        return 'Ok'
-    abort(500)
+    data = auctions_server.couch_server.tasks()
+    response = Response(dumps(data))
+    if not(data and data[0]['progress'] > 95):
+        response.status_code = 503
+    return response
 
 
 @auctions_server.route('/archive')
@@ -317,11 +320,14 @@ def make_auctions_app(global_conf,
     auctions_server.config['COUCH_DB'] = auctions_db
     auctions_server.config['TIMEZONE'] = tz(timezone)
     auctions_server.redis = Redis(auctions_server)
-    auctions_server.db = Database(
-        urljoin(auctions_server.config.get('INT_COUCH_URL'),
-                auctions_server.config['COUCH_DB']),
+    auctions_server.couch_server = Server(
+        auctions_server.config.get('INT_COUCH_URL'),
         session=Session(retry_delays=range(10))
     )
+    if auctions_server.config['COUCH_DB'] not in auctions_server.couch_server:
+        auctions_server.couch_server.create(auctions_server.config['COUCH_DB'])
+
+    auctions_server.db = auctions_server.couch_server[auctions_server.config['COUCH_DB']]
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
     auctions_server.config['ASSETS_DEBUG'] = True if debug else False
