@@ -119,11 +119,13 @@ class AuctionsDataBridge(object):
                             auction_document["endDate"] = datetime.now(self.tz).isoformat()
                             self.db.save(auction_document)
                             logger.info("Change auction {} status to 'canceled'".format(item["id"]),
-                                        extra={"JOURNAL_REQUEST_ID": request_id})
+                                        extra={"JOURNAL_REQUEST_ID": request_id,
+                                               'MESSAGE_ID': DATA_BRIDGE_PLANNING})
 
                 logger.info(
                     "Change offset date to {}".format(response_json['next_page']['offset']),
-                    extra={"JOURNAL_REQUEST_ID": request_id}
+                    extra={"JOURNAL_REQUEST_ID": request_id,
+                           'MESSAGE_ID': DATA_BRIDGE_PLANNING}
                 )
                 self.offset = response_json['next_page']['offset']
             else:
