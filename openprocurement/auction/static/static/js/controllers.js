@@ -420,7 +420,7 @@ angular.module('auction').controller('AuctionController', [
                 "event": "JS.error",
                 "MESSAGE": "Unhandled Error while post bid"
               });
-              $scope.post_bid();
+              $timeout($scope.post_bid, 2000);
             }
           });
       }
