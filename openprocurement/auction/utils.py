@@ -1,3 +1,9 @@
+try:
+    import urllib3.contrib.pyopenssl
+    urllib3.contrib.pyopenssl.inject_into_urllib3()
+except ImportError:
+    pass
+
 import iso8601
 from datetime import MINYEAR, datetime
 from pytz import timezone
@@ -255,10 +261,8 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
         sleep(pow(iteration, 2))
 
 
-
-
-def do_until_success(func, args=(), kw={}, repeat=10, sleep_seconds=10):
-    while True:
+def do_until_success(func, args=(), kw={}, repeat=10):
+    for iteration in xrange(repeat):
         try:
             return func(*args, **kw)
         except Exception, e:
@@ -271,7 +275,7 @@ def do_until_success(func, args=(), kw={}, repeat=10, sleep_seconds=10):
                 func, args, kw
             ))
             break
-        sleep(sleep_seconds)
+        sleep(pow(iteration, 2))
 
 
 def calculate_hash(bidder_id, hash_secret):

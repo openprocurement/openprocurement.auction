@@ -18,14 +18,18 @@ angular.module('auction').controller('AuctionController', [
     }
     $scope.lang = 'uk';
     $rootScope.normilized = false;
-    $rootScope.change_view = function(){
-      if($scope.bidder_coeficient){
+    $rootScope.change_view = function() {
+      if ($scope.bidder_coeficient) {
         $rootScope.normilized = !$rootScope.normilized
       }
       if ($rootScope.normilized) {
-        growl.info('Changed to normilized view', {ttl: 10000});
+        growl.info('Changed to normilized view', {
+          ttl: 10000
+        });
       } else {
-        growl.info('Changed to calculated price view', {ttl: 10000});
+        growl.info('Changed to calculated price view', {
+          ttl: 10000
+        });
       }
     }
     $rootScope.format_date = AuctionUtils.format_date;
@@ -50,10 +54,10 @@ angular.module('auction').controller('AuctionController', [
         $log.debug("Error", err);
         $scope.http_error_timeout = $scope.http_error_timeout * 2;
         $timeout(function() {
-          $scope.get_database();
+          $scope.start();
         }, $scope.http_error_timeout);
       });
-    }
+    };
 
 
 
@@ -75,7 +79,7 @@ angular.module('auction').controller('AuctionController', [
     /*      Time tick events    */
     $rootScope.$on('timer-tick', function(event) {
       if (($scope.auction_doc) && (event.targetScope.timerid == 1)) {
-        
+
         if (((($rootScope.info_timer || {}).msg || "") === 'until your turn') && (event.targetScope.minutes == 1) && (event.targetScope.seconds == 50)) {
           $http.post('./check_authorization').success(function(data) {
             $log.debug("Authorization checked");
@@ -181,7 +185,7 @@ angular.module('auction').controller('AuctionController', [
         var data = angular.fromJson(e.data);
         $scope.last_sync = new Date(data.time);
         $log.debug("Tick: ", data);
-        if ($scope.auction_doc.stage > -1) {
+        if ($scope.auction_doc.current_stage > -1) {
           $rootScope.info_timer = AuctionUtils.prepare_info_timer_data($scope.last_sync, $scope.auction_doc, $scope.bidder_id, $scope.Rounds);
           $log.debug("Info timer data:", $rootScope.info_timer);
           $rootScope.progres_timer = AuctionUtils.prepare_progress_timer_data($scope.last_sync, $scope.auction_doc);
@@ -203,7 +207,7 @@ angular.module('auction').controller('AuctionController', [
           $scope.bidder_id = data.bidder_id;
           $scope.client_id = data.client_id;
           $scope.return_url = data.return_url;
-          if ('coeficient' in data){
+          if ('coeficient' in data) {
             $scope.bidder_coeficient = math.fraction(data.coeficient);
             $log.debug("Get coeficient:", $scope.bidder_coeficient);
           }
@@ -349,6 +353,16 @@ angular.module('auction').controller('AuctionController', [
         return 0;
       }
       if ($rootScope.form.BidsForm.$valid) {
+        $rootScope.alerts = [];
+        var bid_amount = parseFloat(bid) || parseFloat($rootScope.form.bid) || 0;
+        if (bid_amount == $scope.minimal_bid.amount) {
+          msg_id = Math.random();
+          $rootScope.alerts.push({
+            msg_id: msg_id,
+            type: 'warning',
+            msg: 'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.'
+          });
+        }
         $rootScope.form.active = true;
         $timeout(function() {
           $rootScope.form.active = false;
@@ -384,6 +398,7 @@ angular.module('auction').controller('AuctionController', [
               msg_id = Math.random();
 
               if (bid == -1) {
+                $rootScope.alerts = [];
                 $scope.allow_bidding = true;
                 $rootScope.alerts.push({
                   msg_id: msg_id,
@@ -423,7 +438,7 @@ angular.module('auction').controller('AuctionController', [
                 "event": "JS.error",
                 "MESSAGE": "Unhandled Error while post bid"
               });
-              $scope.post_bid();
+              $timeout($scope.post_bid, 2000);
             }
           });
       }
@@ -435,11 +450,11 @@ angular.module('auction').controller('AuctionController', [
     $scope.max_bid_amount = function() {
       var amount = 0;
       if ((angular.isString($scope.bidder_id)) && (angular.isObject($scope.auction_doc))) {
-        var current_stage_obj = $scope.auction_doc.stages[$scope.auction_doc.current_stage]||null;
+        var current_stage_obj = $scope.auction_doc.stages[$scope.auction_doc.current_stage] || null;
 
         if ((angular.isObject(current_stage_obj)) && (current_stage_obj.amount || current_stage_obj.amount_features)) {
-          if ($scope.bidder_coeficient){
-            amount = math.fraction(current_stage_obj.amount_features)/$scope.bidder_coeficient - math.fraction($scope.auction_doc.minimalStep.amount);
+          if ($scope.bidder_coeficient) {
+            amount = math.fraction(current_stage_obj.amount_features) / $scope.bidder_coeficient - math.fraction($scope.auction_doc.minimalStep.amount);
           } else {
             amount = math.fraction(current_stage_obj.amount) - math.fraction($scope.auction_doc.minimalStep.amount);
           }
@@ -454,9 +469,8 @@ angular.module('auction').controller('AuctionController', [
     };
     $scope.calculate_minimal_bid_amount = function() {
       if ((angular.isObject($scope.auction_doc)) && (angular.isArray($scope.auction_doc.stages)) && (angular.isArray($scope.auction_doc.initial_bids))) {
-        var bids = [];
-
-        if ($scope.auction_doc.auction_type == 'meat'){
+        var bids = []; 
+        if ($scope.auction_doc.auction_type == 'meat') {
           filter_func = function(item, index) {
             if (!angular.isUndefined(item.amount_features)) {
               bids.push(item);
@@ -474,23 +488,17 @@ angular.module('auction').controller('AuctionController', [
         $scope.auction_doc.stages.forEach(filter_func);
         $scope.auction_doc.initial_bids.forEach(filter_func);
 
-        if ($scope.auction_doc.auction_type == 'meat'){
-          $scope.minimal_bid = bids.sort(function(a, b) {
-            return math.fraction(a.amount_features) - math.fraction(b.amount_features);
-          })[0];
-        } else {
-          $scope.minimal_bid = bids.sort(function(a, b) {
-            // return math.fraction(a) - math.fraction(b);
-            return a.amount - b.amount;
-          })[0];
-        }
-
-
-
-        console.log(bids)
-
-
-
+        $scope.minimal_bid = bids.sort(function(a, b) {
+          if ($scope.auction_doc.auction_type == 'meat') {
+            var diff = math.fraction(a.amount_features) - math.fraction(b.amount_features);
+          } else {
+            var diff = a.amount - b.amount;
+          }
+          if (diff == 0) {
+            return Date.parse(a.time || "") - Date.parse(b.time || "");
+          }
+          return diff;
+        })[0];
       }
     };
     $scope.start_sync = function() {
@@ -580,12 +588,14 @@ angular.module('auction').controller('AuctionController', [
             $scope.sync = $scope.start_sync()
           });
         } else {
-          // if ($cookieStore.get('auctions_loggedin')) {
-          //   $cookieStore.remove('auctions_loggedin');
-          //   $timeout(function() {
-          //     window.location.replace(window.location.protocol + '//' + window.location.host + window.location.pathname);
-          //   }, 1000);
-          // }
+            // TODO: CLEAR COOKIE
+
+            // if ($cookieStore.get('auctions_loggedin')) {
+            //   $cookieStore.remove('auctions_loggedin');
+            //   $timeout(function() {
+            //     window.location.replace(window.location.protocol + '//' + window.location.host + window.location.pathname);
+            //   }, 1000);
+            // }
         }
       });
     };
@@ -703,8 +713,8 @@ angular.module('auction')
           return (filter('number')(val, 2) || "").replace(/,/g, " ") || "";
         }
         console.log(val);
-        if (val){
-          if (coeficient){
+        if (val) {
+          if (coeficient) {
             return format_function(math.eval(math.format(math.fraction(val) / math.fraction(coeficient))).toFixed(2));
           }
           return format_function(math.eval(math.format(math.fraction(val))).toFixed(2));

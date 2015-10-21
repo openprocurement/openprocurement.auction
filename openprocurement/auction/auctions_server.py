@@ -1,27 +1,28 @@
 from gevent import monkey
 monkey.patch_all()
 
+import time
+from collections import deque
+from Cookie import SimpleCookie
+from couchdb import Server, Session
 from datetime import datetime
 from design import sync_design, endDate_view
 from flask import Flask, render_template, request, abort, url_for, redirect, Response
 from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
+from http_parser.util import IOrderedDict
+from json import dumps
+from memoize import Memoizer
 from paste.proxy import make_proxy
 from pytz import timezone as tz
-import couchdb
-import time
-from sse import Sse as PySse
-
-from restkit.contrib.wsgi_proxy import HostProxy
 from restkit.conn import Connection
+from restkit.contrib.wsgi_proxy import HostProxy
 from socketpool import ConnectionPool
-from .utils import StreamWrapper, unsuported_browser
-from collections import deque
-from werkzeug.exceptions import NotFound
-from memoize import Memoizer
+from sse import Sse as PySse
 from urlparse import urlparse, urljoin
-from http_parser.util import IOrderedDict
-from Cookie import SimpleCookie
+from werkzeug.exceptions import NotFound
+
+from .utils import StreamWrapper, unsuported_browser
 
 
 def start_response_decorated(start_response_decorated):
@@ -43,7 +44,6 @@ def start_response_decorated(start_response_decorated):
 
 
 class StreamProxy(HostProxy):
-
     def __init__(self, uri, event_sources_pool,
                  auction_doc_id="",
                  event_source_connection_limit=1000,
@@ -153,6 +153,7 @@ def auction_url(auction_doc_id):
         request_base=request_base
     )
 
+
 @auctions_server.route('/')
 def archive_tenders_list_index():
     return render_template(
@@ -164,6 +165,15 @@ def archive_tenders_list_index():
                                          include_docs=True)
              ])
     )
+
+
+@auctions_server.route('/health')
+def health():
+    data = auctions_server.couch_server.tasks()
+    response = Response(dumps(data))
+    if not(data and data[0]['progress'] > 95):
+        response.status_code = 503
+    return response
 
 
 @auctions_server.route('/archive')
@@ -298,10 +308,14 @@ def make_auctions_app(global_conf,
     auctions_server.config['COUCH_DB'] = auctions_db
     auctions_server.config['TIMEZONE'] = tz(timezone)
     auctions_server.redis = Redis(auctions_server)
-    auctions_server.db = couchdb.client.Database(
-        urljoin(auctions_server.config.get('INT_COUCH_URL'),
-                auctions_server.config['COUCH_DB'])
+    auctions_server.couch_server = Server(
+        auctions_server.config.get('INT_COUCH_URL'),
+        session=Session(retry_delays=range(10))
     )
+    if auctions_server.config['COUCH_DB'] not in auctions_server.couch_server:
+        auctions_server.couch_server.create(auctions_server.config['COUCH_DB'])
+
+    auctions_server.db = auctions_server.couch_server[auctions_server.config['COUCH_DB']]
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
     auctions_server.config['ASSETS_DEBUG'] = True if debug else False

@@ -76,8 +76,8 @@ angular.module('auction')
       'Learn how to update your browser.': 'Learn how to update your browser.',
       'Not Found': 'Not Found',
       'Calculated price': 'Calculated price',
-      'Normilized price': 'Normilized price'
-
+      'Normilized price': 'Normilized price',
+      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.'
     });
 
     $translateProvider.translations('uk', {
@@ -155,9 +155,10 @@ angular.module('auction')
       'Learn how to update your browser.': 'Дізнайтесь, як оновити Ваш браузер.',
       'Not Found': 'Аукціону із даною Id не знайдено',
       'Calculated price': 'Приведена ціна',
-      'Normilized price': 'Ціна пропозиції (нормалізована ціна по коефіціенту корекції)'
-
+      'Normilized price': 'Ціна пропозиції (нормалізована ціна по коефіціенту корекції)',
+      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Подана вами пропозиція співпадає з пропозицією іншого учасника. Його пропозиція розглядатиметься першою, оскільки вона подана раніше.'
     });
+
 
     $translateProvider.translations('ru', {
       'at': 'о',
@@ -234,6 +235,7 @@ angular.module('auction')
       'Learn how to update your browser.': 'Узнайте, как обновить Ваш браузер.',
       'Not Found': 'Аукциона по данной Id не найдена',
       'Calculated price': 'Приведенная цена',
-      'Normilized price': 'Normilized price'
+      'Normilized price': 'Normilized price',
+      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Поданное вами предложение совпадает с предложением другого участника. Его предложение будет рассматриваться первым, поскольку оно подано раньше.'
     });
   }]);

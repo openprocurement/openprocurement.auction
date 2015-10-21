@@ -48,7 +48,7 @@ angular.module('auction')
             for (var index = auction.current_stage; index <= all_rounds[i]; index++) {
               if ((auction.stages[index].bidder_id) && (auction.stages[index].bidder_id === bidder_id)) {
                 return {
-                  'countdown': ((new Date(auction.stages[index].start) - current_time) / 1000)  + Math.random(),
+                  'countdown': ((new Date(auction.stages[index].start) - current_time) / 1000) + Math.random(),
                   'start_time': false,
                   'msg': 'until your turn'
                 };

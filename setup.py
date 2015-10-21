@@ -1,7 +1,9 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0.7'
+
+version = '1.0.14'
+
 
 setup(name='openprocurement.auction',
       version=version,
@@ -44,7 +46,14 @@ setup(name='openprocurement.auction',
           'request_id_middleware',
           'restkit',
           'PyMemoize',
+<<<<<<< HEAD
           'barbecue'
+=======
+          # ssl warning
+          'pyopenssl',
+          'ndg-httpsclient',
+          'pyasn1'
+>>>>>>> origin/master
       ],
       entry_points={
           'console_scripts': [
