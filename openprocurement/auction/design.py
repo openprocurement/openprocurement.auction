@@ -49,7 +49,8 @@ def sync_design(db):
             return false;
         }
         """
-        if validate_doc_update != design['validate_doc_update'] or \
+        if 'validate_doc_update' not in design or \
+                validate_doc_update != design['validate_doc_update'] or \
                 start_date_filter != design.get("filters", {}).get("by_startDate"):
             design['validate_doc_update'] = validate_doc_update
             design['filters'] = design.get("filters", {})
