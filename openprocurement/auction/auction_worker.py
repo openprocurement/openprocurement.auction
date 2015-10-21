@@ -45,7 +45,8 @@ from .templates import (
 )
 
 from yaml import safe_dump as yaml_dump
-from barbecue import chef, cooking, calculate_coeficients
+from barbecue import chef, cooking, calculate_coeficient
+from fractions import Fraction
 
 MULTILINGUAL_FIELDS = ["title", "description"]
 ADDITIONAL_LANGUAGES = ["ru", "en"]
@@ -100,6 +101,7 @@ class Auction(object):
         self.bids_actions = BoundedSemaphore()
         self.worker_defaults = worker_defaults
         self._bids_data = {}
+        self._hidden_stages_data = []
         self.db = Database(str(self.worker_defaults["COUCH_DATABASE"]))
         self.retries = 10
 
@@ -149,9 +151,11 @@ class Auction(object):
     def filter_bids_keys(self, bids):
         filtered_bids_data = []
         for bid_info in bids:
-            bid_info = {key: bid_info[key] for key in BIDS_KEYS_FOR_COPY}
-            bid_info["bidder_name"] = self.mapping[bid_info['bidder_id']]
-            filtered_bids_data.append(bid_info)
+            bid_info_result = {key: bid_info[key] for key in BIDS_KEYS_FOR_COPY}
+            if self.features:
+                bid_info_result['amount_features'] = bid_info['amount_features']
+            bid_info_result["bidder_name"] = self.mapping[bid_info_result['bidder_id']]
+            filtered_bids_data.append(bid_info_result)
         return filtered_bids_data
 
     @property
@@ -187,7 +191,10 @@ class Auction(object):
         }
         if self.auction_document["stages"][self.current_stage].get('changed', False):
             self.audit['timeline'][round_label][turn_label]["bid_time"] = self.auction_document["stages"][self.current_stage]['time']
-            self.audit['timeline'][round_label][turn_label]["amount"] = self.auction_document["stages"][self.current_stage]['amount']
+            if self.features:
+                self.audit['timeline'][round_label][turn_label]["amount"] = self.
+            else:
+                self.audit['timeline'][round_label][turn_label]["amount"] = self.auction_document["stages"][self.current_stage]['amount']
 
     def approve_audit_info_on_announcement(self, approved={}):
         self.audit['timeline']['results'] = {
@@ -246,10 +253,13 @@ class Auction(object):
         self.bidders = [bid["id"] for bid in self._auction_data["data"]["bids"]]
         self.mapping = {}
         if "features" in self._auction_data["data"]:
+            # TODO: remove bidders_features, use bidders_coeficient instead
             self.bidders_features = {}
+            self.bidders_coeficient = {}
             self.features = self._auction_data["data"]["features"]
             for bid in self._auction_data["data"]["bids"]:
                 self.bidders_features[bid["id"]] = bid["parameters"]
+                self.bidders_coeficient[bid["id"]] = calculate_coeficient(self.features, bid["parameters"])
         else:
             self.bidders_features = None
             self.features = None
@@ -265,7 +275,7 @@ class Auction(object):
                     time="",
                     bidder_id=bid_info["id"],
                     bidder_name=self.mapping[bid_info["id"]],
-                    amount="null"
+                    amount="0"
                 ))
             )
         self.auction_document['stages'] = []
@@ -287,7 +297,7 @@ class Auction(object):
                     start=next_stage_timedelta.isoformat(),
                     bidder_id="",
                     bidder_name="",
-                    amount="null",
+                    amount="0",
                     time=""
                 ))
                 self.auction_document['stages'].append(bid_stage)
@@ -322,6 +332,11 @@ class Auction(object):
              "items": self._auction_data["data"].get("items", []),
              "value": self._auction_data["data"].get("value", {})}
         )
+        if self.features:
+            self.auction_document["auction_type"] = "meat"
+        else:
+            self.auction_document["auction_type"] = "default"
+
         for key in MULTILINGUAL_FIELDS:
             for lang in ADDITIONAL_LANGUAGES:
                 lang_key = "{}_{}".format(key, lang)
@@ -514,18 +529,20 @@ class Auction(object):
         self.auction_document["initial_bids"] = []
         bids_info = sorting_start_bids_by_amount(bids, features=self.features)
         for index, bid in enumerate(bids_info):
-            if self.bidders_features:
-                amount = cooking(
-                    bid["value"]["amount"],
+            amount = bid["value"]["amount"]
+            if self.features:
+                amount_features = cooking(
+                    amount,
                     self.features, self.bidders_features[bid["id"]]
                 )
             else:
-                amount = bid["value"]["amount"]
+                amount_features = None
             self.audit['timeline']['auction_start']['initial_bids'].append(
                 {
                     "bidder": bid["id"],
                     "date": bid["date"],
-                    "amount": str(amount)
+                    "amount": amount,
+                    "amount_features": amount_features
                 }
             )
 
@@ -534,7 +551,8 @@ class Auction(object):
                     time=bid["date"] if "date" in bid else self.startDate,
                     bidder_id=bid["id"],
                     bidder_name=self.mapping[bid["id"]],
-                    amount=str(amount)
+                    amount="" if self.features else amount,
+                    amount_features=amount_features
                 ))
             )
 
@@ -691,6 +709,10 @@ class Auction(object):
                 return False
             bid_info = {key: bid_info[key] for key in BIDS_KEYS_FOR_COPY}
             bid_info["bidder_name"] = self.mapping[bid_info['bidder_id']]
+            if self.features:
+                bid_info['amount_features'] = str(Fraction(bid_info['amount']) * self.bidders_coeficient[bid_info['bidder_id']])
+
+                del bid_info['amount']
             self.auction_document["stages"][self.current_stage] = generate_bids_stage(
                 self.auction_document["stages"][self.current_stage],
                 bid_info

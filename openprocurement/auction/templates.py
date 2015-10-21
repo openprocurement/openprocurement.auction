@@ -11,7 +11,8 @@ INITIAL_BIDS_TEMPLATE = Template(u'''{
     "label": {"en": "Bidder #{{ bidder_name }}",
               "ru": "Участник №{{ bidder_name }}",
               "uk": "Учасник №{{ bidder_name }}"},
-    "amount": "{{ amount }}"
+    {% if amount_features %}"amount_features": "{{ amount_features}}",{% endif %}
+    "amount": {% if amount %}{{ amount }}{% else %}null{% endif %}
 }''')
 
 PAUSE_TEMPLATE = Template(u'''{
@@ -32,7 +33,8 @@ BIDS_TEMPLATE = Template(u'''{
               "ru": "",
               "uk": ""},
     {% endif %}
-    "amount": "{{ amount }}",
+    "amount": {% if amount %}{{ amount }}{% else %}null{% endif %},
+    {% if amount_features %}"amount_features": "{{ amount_features}}",{% endif %}
     "time": "{{ time }}"
 }''')
 
@@ -47,16 +49,21 @@ RESULTS_TEMPLATE = Template(u'''{
     "label": {"en": "Bidder #{{ bidder_name }}",
               "ru": "Участник №{{ bidder_name }}",
               "uk": "Учасник №{{ bidder_name }}"},
-    "amount": "{{ amount }}",
+    {% if amount_features %}"amount_features": "{{ amount_features}}",{% endif %}
+    "amount": {% if amount %}{{ amount }}{% else %}null{% endif %},
     "time": "{{ time }}"
 }''')
 
 
 def generate_bids_stage(exist_stage_params, params):
     exist_stage_params.update(params)
-    return loads(
-        BIDS_TEMPLATE.render(**exist_stage_params)
-    )
+    try:
+      return loads(
+          BIDS_TEMPLATE.render(**exist_stage_params)
+      )
+    except Exception, e:
+      import pdb; pdb.set_trace() # ktarasz - Debug
+      raise e
 
 
 def generate_resuls(params):

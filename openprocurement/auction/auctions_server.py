@@ -123,26 +123,9 @@ js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
             "static/js/controllers.js",
             "vendor/moment/locale/uk.js",
             "vendor/moment/locale/ru.js",
-            filters='jsmin', output='min/js_1%(version)s.js')
+            filters='jsmin', output='min/js_%(version)s.js')
 assets.register('all_js', js)
 
-js_meat = Bundle("vendor/event-source-polyfill/eventsource.min.js",
-                 "vendor/angular-cookies/angular-cookies.min.js",
-                 "vendor/angular-ellipses/src/truncate.js",
-                 "vendor/angular-timer/dist/angular-timer.min.js",
-                 "vendor/angular-translate/angular-translate.min.js",
-                 "vendor/angular-translate-storage-cookie/angular-translate-storage-cookie.min.js",
-                 "vendor/angular-translate-storage-local/angular-translate-storage-local.min.js",
-                 "vendor/angular-growl-2/build/angular-growl.js",
-                 "static/js/app.js",
-                 "static/js/utils.js",
-                 "static/js/translations.js",
-                 "static/js/controllers_meat.js",
-                 "vendor/moment/locale/uk.js",
-                 "vendor/moment/locale/ru.js",
-                 filters='jsmin', output='min/js_2%(version)s.js')
-
-assets.register('all_js_meat', js_meat)
 ################################################################################
 
 
@@ -171,20 +154,6 @@ def auction_url(auction_doc_id):
         request_base=request_base
     )
 
-
-@auctions_server.route('/tenders_meat/<auction_doc_id>')
-def meat_auction_url(auction_doc_id):
-    url_obj = urlparse(request.url)
-    request_base = u'//' + url_obj.netloc + url_obj.path + u'/'
-    return render_template(
-        'tender_meat.html',
-        db_url=auctions_server.config.get('EXT_COUCH_DB'),
-        auction_doc_id=auction_doc_id,
-        unsupported_browser=unsuported_browser(request),
-        request_base=request_base
-    )
-
-
 @auctions_server.route('/')
 def archive_tenders_list_index():
     return render_template(
@@ -211,8 +180,6 @@ def auction_list_index():
 
 
 @auctions_server.route('/tenders/<auction_doc_id>/<path:path>',
-                       methods=['GET', 'POST'])
-@auctions_server.route('/tenders_meat/<auction_doc_id>/<path:path>',
                        methods=['GET', 'POST'])
 def auctions_proxy(auction_doc_id, path):
     auctions_server.logger.debug('Auction_doc_id: {}'.format(auction_doc_id))

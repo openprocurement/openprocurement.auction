@@ -17,7 +17,18 @@ angular.module('auction').controller('AuctionController', [
       return false;
     }
     $scope.lang = 'uk';
-    $scope.format_date = AuctionUtils.format_date;
+    $rootScope.normilized = false;
+    $rootScope.change_view = function(){
+      if($scope.bidder_coeficient){
+        $rootScope.normilized = !$rootScope.normilized
+      }
+      if ($rootScope.normilized) {
+        growl.info('Changed to normilized view', {ttl: 10000});
+      } else {
+        growl.info('Changed to calculated price view', {ttl: 10000});
+      }
+    }
+    $rootScope.format_date = AuctionUtils.format_date;
     $scope.bidder_id = null;
     $scope.bid = null;
     $scope.allow_bidding = true;
@@ -39,7 +50,7 @@ angular.module('auction').controller('AuctionController', [
         $log.debug("Error", err);
         $scope.http_error_timeout = $scope.http_error_timeout * 2;
         $timeout(function() {
-          $scope.start();
+          $scope.get_database();
         }, $scope.http_error_timeout);
       });
     }
@@ -62,8 +73,9 @@ angular.module('auction').controller('AuctionController', [
     }
 
     /*      Time tick events    */
-    $scope.$on('timer-tick', function(event) {
+    $rootScope.$on('timer-tick', function(event) {
       if (($scope.auction_doc) && (event.targetScope.timerid == 1)) {
+        
         if (((($rootScope.info_timer || {}).msg || "") === 'until your turn') && (event.targetScope.minutes == 1) && (event.targetScope.seconds == 50)) {
           $http.post('./check_authorization').success(function(data) {
             $log.debug("Authorization checked");
@@ -85,10 +97,10 @@ angular.module('auction').controller('AuctionController', [
           });
         };
         $timeout(function() {
-          $scope.time_in_title = event.targetScope.days ? (event.targetScope.days + $filter('translate')('days') + " ") : "";
-          $scope.time_in_title += event.targetScope.hours ? (AuctionUtils.pad(event.targetScope.hours) + ":") : "";
-          $scope.time_in_title += (AuctionUtils.pad(event.targetScope.minutes) + ":");
-          $scope.time_in_title += (AuctionUtils.pad(event.targetScope.seconds) + " ");
+          $rootScope.time_in_title = event.targetScope.days ? (event.targetScope.days + $filter('translate')('days') + " ") : "";
+          $rootScope.time_in_title += event.targetScope.hours ? (AuctionUtils.pad(event.targetScope.hours) + ":") : "";
+          $rootScope.time_in_title += (AuctionUtils.pad(event.targetScope.minutes) + ":");
+          $rootScope.time_in_title += (AuctionUtils.pad(event.targetScope.seconds) + " ");
         }, 10);
       } else {
         var date = new Date();
@@ -130,7 +142,7 @@ angular.module('auction').controller('AuctionController', [
           timeout: '7'
         }).success(function(data) {
           dataLayer.push({
-            "event": "EventSourceSetTimeout",
+            "event": "EventSource.SetTimeout",
             "data": data
           });
         });
@@ -169,7 +181,7 @@ angular.module('auction').controller('AuctionController', [
         var data = angular.fromJson(e.data);
         $scope.last_sync = new Date(data.time);
         $log.debug("Tick: ", data);
-        if ($scope.auction_doc.current_stage > -1) {
+        if ($scope.auction_doc.stage > -1) {
           $rootScope.info_timer = AuctionUtils.prepare_info_timer_data($scope.last_sync, $scope.auction_doc, $scope.bidder_id, $scope.Rounds);
           $log.debug("Info timer data:", $rootScope.info_timer);
           $rootScope.progres_timer = AuctionUtils.prepare_progress_timer_data($scope.last_sync, $scope.auction_doc);
@@ -191,6 +203,10 @@ angular.module('auction').controller('AuctionController', [
           $scope.bidder_id = data.bidder_id;
           $scope.client_id = data.client_id;
           $scope.return_url = data.return_url;
+          if ('coeficient' in data){
+            $scope.bidder_coeficient = math.fraction(data.coeficient);
+            $log.debug("Get coeficient:", $scope.bidder_coeficient);
+          }
         });
       }, false);
 
@@ -418,31 +434,63 @@ angular.module('auction').controller('AuctionController', [
 
     $scope.max_bid_amount = function() {
       var amount = 0;
-      if ((angular.isString($scope.bidder_id)) && (angular.isObject($scope.auction_doc)) && (angular.isObject($scope.auction_doc.stages[$scope.auction_doc.current_stage]))) {
-        amount = $scope.auction_doc.stages[$scope.auction_doc.current_stage].amount - $scope.auction_doc.minimalStep.amount;
-      }
+      if ((angular.isString($scope.bidder_id)) && (angular.isObject($scope.auction_doc))) {
+        var current_stage_obj = $scope.auction_doc.stages[$scope.auction_doc.current_stage]||null;
+
+        if ((angular.isObject(current_stage_obj)) && (current_stage_obj.amount || current_stage_obj.amount_features)) {
+          if ($scope.bidder_coeficient){
+            amount = math.fraction(current_stage_obj.amount_features)/$scope.bidder_coeficient - math.fraction($scope.auction_doc.minimalStep.amount);
+          } else {
+            amount = math.fraction(current_stage_obj.amount) - math.fraction($scope.auction_doc.minimalStep.amount);
+          }
+        }
+
+      };
       if (amount < 0) {
         return 0;
       }
+      $log.debug("max_bid_amount:", amount);
       return amount;
     };
     $scope.calculate_minimal_bid_amount = function() {
       if ((angular.isObject($scope.auction_doc)) && (angular.isArray($scope.auction_doc.stages)) && (angular.isArray($scope.auction_doc.initial_bids))) {
         var bids = [];
-        filter_func = function(item, index) {
-          if (!angular.isUndefined(item.amount)) {
-            bids.push(item);
-          }
-        };
-        
+
+        if ($scope.auction_doc.auction_type == 'meat'){
+          filter_func = function(item, index) {
+            if (!angular.isUndefined(item.amount_features)) {
+              bids.push(item);
+            }
+          };
+        } else {
+          filter_func = function(item, index) {
+            if (!angular.isUndefined(item.amount)) {
+              bids.push(item);
+            }
+          };
+        }
+
+
         $scope.auction_doc.stages.forEach(filter_func);
         $scope.auction_doc.initial_bids.forEach(filter_func);
-        $scope.minimal_bid = bids.sort(function(a, b) {
-            if ( a.amount == b.amount ) {
-                return Date.parse(a.time||"") - Date.parse(b.time||"");
-            }
+
+        if ($scope.auction_doc.auction_type == 'meat'){
+          $scope.minimal_bid = bids.sort(function(a, b) {
+            return math.fraction(a.amount_features) - math.fraction(b.amount_features);
+          })[0];
+        } else {
+          $scope.minimal_bid = bids.sort(function(a, b) {
+            // return math.fraction(a) - math.fraction(b);
             return a.amount - b.amount;
-        })[0];
+          })[0];
+        }
+
+
+
+        console.log(bids)
+
+
+
       }
     };
     $scope.start_sync = function() {
@@ -534,7 +582,6 @@ angular.module('auction').controller('AuctionController', [
         } else {
           // if ($cookieStore.get('auctions_loggedin')) {
           //   $cookieStore.remove('auctions_loggedin');
-          //   $log.debug('Refresh page');
           //   $timeout(function() {
           //     window.location.replace(window.location.protocol + '//' + window.location.host + window.location.pathname);
           //   }, 1000);
@@ -549,19 +596,18 @@ angular.module('auction').controller('AuctionController', [
       }, 1000);
     };
     $scope.replace_document = function(new_doc) {
-      $rootScope.$apply(function(argument) {
-        if ((angular.isUndefined($scope.auction_doc)) || (new_doc.current_stage - $scope.auction_doc.current_stage === 0) || (new_doc.current_stage === -1)) {
-          $scope.auction_doc = new_doc;
-        } else {
-          $rootScope.form.bid = null;
-          $scope.allow_bidding = true;
-          $scope.auction_doc = new_doc;
-        }
-        $scope.sync_times_with_server();
-        $scope.calculate_rounds();
-        $scope.calculate_minimal_bid_amount();
-        $scope.scroll_to_stage();
-      });
+      if ((angular.isUndefined($scope.auction_doc)) || (new_doc.current_stage - $scope.auction_doc.current_stage === 0) || (new_doc.current_stage === -1)) {
+        $scope.auction_doc = new_doc;
+      } else {
+        $rootScope.form.bid = null;
+        $scope.allow_bidding = true;
+        $scope.auction_doc = new_doc;
+      }
+      $scope.sync_times_with_server();
+      $scope.calculate_rounds();
+      $scope.calculate_minimal_bid_amount();
+      $scope.scroll_to_stage();
+      $scope.$apply();
     };
     $scope.calculate_rounds = function(argument) {
       $scope.Rounds = [];
@@ -648,3 +694,22 @@ angular.module('auction')
       replace: true
     };
   });
+
+angular.module('auction')
+  .filter('fraction', ['$filter',
+    function(filter) {
+      return function(val, coeficient) {
+        var format_function = function(val) {
+          return (filter('number')(val, 2) || "").replace(/,/g, " ") || "";
+        }
+        console.log(val);
+        if (val){
+          if (coeficient){
+            return format_function(math.eval(math.format(math.fraction(val) / math.fraction(coeficient))).toFixed(2));
+          }
+          return format_function(math.eval(math.format(math.fraction(val))).toFixed(2));
+        }
+        return "";
+      }
+    }
+  ]);

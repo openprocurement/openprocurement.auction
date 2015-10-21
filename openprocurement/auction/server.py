@@ -181,6 +181,7 @@ def post_bid():
         if bidder_data and bidder_data['bidder_id'] == request.json['bidder_id']:
             with auction.bids_actions:
                 form = BidsForm.from_json(request.json)
+                form.auction = auction
                 form.document = auction.db.get(auction.auction_doc_id)
                 current_time = datetime.now(timezone('Europe/Kiev'))
                 if form.validate():
@@ -241,7 +242,7 @@ def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
     app._logger = logger
     app.config['auction'] = auction
     app.config['timezone'] = tz(timezone)
-    app.config['SESSION_COOKIE_PATH'] = '/tenders/{}'.format(auction.auction_doc_id)
+    app.config['SESSION_COOKIE_PATH'] = '/tenders_meat/{}'.format(auction.auction_doc_id)
     app.config['SESSION_COOKIE_NAME'] = 'auction_session'
     app.oauth = OAuth(app)
     app.remote_oauth = app.oauth.remote_app(

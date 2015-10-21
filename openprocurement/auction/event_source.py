@@ -109,10 +109,13 @@ def event_source():
                 'Send identification for bidder: {} with client_hash {}'.format(bidder, client_hash),
                 extra=prepare_extra_journal_fields(request.headers)
             )
-            send_event_to_client(bidder, client_hash,
-                                 {"bidder_id": bidder,
-                                  "client_id": client_hash,
-                                  "return_url": session.get('return_url', '')},
+            identification_data = {"bidder_id": bidder,
+                                   "client_id": client_hash,
+                                   "return_url": session.get('return_url', '')}
+            if current_app.config['auction'].features:
+                identification_data["coeficient"] = str(current_app.config['auction'].bidders_coeficient[bidder])
+
+            send_event_to_client(bidder, client_hash, identification_data,
                                  "Identification")
             if 'amount' in session:
                 send_event_to_client(bidder, client_hash,

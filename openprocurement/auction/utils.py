@@ -15,6 +15,7 @@ import uuid
 from pkg_resources import parse_version
 from restkit.wrappers import BodyWrapper
 from barbecue import chef
+from fractions import Fraction
 
 
 EXTRA_LOGGING_VALUES = {
@@ -106,7 +107,7 @@ def sorting_by_amount(bids, reverse=True):
             time_of_bid2 = get_time(bid2)
             return - cmp(time_of_bid2, time_of_bid1)
         else:
-            return cmp(bid1["amount"], bid2["amount"])
+            return cmp(Fraction(bid1["amount"]), Fraction(bid2["amount"]))
 
     return sorted(bids, reverse=reverse, cmp=bids_compare)
 
