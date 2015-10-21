@@ -123,9 +123,8 @@ js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
             "static/js/controllers.js",
             "vendor/moment/locale/uk.js",
             "vendor/moment/locale/ru.js",
-            filters='jsmin', output='min/js_%(version)s.js')
+            filters='jsmin', output='min/js_1%(version)s.js')
 assets.register('all_js', js)
-
 ################################################################################
 
 

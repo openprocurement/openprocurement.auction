@@ -192,7 +192,7 @@ class Auction(object):
         if self.auction_document["stages"][self.current_stage].get('changed', False):
             self.audit['timeline'][round_label][turn_label]["bid_time"] = self.auction_document["stages"][self.current_stage]['time']
             if self.features:
-                self.audit['timeline'][round_label][turn_label]["amount"] = self.
+                self.audit['timeline'][round_label][turn_label]["amount"] = self.auction_document["stages"][self.current_stage].get("amount", "null")
             else:
                 self.audit['timeline'][round_label][turn_label]["amount"] = self.auction_document["stages"][self.current_stage]['amount']
 
