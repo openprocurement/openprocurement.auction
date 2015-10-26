@@ -391,6 +391,8 @@ class Auction(object):
         public_document = self.get_auction_document()
         if public_document:
             self.auction_document = {"_rev": public_document["_rev"]}
+        else:
+            self.auction_document = {}
 
         if self.debug:
             self.auction_document['mode'] = 'test'
