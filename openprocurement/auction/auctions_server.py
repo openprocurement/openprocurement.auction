@@ -123,7 +123,7 @@ js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
             "static/js/controllers.js",
             "vendor/moment/locale/uk.js",
             "vendor/moment/locale/ru.js",
-            filters='jsmin', output='min/js_1%(version)s.js')
+            filters='jsmin', output='min/all_js_%(version)s.js')
 assets.register('all_js', js)
 ################################################################################
 
@@ -171,7 +171,7 @@ def archive_tenders_list_index():
 def health():
     data = auctions_server.couch_server.tasks()
     response = Response(dumps(data))
-    if not(data and data[0]['progress'] > 95):
+    if not(data and data[0]['progress'] > 90):
         response.status_code = 503
     return response
 
