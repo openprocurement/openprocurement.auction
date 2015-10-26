@@ -972,6 +972,8 @@ def main():
     parser.add_argument('auction_worker_config', type=str,
                         help='Auction Worker Configuration File')
     parser.add_argument('--auction_info', type=str, help='Auction File')
+    parser.add_argument('--with_api_version', type=str, help='Tender Api Version')
+
     args = parser.parse_args()
     if args.auction_info:
         auction_data = json.load(open(args.auction_info))
@@ -980,6 +982,8 @@ def main():
 
     if os.path.isfile(args.auction_worker_config):
         worker_defaults = json.load(open(args.auction_worker_config))
+        if args.with_api_version:
+            worker_defaults['TENDERS_API_VERSION'] = args.with_api_version
         if args.cmd != 'cleanup':
             worker_defaults['handlers']['journal']['TENDER_ID'] = args.auction_doc_id
         for key in ('TENDERS_API_VERSION', 'TENDERS_API_URL',):

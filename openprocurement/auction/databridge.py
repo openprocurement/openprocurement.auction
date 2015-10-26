@@ -131,12 +131,15 @@ class AuctionsDataBridge(object):
             else:
                 sleep(10)
 
-    def start_auction_worker(self, tender_item):
+    def start_auction_worker(self, tender_item, with_api_version=''):
+        params = [self.config_get('auction_worker'),
+                  'planning', str(tender_item['id']),
+                  self.config_get('auction_worker_config')]
+        if with_api_version:
+            params += ['--with_api_version', with_api_version]
         result = do_until_success(
             check_output,
-            args=([self.config_get('auction_worker'),
-                   'planning', str(tender_item['id']),
-                   self.config_get('auction_worker_config')],),
+            args=(params,),
         )
         logger.info("Auction planning command result: {}".format(result),
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_PROCESS})
@@ -171,7 +174,12 @@ class AuctionsDataBridge(object):
                     continue
                 logger.info('Tender {} selected for planning'.format(tender_item['id']),
                             extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
-                self.start_auction_worker(tender_item)
+                if 'TENDERS_API_VERSION' in tender_item['doc']:
+                    self.start_auction_worker(
+                        tender_item, with_api_version=tender_item['doc']['TENDERS_API_VERSION'])
+                else:
+                    self.start_auction_worker(tender_item)
+
                 self.planned_tenders[tender_item['id']] = start_date
             elif 'last_seq' in tender_item:
                 self.last_seq_id = tender_item['last_seq']
