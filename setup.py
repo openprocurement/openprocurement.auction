@@ -46,14 +46,11 @@ setup(name='openprocurement.auction',
           'request_id_middleware',
           'restkit',
           'PyMemoize',
-<<<<<<< HEAD
-          'barbecue'
-=======
+          'barbecue',
           # ssl warning
           'pyopenssl',
           'ndg-httpsclient',
           'pyasn1'
->>>>>>> origin/master
       ],
       entry_points={
           'console_scripts': [

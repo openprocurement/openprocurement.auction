@@ -12,6 +12,7 @@ INITIAL_BIDS_TEMPLATE = Template(u'''{
               "ru": "Участник №{{ bidder_name }}",
               "uk": "Учасник №{{ bidder_name }}"},
     {% if amount_features %}"amount_features": "{{ amount_features}}",{% endif %}
+    {% if coeficient %}"coeficient": "{{ coeficient}}",{% endif %}
     "amount": {% if amount %}{{ amount }}{% else %}null{% endif %}
 }''')
 
@@ -35,6 +36,7 @@ BIDS_TEMPLATE = Template(u'''{
     {% endif %}
     "amount": {% if amount %}{{ amount }}{% else %}null{% endif %},
     {% if amount_features %}"amount_features": "{{ amount_features}}",{% endif %}
+    {% if coeficient %}"coeficient": "{{ coeficient}}",{% endif %}
     "time": "{{ time }}"
 }''')
 
@@ -50,6 +52,7 @@ RESULTS_TEMPLATE = Template(u'''{
               "ru": "Участник №{{ bidder_name }}",
               "uk": "Учасник №{{ bidder_name }}"},
     {% if amount_features %}"amount_features": "{{ amount_features}}",{% endif %}
+    {% if coeficient %}"coeficient": "{{ coeficient}}",{% endif %}
     "amount": {% if amount %}{{ amount }}{% else %}null{% endif %},
     "time": "{{ time }}"
 }''')

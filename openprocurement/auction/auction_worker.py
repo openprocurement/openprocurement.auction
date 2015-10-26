@@ -31,7 +31,8 @@ from .utils import (
     patch_tender_data,
     calculate_hash,
     delete_mapping,
-    generate_request_id
+    generate_request_id,
+    filter_amount
 )
 from .executor import AuctionsExecutor
 
@@ -59,8 +60,6 @@ from systemd_msgs_ids import(
     AUCTION_WORKER_CLEANUP,
     AUCTION_WORKER_SET_AUCTION_URLS
 )
-
-
 
 MULTILINGUAL_FIELDS = ["title", "description"]
 ADDITIONAL_LANGUAGES = ["ru", "en"]
@@ -125,16 +124,36 @@ class Auction(object):
     def generate_request_id(self):
         self.request_id = generate_request_id()
 
-    def get_auction_document(self):
+    def prepare_public_document(self):
+        public_document = deepcopy(dict(self.auction_document))
+        not_last_stage = (len(self.auction_document["stages"]) - 1) != self.auction_document["current_stage"]
+        if self.features and not_last_stage:
+            for stage_name in ['initial_bids', 'stages', 'results']:
+                public_document[stage_name] = map(
+                    filter_amount,
+                    public_document[stage_name]
+                )
+        return public_document
+
+    def get_auction_document(self, force=False):
         retries = self.retries
         while retries:
             try:
-                self.auction_document = self.db.get(self.auction_doc_id)
-                if self.auction_document:
-                    logger.info("Get auction document {0[_id]} with rev {0[_rev]}".format(self.auction_document),
+                public_document = self.db.get(self.auction_doc_id)
+                if public_document:
+                    logger.info("Get auction document {0[_id]} with rev {0[_rev]}".format(public_document),
                                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                                        "MESSAGE_ID": AUCTION_WORKER_DB})
-                return
+                    if not hasattr(self, 'auction_document'):
+                        self.auction_document = public_document
+                    if force:
+                        return public_document
+                    elif public_document.rev != self.auction_document.rev:
+                        logger.warning("Rev error")
+                        self.auction_document.rev = public_document.rev
+                    logger.debug(json.dumps(self.auction_document, indent=4))
+                return public_document
+
             except HTTPError, e:
                 logger.error("Error while get document: {}".format(e),
                              extra={'MESSAGE_ID': AUCTION_WORKER_DB})
@@ -149,15 +168,17 @@ class Auction(object):
             retries -= 1
 
     def save_auction_document(self):
+        public_document = self.prepare_public_document()
         retries = 10
         while retries:
             try:
-                response = self.db.save(self.auction_document)
+                response = self.db.save(public_document)
                 if len(response) == 2:
                     logger.info("Saved auction document {0} with rev {1}".format(*response),
                                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                                        "MESSAGE_ID": AUCTION_WORKER_DB})
-                return response
+                    self.auction_document['_rev'] = response[1]
+                    return response
             except HTTPError, e:
                 logger.error("Error while save document: {}".format(e),
                              extra={'MESSAGE_ID': AUCTION_WORKER_DB})
@@ -169,12 +190,10 @@ class Auction(object):
                 else:
                     logger.critical("Unhandled error: {}".format(e),
                                     extra={'MESSAGE_ID': AUCTION_WORKER_DB})
-            new_doc = self.auction_document
-            if "_rev" in new_doc:
-                del new_doc["_rev"]
-            self.get_auction_document()
-            self.auction_document.update(new_doc)
-            logger.debug("Retry save document changes")
+            if "_rev" in public_document:
+                logger.debug("Retry save document changes")
+            saved_auction_document = self.get_auction_document(force=True)
+            public_document["_rev"] = saved_auction_document["_rev"]
             retries -= 1
 
     def add_bid(self, round_id, bid):
@@ -198,6 +217,7 @@ class Auction(object):
             bid_info_result = {key: bid_info[key] for key in BIDS_KEYS_FOR_COPY}
             if self.features:
                 bid_info_result['amount_features'] = bid_info['amount_features']
+                bid_info_result['coeficient'] = bid_info['coeficient']
             bid_info_result["bidder_name"] = self.mapping[bid_info_result['bidder_id']]
             filtered_bids_data.append(bid_info_result)
         return filtered_bids_data
@@ -235,10 +255,14 @@ class Auction(object):
         }
         if self.auction_document["stages"][self.current_stage].get('changed', False):
             self.audit['timeline'][round_label][turn_label]["bid_time"] = self.auction_document["stages"][self.current_stage]['time']
+            self.audit['timeline'][round_label][turn_label]["amount"] = self.auction_document["stages"][self.current_stage]['amount']
             if self.features:
-                self.audit['timeline'][round_label][turn_label]["amount"] = self.auction_document["stages"][self.current_stage].get("amount", "null")
-            else:
-                self.audit['timeline'][round_label][turn_label]["amount"] = self.auction_document["stages"][self.current_stage]['amount']
+                self.audit['timeline'][round_label][turn_label]["amount_features"] = str(
+                    self.auction_document["stages"][self.current_stage].get("amount_features")
+                )
+                self.audit['timeline'][round_label][turn_label]["coeficient"] = str(
+                    self.auction_document["stages"][self.current_stage].get("coeficient")
+                )
 
     def approve_audit_info_on_announcement(self, approved={}):
         self.audit['timeline']['results'] = {
@@ -364,9 +388,9 @@ class Auction(object):
     def prepare_auction_document(self):
         self.generate_request_id()
         self.get_auction_info(prepare=True)
-        self.get_auction_document()
-        if not self.auction_document:
-            self.auction_document = {}
+        public_document = self.get_auction_document()
+        if public_document:
+            self.auction_document = {"_rev": public_document["_rev"]}
 
         if self.debug:
             self.auction_document['mode'] = 'test'
@@ -375,6 +399,7 @@ class Auction(object):
             {"_id": self.auction_doc_id,
              "stages": [],
              "tenderID": self._auction_data["data"].get("tenderID", ""),
+             "TENDERS_API_VERSION": self.worker_defaults["TENDERS_API_VERSION"],
              "initial_bids": [],
              "current_stage": -1,
              "results": [],
@@ -604,32 +629,36 @@ class Auction(object):
         bids_info = sorting_start_bids_by_amount(bids, features=self.features)
         for index, bid in enumerate(bids_info):
             amount = bid["value"]["amount"]
+            audit_info = {
+                "bidder": bid["id"],
+                "date": bid["date"],
+                "amount": amount
+            }
             if self.features:
                 amount_features = cooking(
                     amount,
                     self.features, self.bidders_features[bid["id"]]
                 )
+                coeficient = self.bidders_coeficient[bid["id"]]
+                audit_info["amount_features"] = str(amount_features)
+                audit_info["coeficient"] = str(coeficient)
             else:
+                coeficient = None
                 amount_features = None
-            self.audit['timeline']['auction_start']['initial_bids'].append(
-                {
-                    "bidder": bid["id"],
-                    "date": bid["date"],
-                    "amount": amount,
-                    "amount_features": amount_features
-                }
-            )
 
+            self.audit['timeline']['auction_start']['initial_bids'].append(
+                audit_info
+            )
             self.auction_document["initial_bids"].append(
                 json.loads(INITIAL_BIDS_TEMPLATE.render(
                     time=bid["date"] if "date" in bid else self.startDate,
                     bidder_id=bid["id"],
                     bidder_name=self.mapping[bid["id"]],
-                    amount="" if self.features else amount,
+                    amount=amount,
+                    coeficient=coeficient,
                     amount_features=amount_features
                 ))
             )
-
         if isinstance(switch_to_round, int):
             self.auction_document["current_stage"] = switch_to_round
         else:
@@ -641,6 +670,7 @@ class Auction(object):
             minimal_bids.append(get_latest_bid_for_bidder(
                 all_bids, str(bidder)
             ))
+
         minimal_bids = self.filter_bids_keys(sorting_by_amount(minimal_bids))
         self.update_future_bidding_orders(minimal_bids)
         self.save_auction_document()
@@ -791,8 +821,6 @@ class Auction(object):
             bid_info["bidder_name"] = self.mapping[bid_info['bidder_id']]
             if self.features:
                 bid_info['amount_features'] = str(Fraction(bid_info['amount']) * self.bidders_coeficient[bid_info['bidder_id']])
-
-                del bid_info['amount']
             self.auction_document["stages"][self.current_stage] = generate_bids_stage(
                 self.auction_document["stages"][self.current_stage],
                 bid_info
@@ -823,27 +851,29 @@ class Auction(object):
     def put_auction_data(self):
         doc_id = None
         self.approve_audit_info_on_announcement()
-
-        files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
-        response = patch_tender_data(
-            self.tender_url + '/documents', files=files,
-            user=self.worker_defaults["TENDERS_API_TOKEN"],
-            method='post', request_id=self.request_id,
-            retry_count=2
-        )
-        if response:
-            doc_id = response["data"]['id']
-            logger.info(
-                "Audit log approved. Document id: {}".format(doc_id),
-                extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_API}
+        try:
+            files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
+            response = patch_tender_data(
+                self.tender_url + '/documents', files=files,
+                user=self.worker_defaults["TENDERS_API_TOKEN"],
+                method='post', request_id=self.request_id,
+                retry_count=2
             )
-        else:
-            logger.warning(
-                "Audit log not approved.",
-                extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_API}
-            )
+            if response:
+                doc_id = response["data"]['id']
+                logger.info(
+                    "Audit log approved. Document id: {}".format(doc_id),
+                    extra={"JOURNAL_REQUEST_ID": self.request_id,
+                           "MESSAGE_ID": AUCTION_WORKER_API}
+                )
+            else:
+                logger.warning(
+                    "Audit log not approved.",
+                    extra={"JOURNAL_REQUEST_ID": self.request_id,
+                           "MESSAGE_ID": AUCTION_WORKER_API}
+                )
+        except Exception, e:
+            logger.error(repr(self.audit))
 
         all_bids = self.auction_document["results"]
         logger.info(

@@ -453,7 +453,7 @@ angular.module('auction').controller('AuctionController', [
         var current_stage_obj = $scope.auction_doc.stages[$scope.auction_doc.current_stage] || null;
 
         if ((angular.isObject(current_stage_obj)) && (current_stage_obj.amount || current_stage_obj.amount_features)) {
-          if ($scope.bidder_coeficient) {
+          if ($scope.bidder_coeficient && ($scope.auction_doc.auction_type|| "default" == "meat")) {
             amount = math.fraction(current_stage_obj.amount_features) / $scope.bidder_coeficient - math.fraction($scope.auction_doc.minimalStep.amount);
           } else {
             amount = math.fraction(current_stage_obj.amount) - math.fraction($scope.auction_doc.minimalStep.amount);

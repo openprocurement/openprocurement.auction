@@ -152,7 +152,7 @@
                             <span class="stage-info-item stage-amount" 
                                   ng-if="bid_info['amount']||bid_info['amount_features']"
                                   ng-class="{true: 'minimal-amount', false: 'default-amount'}[((bid_info.amount_features||bid_info.amount) == (minimal_bid.amount_features||minimal_bid.amount)) && bid_info.time == minimal_bid.time]">
-                                <span ng-if="auction_doc.auction_type == 'meat'">
+                                <span ng-if="auction_doc.auction_type == 'meat' && auction_doc.current_stage < (auction_doc.stages.length - 1)">
                                     <span class="label-price" ng-if="!$root.normilized">
                                         {{ bid_info['amount_features']|fraction }}
                                         <span class="amount-currency" ng-if="bid_info['amount_features']">{{ auction_doc.minimalStep.currency|translate }}</span>
@@ -161,11 +161,17 @@
                                         {{ bid_info['amount_features']|fraction:bidder_coeficient }} 
                                         <span class="amount-currency" ng-if="bid_info['amount_features']">{{ auction_doc.minimalStep.currency|translate }}</span>
                                     </span>
-                                    <span ng-if="auction_doc.auction_type||'default' == 'default'">
-                                        <span class="label-price">
-                                            {{ bid_info['amount'] }}
-                                            <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
-                                        </span>
+                                </span>
+                                <span ng-if="auction_doc.auction_type == 'meat' && auction_doc.current_stage == (auction_doc.stages.length - 1)">
+                                    <span class="label-price">
+                                        {{ bid_info['amount']|fraction }} * {{ bid_info['coeficient']|fraction }}
+                                        <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
+                                    </span>
+                                </span>
+                                <span ng-if="(auction_doc.auction_type||'default') == 'default'">
+                                    <span class="label-price">
+                                        {{ bid_info['amount']|fraction }}
+                                        <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
                                     </span>
                                 </span>
                                 <span class="label-minimum" ng-if="((bid_info.amount_features||bid_info.amount) == (minimal_bid.amount_features||minimal_bid.amount)) && bid_info.time == minimal_bid.time" translate>minimum</span>
@@ -217,7 +223,7 @@
                                   ng-if="(auction_doc.stages[stage + $index + 1]['type'] == 'bids')&&(auction_doc.stages[stage + $index + 1]['amount_features']||auction_doc.stages[stage + $index + 1]['amount'])"
                                   ng-class="{true: 'minimal-amount', false: 'default-amount'}[((auction_doc.stages[stage + $index + 1].amount_features||auction_doc.stages[stage + $index + 1].amount) == (minimal_bid.amount_features||minimal_bid.amount)) && auction_doc.stages[stage + $index + 1]['time'] == minimal_bid.time]">
                                 <span class="label-price" ng-if="auction_doc.stages[stage + $index + 1]['changed']">
-                                     <span ng-if="auction_doc.auction_type == 'meat'">
+                                     <span ng-if="(auction_doc.auction_type == 'meat') && (auction_doc.current_stage < (auction_doc.stages.length - 1))">
                                         <strong ng-if="!$root.normilized">{{ auction_doc.stages[stage + $index + 1]['amount_features']|fraction }}
                                             <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount_features']">{{ auction_doc.minimalStep.currency|translate }}</span>
                                         </strong>
@@ -225,15 +231,23 @@
                                             <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount_features']">{{ auction_doc.minimalStep.currency|translate }}</span>
                                         </strong>
                                     </span>
-                                    <span ng-if="auction_doc.auction_type||'default' == 'default'">
+
+                                    <span ng-if="(auction_doc.auction_type == 'meat') && (auction_doc.current_stage == (auction_doc.stages.length - 1))">
                                         <span class="label-price">
-                                            {{ auction_doc.stages[stage + $index + 1]['amount'] }}
+                                            {{ auction_doc.stages[stage + $index + 1]['amount'] }} * {{ auction_doc.stages[stage + $index + 1]['coeficient']|fraction }}
+                                            <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
+                                        </span>
+                                    </span>
+
+                                    <span ng-if="(auction_doc.auction_type||'default') == 'default'">
+                                        <span class="label-price">
+                                            {{ auction_doc.stages[stage + $index + 1]['amount']|fraction }}
                                             <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
                                         </span>
                                     </span>
                                 </span>
                                 <span class="label-price" ng-if="!auction_doc.stages[stage + $index + 1]['changed']">
-                                    <span ng-if="auction_doc.auction_type == 'meat'">
+                                    <span ng-if="(auction_doc.auction_type == 'meat') && (auction_doc.current_stage < (auction_doc.stages.length - 1))">
                                         <span ng-if="!$root.normilized">
                                             {{ auction_doc.stages[stage + $index + 1]['amount_features']|fraction }}
                                             <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount_features']">{{ auction_doc.minimalStep.currency|translate }}</span>
@@ -244,9 +258,16 @@
                                         </span>
                                     </span>
 
-                                    <span ng-if="auction_doc.auction_type||'default' == 'default'">
+                                    <span ng-if="auction_doc.auction_type == 'meat' && (auction_doc.current_stage == (auction_doc.stages.length - 1))">
                                         <span class="label-price">
-                                            {{ auction_doc.stages[stage + $index + 1]['amount'] }}
+                                            {{ auction_doc.stages[stage + $index + 1]['amount']|fraction }} * {{ auction_doc.stages[stage + $index + 1]['coeficient']|fraction }}
+                                            <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
+                                        </span>
+                                    </span>
+
+                                    <span ng-if="(auction_doc.auction_type||'default') == 'default'">
+                                        <span class="label-price">
+                                            {{ auction_doc.stages[stage + $index + 1]['amount']|fraction }}
                                             <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
                                         </span>
                                     </span>
@@ -287,9 +308,9 @@
                             <span class="stage-info-item stage-label" ng-if="bid_info.bidder_id == bidder_id " translate>You</span>
                             <span class="stage-info-item stage-amount" 
                                   ng-if="bid_info['amount_features']||bid_info['amount']"
-                                  ng-class="{true: 'minimal-amount', false: 'default-amount'}[(bid_info.amount_features||bid_info.amount) == (minimal_bid.amount_features||minimal_bid.amount)]">
+                                  ng-class="{true: 'minimal-amount', false: 'default-amount'}[((bid_info.amount_features||bid_info.amount) == (minimal_bid.amount_features||minimal_bid.amount)) && bid_info.time == minimal_bid.time]">
 
-                                <span ng-if="auction_doc.auction_type == 'meat'">
+                                <span ng-if="(auction_doc.auction_type == 'meat')&&(auction_doc.current_stage < (auction_doc.stages.length - 1))">
                                     <span class="label-price" ng-if="!$root.normilized">
                                         {{ bid_info['amount_features']|fraction }}
                                         <span class="amount-currency" ng-if="bid_info['amount_features']">{{ auction_doc.minimalStep.currency|translate }}</span>
@@ -299,7 +320,19 @@
                                         <span class="amount-currency" ng-if="bid_info['amount_features']">{{ auction_doc.minimalStep.currency|translate }}</span>
                                     </span>
                                 </span>
-                                <span class="label-minimum" ng-if="(bid_info.amount_features||bid_info.amount) == (minimal_bid.amount_features||minimal_bid.amount)" translate>minimum</span>
+                                <span ng-if="auction_doc.auction_type == 'meat' && (auction_doc.current_stage == (auction_doc.stages.length - 1))">
+                                    <span class="label-price">
+                                        {{ bid_info['amount']|fraction }} * {{ bid_info['coeficient']|fraction }}
+                                        <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
+                                    </span>
+                                </span>
+                                <span ng-if="(auction_doc.auction_type||'default') == 'default'">
+                                    <span class="label-price">
+                                        {{ bid_info['amount']|fraction }}
+                                        <span class="amount-currency" ng-if="bid_info['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
+                                    </span>
+                                </span>
+                                <span class="label-minimum" ng-if="((bid_info.amount_features||bid_info.amount) == (minimal_bid.amount_features||minimal_bid.amount)) && bid_info.time == minimal_bid.time" translate>minimum</span>
                             </span>
                         </div>
                     </div>
@@ -336,10 +369,10 @@
                         <div class="container">
                             <alert ng-repeat="alert in alerts" type="{{alert.type}}" class="bids-form-alert" close="closeAlert(alert.msg_id)"><span class="bids-form-alert-msg">{{ alert.msg | translate }}</span></alert>
                             <form id="BidsForm" name="form.BidsForm" role="form">
-                                <label for="bid"><span translate>Your proposal</span>:</label><span ng-if="bidder_coeficient"> {{ max_bid_amount()|fraction }} {{'or lower'|translate}}</span>
+                                <label for="bid"><span translate>Your proposal</span>:</label><span> {{ max_bid_amount()|fraction }} {{'or lower'|translate}}</span>
                                 <div class="input-group">
                                     <input id="bid-amount-input" ng-disabled="!allow_bidding" min="0" class="form-control" id="bid" name="bid" ng-model="form.bid" required format="formatnumber">
-                                    <span ng-if="bidder_coeficient && allow_bidding" class="input-group-addon"> x {{bidder_coeficient| fraction}} = {{ (form.bid * bidder_coeficient)|fraction}}</span>
+                                    <span id="bid-amount-description" ng-if="bidder_coeficient && allow_bidding && !$root.normilized" class="input-group-addon"> x {{bidder_coeficient| fraction}} = {{ (form.bid * bidder_coeficient)|fraction}}</span>
                                     <div class="input-group-btn">
                                         <button id="place-bid-button" type="submit" ng-show="allow_bidding" ng-click="post_bid()" class="btn btn-success" ng-class="{'active': form.active}" translate>Place a bid</button>
                                         <button id="cancel-bid-button" type="submit" ng-hide="allow_bidding" ng-click="post_bid(-1)" class="btn btn-success" ng-class="{'active': form.active}" translate>Cancel Bid</button>
@@ -419,7 +452,6 @@ var auction_doc_id = '{{ auction_doc_id }}';
 
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.8/angular.min.js"></script>
-<!-- <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/pouchdb/3.6.0/pouchdb.min.js"></script> -->
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/pouchdb/3.6.0/pouchdb.min.js"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.2/ui-bootstrap-tpls.min.js"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjs/2.3.0/math.min.js"></script>

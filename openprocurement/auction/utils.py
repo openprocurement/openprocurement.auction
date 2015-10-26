@@ -108,12 +108,18 @@ def sorting_by_amount(bids, reverse=True):
      {'amount': 3966.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:20+03:00'}]
     """
     def bids_compare(bid1, bid2):
-        if bid1["amount"] == bid2["amount"]:
+        if "amount_features" in bid1 and "amount_features" in bid2:
+            full_amount_bid1 = Fraction(bid1["amount_features"])
+            full_amount_bid2 = Fraction(bid2["amount_features"])
+        else:
+            full_amount_bid1 = bid1["amount"]
+            full_amount_bid2 = bid2["amount"]
+        if full_amount_bid1 == full_amount_bid2:
             time_of_bid1 = get_time(bid1)
             time_of_bid2 = get_time(bid2)
             return - cmp(time_of_bid2, time_of_bid1)
         else:
-            return cmp(Fraction(bid1["amount"]), Fraction(bid2["amount"]))
+            return cmp((bid1["amount"]), Fraction(bid2["amount"]))
 
     return sorted(bids, reverse=reverse, cmp=bids_compare)
 
@@ -365,3 +371,11 @@ def unsuported_browser(request):
         if 'Opera Mini' in request.user_agent.string:
             return True
     return False
+
+
+def filter_amount(stage):
+    if 'amount' in stage:
+        del stage['amount']
+    if 'coeficient' in stage:
+        del stage['coeficient']
+    return stage
