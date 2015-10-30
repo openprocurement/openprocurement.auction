@@ -75,8 +75,9 @@ angular.module('auction')
       'Your browser is out of date, and this site may not work properly.': 'Your browser is out of date, and this site may not work properly.',
       'Learn how to update your browser.': 'Learn how to update your browser.',
       'Not Found': 'Not Found',
-      'Calculated price': 'Calculated price',
-      'Normilized price': 'Normilized price',
+      'Price normalization mode': 'Price normalization mode',
+      'to Mine': 'to Mine',
+      'to General': 'to General',
       'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.'
     });
 
@@ -154,8 +155,9 @@ angular.module('auction')
       'Your browser is out of date, and this site may not work properly.': 'Ваш переглядач застарів, і цей сайт може некоректно працювати.',
       'Learn how to update your browser.': 'Дізнайтесь, як оновити Ваш браузер.',
       'Not Found': 'Аукціону із даною Id не знайдено',
-      'Calculated price': 'Приведена ціна',
-      'Normilized price': 'Ціна пропозиції (нормалізована ціна по коефіціенту корекції)',
+      'Price normalization mode': 'Режим приведення ціни',
+      'to Mine': 'до Моєї',
+      'to General': 'до Загальної',
       'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Подана вами пропозиція співпадає з пропозицією іншого учасника. Його пропозиція розглядатиметься першою, оскільки вона подана раніше.'
     });
 
@@ -234,8 +236,9 @@ angular.module('auction')
       'Your browser is out of date, and this site may not work properly.': 'Ваш браузер устарел, и этот сайт может некорректно работать.',
       'Learn how to update your browser.': 'Узнайте, как обновить Ваш браузер.',
       'Not Found': 'Аукциона по данной Id не найдена',
-      'Calculated price': 'Приведенная цена',
-      'Normilized price': 'Normilized price',
+      'Price normalization mode': 'Режим приведения цены',
+      'to Mine': 'к Моей',
+      'to General': 'к Общей',
       'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Поданное вами предложение совпадает с предложением другого участника. Его предложение будет рассматриваться первым, поскольку оно подано раньше.'
     });
   }]);
