@@ -99,6 +99,7 @@ class Auction(object):
                  worker_defaults={},
                  auction_data={}):
         super(Auction, self).__init__()
+        self.generate_request_id()
         self.auction_doc_id = auction_doc_id
         self.tender_url = urljoin(
             worker_defaults["TENDERS_API_URL"],
@@ -230,6 +231,7 @@ class Auction(object):
         return date
 
     def prepare_audit(self):
+        # TODO: timeline by ROUNDS constant
         self.audit = {
             "id": self.auction_doc_id,
             "tenderId": self._auction_data["data"].get("tenderID", ""),
