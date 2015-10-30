@@ -22,15 +22,6 @@ angular.module('auction').controller('AuctionController', [
       if ($scope.bidder_coeficient) {
         $rootScope.normilized = !$rootScope.normilized
       }
-      if ($rootScope.normilized) {
-        growl.info('Changed to normilized view', {
-          ttl: 10000
-        });
-      } else {
-        growl.info('Changed to calculated price view', {
-          ttl: 10000
-        });
-      }
     }
     $rootScope.format_date = AuctionUtils.format_date;
     $scope.bidder_id = null;
@@ -453,7 +444,7 @@ angular.module('auction').controller('AuctionController', [
         var current_stage_obj = $scope.auction_doc.stages[$scope.auction_doc.current_stage] || null;
 
         if ((angular.isObject(current_stage_obj)) && (current_stage_obj.amount || current_stage_obj.amount_features)) {
-          if ($scope.bidder_coeficient && ($scope.auction_doc.auction_type|| "default" == "meat")) {
+          if ($scope.bidder_coeficient && ($scope.auction_doc.auction_type || "default" == "meat")) {
             amount = math.fraction(current_stage_obj.amount_features) / $scope.bidder_coeficient - math.fraction($scope.auction_doc.minimalStep.amount);
           } else {
             amount = math.fraction(current_stage_obj.amount) - math.fraction($scope.auction_doc.minimalStep.amount);
@@ -465,11 +456,12 @@ angular.module('auction').controller('AuctionController', [
         return 0;
       }
       $log.debug("max_bid_amount:", amount);
+      $scope.calculated_max_bid_amount = amount;
       return amount;
     };
     $scope.calculate_minimal_bid_amount = function() {
       if ((angular.isObject($scope.auction_doc)) && (angular.isArray($scope.auction_doc.stages)) && (angular.isArray($scope.auction_doc.initial_bids))) {
-        var bids = []; 
+        var bids = [];
         if ($scope.auction_doc.auction_type == 'meat') {
           filter_func = function(item, index) {
             if (!angular.isUndefined(item.amount_features)) {
@@ -588,14 +580,14 @@ angular.module('auction').controller('AuctionController', [
             $scope.sync = $scope.start_sync()
           });
         } else {
-            // TODO: CLEAR COOKIE
+          // TODO: CLEAR COOKIE
 
-            // if ($cookieStore.get('auctions_loggedin')) {
-            //   $cookieStore.remove('auctions_loggedin');
-            //   $timeout(function() {
-            //     window.location.replace(window.location.protocol + '//' + window.location.host + window.location.pathname);
-            //   }, 1000);
-            // }
+          // if ($cookieStore.get('auctions_loggedin')) {
+          //   $cookieStore.remove('auctions_loggedin');
+          //   $timeout(function() {
+          //     window.location.replace(window.location.protocol + '//' + window.location.host + window.location.pathname);
+          //   }, 1000);
+          // }
         }
       });
     };
@@ -638,9 +630,27 @@ angular.module('auction').controller('AuctionController', [
         templateUrl: 'templates/menu.html',
         controller: 'OffCanvasController',
         scope: $scope,
-        size: 'lg'
+        size: 'lg',
+        backdrop: true
       });
     };
+    /* 2-WAY INPUT */
+    $scope.calculate_bid_temp = function() {
+      $rootScope.form.bid_temp = Number(math.fraction(math.fix($rootScope.form.bid * 100), 100));
+      $rootScope.form.full_price = $rootScope.form.bid_temp * $scope.bidder_coeficient;
+      $log.debug("Set bid_temp:", $rootScope.form);
+    };
+    $scope.calculate_full_price_temp = function() {
+      $rootScope.form.bid = (math.fix((math.fraction($rootScope.form.full_price) / $scope.bidder_coeficient) * 100)) / 100;
+      $rootScope.form.full_price_temp = $rootScope.form.bid * $scope.bidder_coeficient;
+    };
+    $scope.set_bid_from_temp = function () {
+      $rootScope.form.bid = $rootScope.form.bid_temp;
+      $rootScope.form.BidsForm.bid.$setViewValue(math.format($rootScope.form.bid, {
+              notation: 'fixed',
+              precision: 2
+      }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ","));
+    }
     $scope.start();
   }
 ]);
@@ -649,12 +659,15 @@ angular.module('auction').controller('AuctionController', [
 angular.module('auction').controller('OffCanvasController', ['$scope', '$modalInstance',
   function($scope, $modalInstance) {
     $scope.allert = function() {
+      console.log("ok");
       console.log($scope);
     };
     $scope.ok = function() {
+      console.log("ok");
       $modalInstance.close($scope.selected.item);
     };
     $scope.cancel = function() {
+      console.log("cancel");
       $modalInstance.dismiss('cancel');
     };
   }
@@ -680,18 +693,38 @@ angular.module('auction')
       link: function(scope, elem, attrs, ctrl) {
         if (!ctrl) return;
         ctrl.$formatters.unshift(function(value) {
-          return $filter('formatnumber')(value);
+          if (value) {
+            var formatters_value = math.format(Number(value), {
+              notation: 'fixed',
+              precision: 2
+            }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ",");
+            ctrl.prev_value = formatters_value;
+            return formatters_value
+          } else {
+            return ""
+          }
         });
-
         ctrl.$parsers.unshift(function(viewValue) {
-          var plainNumber = (viewValue || "").replace(/ /g, '');
-          ctrl.$viewValue = $filter('formatnumber')(plainNumber);
-          ctrl.$render();
-          return plainNumber;
+          console.log(viewValue);
+          if (viewValue) {
+            var plainNumber = Number((viewValue || "").replace(/ /g, '').replace(/,/g, "."));
+            if (plainNumber >= 0) {
+              var newviewValue = viewValue;
+              ctrl.prev_value = viewValue;
+            } else {
+              var plainNumber = Number((ctrl.prev_value).replace(/ /g, '').replace(/,/g, "."));
+              var newviewValue = ctrl.prev_value;
+            }
+            ctrl.$viewValue = newviewValue;
+            ctrl.$render();
+          } else {
+            var plainNumber = null
+          }
+          return plainNumber
         });
       }
     };
-  }]);
+  }])
 
 
 angular.module('auction')
@@ -710,7 +743,10 @@ angular.module('auction')
     function(filter) {
       return function(val, coeficient) {
         var format_function = function(val) {
-          return (filter('number')(val, 2) || "").replace(/,/g, " ") || "";
+          return math.format(Number(val), {
+              notation: 'fixed',
+              precision: 2
+            }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ",")
         }
         console.log(val);
         if (val) {
@@ -720,6 +756,26 @@ angular.module('auction')
           return format_function(math.eval(math.format(math.fraction(val))).toFixed(2));
         }
         return "";
+      }
+    }
+  ]);
+
+
+
+angular.module('auction')
+  .filter('fraction_string', ['$filter',
+    function(filter) {
+      return function(val) {
+        return math.fraction(val).toString();
+      }
+    }
+  ]);
+
+angular.module('auction')
+  .filter('eval_string', ['$filter',
+    function(filter) {
+      return function(val) {
+        return math.eval(val);
       }
     }
   ]);

@@ -296,7 +296,7 @@ angular.module('auction')
         // check placement is set correct
         // set aside classes
         options.windowClass = 'ng-aside horizontal left' + (options.windowClass ? ' ' + options.windowClass : '');
-        delete options.placement
+        // delete options.placement
         return $modal.open(options);
       }
     };
