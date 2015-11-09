@@ -31,9 +31,7 @@ angular.module('auction').controller('AuctionController', [
         AuctionConfig.remote_db = AuctionConfig.remote_db + "_secured";
       }
 
-      new PouchDB(AuctionConfig.remote_db, {
-        skipSetup: true
-      }).then(function(db) {
+      new PouchDB(AuctionConfig.remote_db).then(function(db) {
         $scope.db = db;
         $scope.http_error_timeout = $scope.default_http_error_timeout;
         $scope.start_auction_process();
@@ -459,6 +457,9 @@ angular.module('auction').controller('AuctionController', [
     };
     $scope.start_sync = function() {
       $scope.changes = $scope.db.changes({
+        remote_server_timeout: 15,
+        timeout: 45,
+        heartbeat: false,
         live: true,
         style: 'main_only',
         continuous: true,
