@@ -1,4 +1,4 @@
-from gevent import monkey
+from gevent import monkey, sleep
 monkey.patch_all()
 
 import time
