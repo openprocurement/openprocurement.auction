@@ -458,7 +458,7 @@ angular.module('auction').controller('AuctionController', [
     $scope.start_sync = function() {
       $scope.changes = $scope.db.changes({
         remote_server_timeout: 15000,
-        timeout: 40000,
+        timeout: (50000 - Math.ceil(Math.random() * 10000)),
         heartbeat: false,
         live: true,
         style: 'main_only',
