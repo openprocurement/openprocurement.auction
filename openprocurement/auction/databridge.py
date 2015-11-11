@@ -7,7 +7,6 @@ except ImportError:
 import argparse
 import logging
 import logging.config
-import requests
 import os
 from time import sleep, mktime
 from urlparse import urljoin
@@ -27,6 +26,9 @@ from systemd_msgs_ids import (
     DATA_BRIDGE_PLANNING_PROCESS
 )
 
+from openprocurement_client.client import Client as ApiClient
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -37,12 +39,10 @@ class AuctionsDataBridge(object):
     def __init__(self, config):
         super(AuctionsDataBridge, self).__init__()
         self.config = config
-
-        self.tenders_url = urljoin(
-            self.config_get('tenders_api_server'),
-            '/api/{}/tenders'.format(
-                self.config_get('tenders_api_version')
-            )
+        self.client = ApiClient(
+            self.config_get('tenders_api_token'),
+            host_url=self.config_get('tenders_api_server'),
+            api_version=self.config_get('tenders_api_version')
         )
         self.tz = tzlocal()
         self.couch_url = urljoin(
@@ -51,7 +51,6 @@ class AuctionsDataBridge(object):
         )
         self.db = Database(self.couch_url,
                            session=Session(retry_delays=range(10)))
-        self.url = self.tenders_url
 
     def config_get(self, name):
         return self.config.get('main').get(name)
@@ -61,27 +60,13 @@ class AuctionsDataBridge(object):
 
     def get_teders_list(self, re_planning=False):
         while True:
-            params = {'offset': self.offset,
-                      'opt_fields': 'status,auctionPeriod',
-                      'mode': '_all_'}
             request_id = generate_request_id(prefix=b'data-bridge-req-')
-            logger.debug('Start request to {}, params: {}'.format(
-                self.url, params),
-                extra={"JOURNAL_REQUEST_ID": request_id})
+            self.client.headers.update({'X-Client-Request-ID': request_id})
 
-            response = requests.get(self.url, params=params,
-                                    headers={'content-type': 'application/json',
-                                             'X-Client-Request-ID': request_id})
-
-            logger.debug('Request response: {}'.format(response.status_code))
-            if response.ok:
-                response_json = response.json()
-                if len(response_json['data']) == 0:
-                    logger.info("Change offset date to {}".format(response_json['next_page']['offset']),
-                                extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
-                    self.offset = response_json['next_page']['offset']
-                    break
-                for item in response_json['data']:
+            tenders_list = list(self.client.get_tenders())
+            if tenders_list:
+                logger.info("Client params: {}".format(self.client.params))
+                for item in tenders_list:
                     if 'auctionPeriod' in item \
                             and 'startDate' in item['auctionPeriod'] \
                             and 'endDate' not in item['auctionPeriod'] \
@@ -122,14 +107,8 @@ class AuctionsDataBridge(object):
                                         extra={"JOURNAL_REQUEST_ID": request_id,
                                                'MESSAGE_ID': DATA_BRIDGE_PLANNING})
 
-                logger.info(
-                    "Change offset date to {}".format(response_json['next_page']['offset']),
-                    extra={"JOURNAL_REQUEST_ID": request_id,
-                           'MESSAGE_ID': DATA_BRIDGE_PLANNING}
-                )
-                self.offset = response_json['next_page']['offset']
             else:
-                sleep(10)
+                break
 
     def start_auction_worker(self, tender_item, with_api_version=''):
         params = [self.config_get('auction_worker'),
@@ -141,6 +120,7 @@ class AuctionsDataBridge(object):
             check_output,
             args=(params,),
         )
+        result = "OK"
         logger.info("Auction planning command result: {}".format(result),
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_PROCESS})
 
@@ -190,12 +170,13 @@ class AuctionsDataBridge(object):
     def run(self):
         logger.info('Start Auctions Bridge',
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
-        self.offset = ''
+        self.client.params.update({'opt_fields': 'status,auctionPeriod', 'mode': '_all_'})
+
         logger.info('Start data sync...',
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
         while True:
             for tender_item in self.get_teders_list():
-                logger.debug('Tender {} selected for planning'.format(tender_item))
+                logger.info('Tender {} selected for planning'.format(tender_item))
                 self.start_auction_worker(tender_item)
                 sleep(2)
             logger.info('Sleep...',
