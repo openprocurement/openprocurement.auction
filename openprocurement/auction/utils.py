@@ -162,7 +162,7 @@ def get_latest_start_bid_for_bidder(bids, bidder):
 
 
 def get_tender_data(tender_url, user="", password="", retry_count=10,
-                    request_id=None):
+                    request_id=None, session=requests):
     if not request_id:
         request_id = generate_request_id()
     extra_headers = {'content-type': 'application/json', 'X-Client-Request-ID': request_id}
@@ -175,8 +175,8 @@ def get_tender_data(tender_url, user="", password="", retry_count=10,
         try:
             logging.info("Get data from {}".format(tender_url),
                          extra={"JOURNAL_REQUEST_ID": request_id})
-            response = requests.get(tender_url, auth=auth, headers=extra_headers,
-                                    timeout=300)
+            response = session.get(tender_url, auth=auth, headers=extra_headers,
+                                   timeout=300)
             if response.ok:
                 logging.info("Response from {}: status: {} text: {}".format(
                     tender_url, response.status_code, response.text),
@@ -209,7 +209,9 @@ def get_tender_data(tender_url, user="", password="", retry_count=10,
 
 
 def patch_tender_data(tender_url, data=None, files=None, user="", password="",
-                      retry_count=10, method='patch', request_id=None):
+                      retry_count=10, method='patch', request_id=None, session=None):
+    if not session:
+        session = requests.Session()
     if not request_id:
         request_id = generate_request_id()
     extra_headers = {'X-Client-Request-ID': request_id}
@@ -223,7 +225,7 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
     for iteration in xrange(retry_count):
         try:
             if data:
-                response = getattr(requests, method)(
+                response = getattr(session, method)(
                     tender_url,
                     auth=auth,
                     headers=extra_headers,
@@ -231,7 +233,7 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
                     timeout=300
                 )
             else:
-                response = getattr(requests, method)(
+                response = getattr(session, method)(
                     tender_url,
                     auth=auth,
                     headers=extra_headers,
@@ -245,6 +247,9 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
                     extra={"JOURNAL_REQUEST_ID": request_id}
                 )
                 return response.json()
+            elif response.status_code == 412 and response.text:
+                get_tender_data(tender_url, user=user, password=password,
+                                request_id=request_id, session=session)
             else:
                 logging.error("Response from {}: status: {} text: {}".format(
                     tender_url, response.status_code, response.text),

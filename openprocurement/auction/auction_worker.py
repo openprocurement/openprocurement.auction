@@ -22,6 +22,7 @@ from gevent.event import Event
 from gevent.coros import BoundedSemaphore
 from gevent.subprocess import call
 from apscheduler.schedulers.gevent import GeventScheduler
+from requests import Session as RequestsSession
 from .server import run_server
 from .utils import (
     sorting_by_amount,
@@ -113,6 +114,7 @@ class Auction(object):
             self._auction_data = auction_data
         else:
             self.debug = False
+        self.session = RequestsSession()
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
         self.worker_defaults = worker_defaults
@@ -289,14 +291,16 @@ class Auction(object):
             if prepare:
                 self._auction_data = get_tender_data(
                     self.tender_url,
-                    request_id=self.request_id
+                    request_id=self.request_id,
+                    session=self.session
                 )
             else:
                 self._auction_data = {'data': {}}
             auction_data = get_tender_data(
                 self.tender_url + '/auction',
                 user=self.worker_defaults["TENDERS_API_TOKEN"],
-                request_id=self.request_id
+                request_id=self.request_id,
+                session=self.session
             )
             if auction_data:
                 self._auction_data['data'].update(auction_data['data'])
@@ -454,7 +458,7 @@ class Auction(object):
             )
         patch_tender_data(self.tender_url + '/auction', patch_data,
                           user=self.worker_defaults["TENDERS_API_TOKEN"],
-                          request_id=self.request_id)
+                          request_id=self.request_id, session=self.session)
 
     def prepare_tasks(self, tenderID, startDate):
         cmd = deepcopy(sys.argv)
@@ -855,29 +859,25 @@ class Auction(object):
     def put_auction_data(self):
         doc_id = None
         self.approve_audit_info_on_announcement()
-        try:
-            files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
-            response = patch_tender_data(
-                self.tender_url + '/documents', files=files,
-                user=self.worker_defaults["TENDERS_API_TOKEN"],
-                method='post', request_id=self.request_id,
-                retry_count=2
+        files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
+        response = patch_tender_data(
+            self.tender_url + '/documents', files=files,
+            user=self.worker_defaults["TENDERS_API_TOKEN"],
+            method='post', request_id=self.request_id, session=self.session,
+            retry_count=2
+        )
+        if response:
+            doc_id = response["data"]['id']
+            logger.info(
+                "Audit log approved. Document id: {}".format(doc_id),
+                extra={"JOURNAL_REQUEST_ID": self.request_id,
+                       "MESSAGE_ID": AUCTION_WORKER_API}
             )
-            if response:
-                doc_id = response["data"]['id']
-                logger.info(
-                    "Audit log approved. Document id: {}".format(doc_id),
-                    extra={"JOURNAL_REQUEST_ID": self.request_id,
-                           "MESSAGE_ID": AUCTION_WORKER_API}
-                )
-            else:
-                logger.warning(
-                    "Audit log not approved.",
-                    extra={"JOURNAL_REQUEST_ID": self.request_id,
-                           "MESSAGE_ID": AUCTION_WORKER_API}
-                )
-        except Exception, e:
-            logger.error(repr(self.audit))
+        else:
+            logger.warning(
+                "Audit log not approved.",
+                extra={"JOURNAL_REQUEST_ID": self.request_id,
+                       "MESSAGE_ID": AUCTION_WORKER_API})
 
         all_bids = self.auction_document["results"]
         logger.info(
@@ -885,7 +885,6 @@ class Auction(object):
             extra={"JOURNAL_REQUEST_ID": self.request_id,
                    "MESSAGE_ID": AUCTION_WORKER_API}
         )
-
         for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
             auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
             self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
@@ -897,7 +896,7 @@ class Auction(object):
             self.tender_url + '/auction', data=data,
             user=self.worker_defaults["TENDERS_API_TOKEN"],
             method='post',
-            request_id=self.request_id
+            request_id=self.request_id, session=self.session
         )
         if results:
             bids_dict = dict([(bid["id"], bid["tenderers"])
@@ -916,7 +915,7 @@ class Auction(object):
                     self.tender_url + '/documents/{}'.format(doc_id), files=files,
                     user=self.worker_defaults["TENDERS_API_TOKEN"],
                     method='put', request_id=self.request_id,
-                    retry_count=2
+                    retry_count=2, session=self.session
                 )
                 if response:
                     doc_id = response["data"]['id']
