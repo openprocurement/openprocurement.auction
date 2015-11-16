@@ -1,4 +1,4 @@
-from gevent import monkey
+from gevent import monkey, sleep
 monkey.patch_all()
 
 import time
@@ -109,7 +109,8 @@ css = Bundle("vendor/angular-growl-2/build/angular-growl.min.css",
              "static/css/starter-template.css",
              filters='cssmin,datauri', output='min/styles_%(version)s.css')
 assets.register('all_css', css)
-js = Bundle("vendor/event-source-polyfill/eventsource.min.js",
+js = Bundle("vendor/pouchdb/dist/pouchdb.js",
+            "vendor/event-source-polyfill/eventsource.min.js",
             "vendor/angular-cookies/angular-cookies.min.js",
             "vendor/angular-ellipses/src/truncate.js",
             "vendor/angular-timer/dist/angular-timer.min.js",

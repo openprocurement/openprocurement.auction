@@ -495,6 +495,9 @@ angular.module('auction').controller('AuctionController', [
     };
     $scope.start_sync = function() {
       $scope.changes = $scope.db.changes({
+        remote_server_timeout: 15000,
+        timeout: (50000 - Math.ceil(Math.random() * 10000)),
+        heartbeat: false,
         live: true,
         style: 'main_only',
         continuous: true,
@@ -568,12 +571,14 @@ angular.module('auction').controller('AuctionController', [
           } else {
             $log.debug("Start anonimous")
             $scope.start_sync_event.resolve('start');
-            $timeout(function() {
-              growl.info($filter('translate')('You are an observer and cannot bid.'), {
-                ttl: -1,
-                disableCountDown: true
-              });
-            }, 500)
+            if (!$scope.follow_login_allowed){
+              $timeout(function() {
+                growl.info($filter('translate')('You are an observer and cannot bid.'), {
+                  ttl: -1,
+                  disableCountDown: true
+                });
+              }, 500)
+            }
           }
           $scope.restart_retries = AuctionConfig.restart_retries;
           $scope.start_sync_event.promise.then(function() {
