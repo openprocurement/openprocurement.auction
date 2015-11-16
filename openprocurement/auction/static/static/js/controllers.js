@@ -37,6 +37,17 @@ angular.module('auction').controller('AuctionController', [
         AuctionConfig.remote_db = AuctionConfig.remote_db + "_secured";
       }
 
+      $scope.changes_options = {
+        timeout: 35000 - Math.ceil(Math.random() * 10000),
+        heartbeat: 20000,
+        live: true,
+        style: 'main_only',
+        continuous: true,
+        include_docs: true,
+        doc_ids: [AuctionConfig.auction_doc_id],
+        since: 0
+      };
+
       new PouchDB(AuctionConfig.remote_db).then(function(db) {
         $scope.db = db;
         $scope.http_error_timeout = $scope.default_http_error_timeout;
@@ -445,7 +456,7 @@ angular.module('auction').controller('AuctionController', [
 
         if ((angular.isObject(current_stage_obj)) && (current_stage_obj.amount || current_stage_obj.amount_features)) {
           if ($scope.bidder_coeficient && ($scope.auction_doc.auction_type || "default" == "meat")) {
-            amount = math.fraction(current_stage_obj.amount_features) / $scope.bidder_coeficient - math.fraction($scope.auction_doc.minimalStep.amount);
+            amount = math.fraction(current_stage_obj.amount_features) * $scope.bidder_coeficient - math.fraction($scope.auction_doc.minimalStep.amount);
           } else {
             amount = math.fraction(current_stage_obj.amount) - math.fraction($scope.auction_doc.minimalStep.amount);
           }
@@ -494,17 +505,7 @@ angular.module('auction').controller('AuctionController', [
       }
     };
     $scope.start_sync = function() {
-      $scope.changes = $scope.db.changes({
-        remote_server_timeout: 15000,
-        timeout: (50000 - Math.ceil(Math.random() * 10000)),
-        heartbeat: false,
-        live: true,
-        style: 'main_only',
-        continuous: true,
-        include_docs: true,
-        doc_ids: [AuctionConfig.auction_doc_id],
-        since: 0
-      }).on('change', function(resp) {
+      $scope.changes = $scope.db.changes($scope.changes_options).on('change', function(resp) {
         $log.debug('Change: ', resp);
         $scope.restart_retries = AuctionConfig.restart_retries;
         if (resp.id == AuctionConfig.auction_doc_id) {
@@ -514,7 +515,8 @@ angular.module('auction').controller('AuctionController', [
           }
         }
       }).on('error', function(err) {
-        $log.error('Changes error: ', err);
+        $log.error('Changes error: ', err, ', changes options: ', $scope.changes_options);
+        $scope.changes_options['heartbeat'] = false;
         $timeout(function() {
           if ($scope.restart_retries != AuctionConfig.restart_retries) {
             growl.warning('Internet connection is lost. Attempt to restart after 1 sec', {
@@ -642,12 +644,12 @@ angular.module('auction').controller('AuctionController', [
     /* 2-WAY INPUT */
     $scope.calculate_bid_temp = function() {
       $rootScope.form.bid_temp = Number(math.fraction(math.fix($rootScope.form.bid * 100), 100));
-      $rootScope.form.full_price = $rootScope.form.bid_temp * $scope.bidder_coeficient;
+      $rootScope.form.full_price = $rootScope.form.bid_temp / $scope.bidder_coeficient;
       $log.debug("Set bid_temp:", $rootScope.form);
     };
     $scope.calculate_full_price_temp = function() {
-      $rootScope.form.bid = (math.fix((math.fraction($rootScope.form.full_price) / $scope.bidder_coeficient) * 100)) / 100;
-      $rootScope.form.full_price_temp = $rootScope.form.bid * $scope.bidder_coeficient;
+      $rootScope.form.bid = (math.fix((math.fraction($rootScope.form.full_price) * $scope.bidder_coeficient) * 100)) / 100;
+      $rootScope.form.full_price_temp = $rootScope.form.bid / $scope.bidder_coeficient;
     };
     $scope.set_bid_from_temp = function () {
       $rootScope.form.bid = $rootScope.form.bid_temp;
@@ -756,7 +758,7 @@ angular.module('auction')
         console.log(val);
         if (val) {
           if (coeficient) {
-            return format_function(math.eval(math.format(math.fraction(val) / math.fraction(coeficient))).toFixed(2));
+            return format_function(math.eval(math.format(math.fraction(val) * math.fraction(coeficient))).toFixed(2));
           }
           return format_function(math.eval(math.format(math.fraction(val))).toFixed(2));
         }
