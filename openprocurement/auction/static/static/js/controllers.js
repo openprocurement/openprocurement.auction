@@ -38,8 +38,8 @@ angular.module('auction').controller('AuctionController', [
       }
 
       $scope.changes_options = {
-        timeout: 35000 - Math.ceil(Math.random() * 10000),
-        heartbeat: 20000,
+        timeout: 40000 - Math.ceil(Math.random() * 10000),
+        heartbeat: 10000,
         live: true,
         style: 'main_only',
         continuous: true,
@@ -621,7 +621,7 @@ angular.module('auction').controller('AuctionController', [
     $scope.calculate_rounds = function(argument) {
       $scope.Rounds = [];
       $scope.auction_doc.stages.forEach(function(item, index) {
-        if (item.type == 'pause') {
+        if (item.type == 'pause'){
           $scope.Rounds.push(index);
         }
       });

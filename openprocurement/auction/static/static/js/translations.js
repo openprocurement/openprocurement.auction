@@ -78,7 +78,8 @@ angular.module('auction')
       'Price normalization mode': 'Price normalization mode',
       'to Mine': 'to Mine',
       'to General': 'to General',
-      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.'
+      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.',
+      'Waiting for the disclosure of the participants\' names': 'Waiting for the disclosure of the participants\' names'
     });
 
     $translateProvider.translations('uk', {
@@ -158,7 +159,8 @@ angular.module('auction')
       'Price normalization mode': 'Режим приведення ціни',
       'to Mine': 'до Моєї',
       'to General': 'до Загальної',
-      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Подана вами пропозиція співпадає з пропозицією іншого учасника. Його пропозиція розглядатиметься першою, оскільки вона подана раніше.'
+      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Подана вами пропозиція співпадає з пропозицією іншого учасника. Його пропозиція розглядатиметься першою, оскільки вона подана раніше.',
+      'Waiting for the disclosure of the participants\' names': 'Очікуємо на розкриття імен учасників'
     });
 
 
@@ -239,6 +241,7 @@ angular.module('auction')
       'Price normalization mode': 'Режим приведения цены',
       'to Mine': 'к Моей',
       'to General': 'к Общей',
-      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Поданное вами предложение совпадает с предложением другого участника. Его предложение будет рассматриваться первым, поскольку оно подано раньше.'
+      'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Поданное вами предложение совпадает с предложением другого участника. Его предложение будет рассматриваться первым, поскольку оно подано раньше.',
+      'Waiting for the disclosure of the participants\' names': 'Ожидаем раскрытия имен участников'
     });
   }]);
