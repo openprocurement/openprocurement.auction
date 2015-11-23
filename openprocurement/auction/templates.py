@@ -5,72 +5,56 @@ from json import loads
 JINJA_ENV = Environment(loader=PackageLoader('openprocurement.auction',
                                              'templates'))
 
-INITIAL_BIDS_TEMPLATE = Template(u'''{
-    "bidder_id": "{{ bidder_id }}",
-    "time": "{{ time }}",
-    "label": {"en": "Bidder #{{ bidder_name }}",
-              "ru": "Участник №{{ bidder_name }}",
-              "uk": "Учасник №{{ bidder_name }}"},
-    {% if amount_features %}"amount_features": "{{ amount_features}}",{% endif %}
-    {% if coeficient %}"coeficient": "{{ coeficient}}",{% endif %}
-    "amount": {% if amount %}{{ amount }}{% else %}null{% endif %}
-}''')
+def prepare_initial_bid_stage(bidder_name="", bidder_id="", time="",
+                              amount_features="", coeficient="", amount=""):
+    stage = dict(bidder_id=bidder_id, time=str(time))
+    stage["label"] = dict(
+        en="Bidder #{}".format(bidder_name),
+        uk="Учасник №{}".format(bidder_name),
+        ru="Участник №{}".format(bidder_name)
+    )
 
-PAUSE_TEMPLATE = Template(u'''{
-    "type": "pause",
-    "start": "{{ start }}"
-}''')
+    stage['amount'] = amount if amount else None
+    if amount_features:
+        stage['amount_features'] = str(amount_features)
+    if coeficient:
+        stage['coeficient'] = str(coeficient)
+    return stage
 
-BIDS_TEMPLATE = Template(u'''{
-    "type": "bids",
-    "bidder_id": "{{ bidder_id }}",
-    "start": "{{ start }}",
-    {% if bidder_name %}
-    "label": {"en": "Bidder #{{ bidder_name }}",
-              "ru": "Участник №{{ bidder_name }}",
-              "uk": "Учасник №{{ bidder_name }}"},
-    {% else %}
-    "label": {"en": "",
-              "ru": "",
-              "uk": ""},
-    {% endif %}
-    "amount": {% if amount %}{{ amount }}{% else %}null{% endif %},
-    {% if amount_features %}"amount_features": "{{ amount_features}}",{% endif %}
-    {% if coeficient %}"coeficient": "{{ coeficient}}",{% endif %}
-    "time": "{{ time }}"
-}''')
+prepare_results_stage = prepare_initial_bid_stage  # Looks identical
 
-ANNOUNCEMENT_TEMPLATE = Template(u'''{
-    "type": "announcement",
-    "start": "{{ start }}"
-}''')
-
-
-RESULTS_TEMPLATE = Template(u'''{
-    "bidder_id": "{{ bidder_id }}",
-    "label": {"en": "Bidder #{{ bidder_name }}",
-              "ru": "Участник №{{ bidder_name }}",
-              "uk": "Учасник №{{ bidder_name }}"},
-    {% if amount_features %}"amount_features": "{{ amount_features}}",{% endif %}
-    {% if coeficient %}"coeficient": "{{ coeficient}}",{% endif %}
-    "amount": {% if amount %}{{ amount }}{% else %}null{% endif %},
-    "time": "{{ time }}"
-}''')
-
-
-def generate_bids_stage(exist_stage_params, params):
+def prepare_bids_stage(exist_stage_params, params={}):
     exist_stage_params.update(params)
-    try:
-      return loads(
-          BIDS_TEMPLATE.render(**exist_stage_params)
-      )
-    except Exception, e:
-      import pdb; pdb.set_trace() # ktarasz - Debug
-      raise e
+    stage = dict(type="bids", bidder_id=exist_stage_params['bidder_id'],
+                 start=str(exist_stage_params['start']), time=str(exist_stage_params['time']))
+    stage["amount"] = exist_stage_params['amount'] if exist_stage_params['amount'] else None
+    if 'amount_features' in exist_stage_params:
+        stage["amount_features"] = exist_stage_params['amount_features']
+    if 'coeficient' in exist_stage_params:
+        stage["coeficient"] = exist_stage_params['coeficient']
+
+    if exist_stage_params['bidder_name']:
+        stage["label"] = {
+            "en": "Bidder #{}".format(exist_stage_params['bidder_name']),
+            "ru": "Участник №{}".format(exist_stage_params['bidder_name']),
+            "uk": "Учасник №{}".format(exist_stage_params['bidder_name'])
+        }
+    else:
+        stage["label"] = {
+            "en": "",
+            "ru": "",
+            "uk": ""
+        }
+    return stage
 
 
-def generate_resuls(params):
-    return loads(RESULTS_TEMPLATE.render(**params))
+def prepare_service_stage(**kwargs):
+    pause = {
+        "type": "pause",
+        "start": ""
+    }
+    pause.update(kwargs)
+    return pause
 
 
 def get_template(name):
