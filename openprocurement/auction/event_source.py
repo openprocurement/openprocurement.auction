@@ -53,15 +53,16 @@ sse = Blueprint('sse', __name__)
 
 @sse.route("/set_sse_timeout", methods=['POST'])
 def set_sse_timeout():
-    current_app.logger.debug(
+    current_app.logger.info(
         'Handle set_sse_timeout request with session {}'.format(repr(dict(session))),
         extra=prepare_extra_journal_fields(request.headers)
     )
     if 'remote_oauth' in session and 'client_id' in session:
-        # resp = current_app.remote_oauth.get('me')
-        # if resp.status == 200:
         bidder_data = get_bidder_id(current_app, session)
         if bidder_data:
+            current_app.logger.info("Bidder {} with client_id {} set sse_timeout".format(
+                                    bidder_data['bidder_id'], session['client_id'],
+                                    ), extra=prepare_extra_journal_fields(request.headers))
             bidder = bidder_data['bidder_id']
             if 'timeout' in request.json:
                 session["sse_timeout"] = int(request.json['timeout'])
@@ -81,68 +82,77 @@ def event_source():
         extra=prepare_extra_journal_fields(request.headers)
     )
     if 'remote_oauth' in session and 'client_id' in session:
-        # resp = current_app.remote_oauth.get('me')
-        # if resp.status == 200:
         bidder_data = get_bidder_id(current_app, session)
         if bidder_data:
-            bidder = bidder_data['bidder_id']
+            valid_bidder = False
             client_hash = session['client_id']
-            if bidder not in current_app.auction_bidders:
-                current_app.auction_bidders[bidder] = {
-                    "clients": {},
-                    "channels": {}
-                }
+            bidder = bidder_data['bidder_id']
+            for bidder_info in current_app.config['auction'].bidders_data:
+                if bidder_info['id'] == bidder:
+                    valid_bidder = True
+                    break
+            if valid_bidder:
+                if bidder not in current_app.auction_bidders:
+                    current_app.auction_bidders[bidder] = {
+                        "clients": {},
+                        "channels": {}
+                    }
 
-            if client_hash not in current_app.auction_bidders[bidder]:
-                real_ip = request.environ.get('HTTP_X_REAL_IP', '')
-                if real_ip.startswith('172.'):
-                    real_ip = ''
-                current_app.auction_bidders[bidder]["clients"][client_hash] = {
-                    'ip': ','.join(
-                        [request.headers.get('X-Forwarded-For', ''), real_ip]
-                    ),
-                    'User-Agent': request.headers.get('User-Agent'),
-                }
-                current_app.auction_bidders[bidder]["channels"][client_hash] = Queue()
+                if client_hash not in current_app.auction_bidders[bidder]:
+                    real_ip = request.environ.get('HTTP_X_REAL_IP', '')
+                    if real_ip.startswith('172.'):
+                        real_ip = ''
+                    current_app.auction_bidders[bidder]["clients"][client_hash] = {
+                        'ip': ','.join(
+                            [request.headers.get('X-Forwarded-For', ''), real_ip]
+                        ),
+                        'User-Agent': request.headers.get('User-Agent'),
+                    }
+                    current_app.auction_bidders[bidder]["channels"][client_hash] = Queue()
 
-            current_app.logger.info(
-                'Send identification for bidder: {} with client_hash {}'.format(bidder, client_hash),
-                extra=prepare_extra_journal_fields(request.headers)
-            )
-            identification_data = {"bidder_id": bidder,
-                                   "client_id": client_hash,
-                                   "return_url": session.get('return_url', '')}
-            if current_app.config['auction'].features:
-                identification_data["coeficient"] = str(current_app.config['auction'].bidders_coeficient[bidder])
-
-            send_event_to_client(bidder, client_hash, identification_data,
-                                 "Identification")
-            if 'amount' in session:
-                send_event_to_client(bidder, client_hash,
-                                     {"last_amount": session['amount']},
-                                     "RestoreBidAmount")
-                current_app.logger.debug('Send RestoreBidAmount')
-                del session['amount']
-
-            if not session.get("sse_timeout", 0):
-                current_app.logger.debug('Send ClientsList')
-                send_event(
-                    bidder,
-                    current_app.auction_bidders[bidder]["clients"],
-                    "ClientsList"
+                current_app.logger.info(
+                    'Send identification for bidder: {} with client_hash {}'.format(bidder, client_hash),
+                    extra=prepare_extra_journal_fields(request.headers)
                 )
+                identification_data = {"bidder_id": bidder,
+                                       "client_id": client_hash,
+                                       "return_url": session.get('return_url', '')}
+                if current_app.config['auction'].features:
+                    identification_data["coeficient"] = str(current_app.config['auction'].bidders_coeficient[bidder])
 
-            return Response(
-                SseStream(
-                    current_app.auction_bidders[bidder]["channels"][client_hash],
-                    bidder_id=bidder,
-                    client_id=client_hash,
-                    timeout=session.get("sse_timeout", 0)
-                ),
-                direct_passthrough=True,
-                mimetype='text/event-stream',
-                content_type='text/event-stream'
-            )
+                send_event_to_client(bidder, client_hash, identification_data,
+                                     "Identification")
+                if 'amount' in session:
+                    send_event_to_client(bidder, client_hash,
+                                         {"last_amount": session['amount']},
+                                         "RestoreBidAmount")
+                    current_app.logger.debug('Send RestoreBidAmount')
+                    del session['amount']
+
+                if not session.get("sse_timeout", 0):
+                    current_app.logger.debug('Send ClientsList')
+                    send_event(
+                        bidder,
+                        current_app.auction_bidders[bidder]["clients"],
+                        "ClientsList"
+                    )
+
+                return Response(
+                    SseStream(
+                        current_app.auction_bidders[bidder]["channels"][client_hash],
+                        bidder_id=bidder,
+                        client_id=client_hash,
+                        timeout=session.get("sse_timeout", 0)
+                    ),
+                    direct_passthrough=True,
+                    mimetype='text/event-stream',
+                    content_type='text/event-stream'
+                )
+            else:
+                current_app.logger.info(
+                    'Not valid bidder: bidder_id {} with client_hash {}'.format(bidder, client_hash),
+                    extra=prepare_extra_journal_fields(request.headers)
+                )
 
     current_app.logger.debug(
         'Disable event_source for unauthorized user.',
