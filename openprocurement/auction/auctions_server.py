@@ -13,10 +13,9 @@ from flask_redis import Redis
 from http_parser.util import IOrderedDict
 from json import dumps
 from memoize import Memoizer
-from paste.proxy import make_proxy
 from pytz import timezone as tz
 from restkit.conn import Connection
-from restkit.contrib.wsgi_proxy import HostProxy
+from restkit.contrib.wsgi_proxy import HostProxy, TransparentProxy
 from socketpool import ConnectionPool
 from sse import Sse as PySse
 from urlparse import urlparse, urljoin
@@ -236,16 +235,22 @@ def auctions_server_current_server_time():
 
 def couch_server_proxy(path):
     """USED FOR DEBUG ONLY"""
-    return make_proxy(
-        {}, auctions_server.config['PROXY_COUCH_URL'], allowed_request_methods="",
-        suppress_http_headers="")
+    return StreamProxy(
+        auctions_server.config['PROXY_COUCH_URL'],
+        auctions_server.event_sources_pool,
+        pool=auctions_server.proxy_connection_pool,
+        backend="gevent"
+    )
 
 
 def auth_couch_server_proxy(path):
     """USED FOR DEBUG ONLY"""
-    return make_proxy(
-        {}, auctions_server.config['PROXY_COUCH_URL'], allowed_request_methods="",
-        suppress_http_headers="")
+    return StreamProxy(
+        auctions_server.config['PROXY_COUCH_URL'],
+        auctions_server.event_sources_pool,
+        pool=auctions_server.proxy_connection_pool,
+        backend="gevent"
+    )
 
 
 def make_auctions_app(global_conf,
