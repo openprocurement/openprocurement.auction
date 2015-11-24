@@ -214,13 +214,12 @@ class AuctionsDataBridge(object):
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
         while True:
             for planning_data in self.get_teders_list():
-                # TODO: yield (SIMPLE_AUCTION_TYPE, item)
                 if len(planning_data) == 1:
                     logger.info('Tender {0} selected for planning'.format(*planning_data))
                     self.start_auction_worker(planning_data[0])
                 elif len(planning_data) == 2:
                     logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
-                    self.start_auction_worker(planning_data[0], lot=planning_data[1])
+                    self.start_auction_worker(planning_data[0], lot_id=planning_data[1])
             logger.info('Sleep...',
                         extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
             sleep(100)
@@ -236,7 +235,14 @@ class AuctionsDataBridge(object):
                     extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING})
         for tender_item in self.get_teders_list(re_planning=True):
             logger.debug('Tender {} selected for re-planning'.format(tender_item))
-            self.start_auction_worker(tender_item)
+            for planning_data in self.get_teders_list():
+            # TODO: yield (SIMPLE_AUCTION_TYPE, item)
+            if len(planning_data) == 1:
+                logger.info('Tender {0} selected for planning'.format(*planning_data))
+                self.start_auction_worker(planning_data[0])
+            elif len(planning_data) == 2:
+                logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
+                self.start_auction_worker(planning_data[0], lot_id=planning_data[1])
             self.tenders_ids_list.append(tender_item['id'])
             sleep(1)
         logger.info("Re-planning auctions finished",
