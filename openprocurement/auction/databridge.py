@@ -4,29 +4,29 @@ try:
 except ImportError:
     pass
 
-import argparse
 import logging
 import logging.config
 import os
+import argparse
+import iso8601
+
+from datetime import datetime
+from subprocess import check_call
 from time import sleep, mktime, time
 from urlparse import urljoin
 
-from datetime import datetime
-from dateutil.tz import tzlocal
-from subprocess import check_output
 from couchdb import Database, Session
-from time import time
-import iso8601
-from .design import endDate_view, startDate_view
-from .utils import do_until_success, generate_request_id
-from yaml import load
+from dateutil.tz import tzlocal
+from openprocurement_client.client import Client as ApiClient
+from pkg_resources import parse_version
 from systemd_msgs_ids import (
     DATA_BRIDGE_RE_PLANNING,
     DATA_BRIDGE_PLANNING,
     DATA_BRIDGE_PLANNING_PROCESS
 )
-
-from openprocurement_client.client import Client as ApiClient
+from yaml import load
+from .design import endDate_view, startDate_view
+from .utils import do_until_success, generate_request_id
 
 SIMPLE_AUCTION_TYPE = 0
 SINGLE_LOT_AUCTION_TYPE = 1
@@ -38,16 +38,21 @@ logger = logging.getLogger(__name__)
 
 class AuctionsDataBridge(object):
 
-    """AuctionsDataBridge"""
+    """Auctions Data Bridge"""
 
     def __init__(self, config):
         super(AuctionsDataBridge, self).__init__()
         self.config = config
+        self.tenders_ids_list = []
         self.client = ApiClient(
             '',
             host_url=self.config_get('tenders_api_server'),
             api_version=self.config_get('tenders_api_version')
         )
+        params = {'opt_fields': 'status,auctionPeriod', 'mode': '_all_'}
+        if parse_version(self.config_get('tenders_api_version')) > parse_version('0.9'):
+            params['opt_fields'] += ',lots'
+        self.client.params.update(params)
         self.tz = tzlocal()
         self.couch_url = urljoin(
             self.config_get('couch_url'),
@@ -149,11 +154,10 @@ class AuctionsDataBridge(object):
         if with_api_version:
             params += ['--with_api_version', with_api_version]
         result = do_until_success(
-            check_output,
+            check_call,
             args=(params,),
         )
-
-        logger.info("Auction planning command result: {}".format(repr(result)),
+        logger.info("Auction planning command result: {}".format(result),
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_PROCESS})
 
     def planning_with_couch(self):
@@ -208,8 +212,6 @@ class AuctionsDataBridge(object):
     def run(self):
         logger.info('Start Auctions Bridge',
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
-        self.client.params.update({'opt_fields': 'status,auctionPeriod,lots', 'mode': '_all_'})
-
         logger.info('Start data sync...',
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
         while True:
@@ -228,22 +230,19 @@ class AuctionsDataBridge(object):
 
     def run_re_planning(self):
         self.re_planning = True
-        self.tenders_ids_list = []
-        # TODO: support mulilots
         self.offset = ''
         logger.info('Start Auctions Bridge for re-planning...',
                     extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING})
         for tender_item in self.get_teders_list(re_planning=True):
             logger.debug('Tender {} selected for re-planning'.format(tender_item))
             for planning_data in self.get_teders_list():
-            # TODO: yield (SIMPLE_AUCTION_TYPE, item)
-            if len(planning_data) == 1:
-                logger.info('Tender {0} selected for planning'.format(*planning_data))
-                self.start_auction_worker(planning_data[0])
-            elif len(planning_data) == 2:
-                logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
-                self.start_auction_worker(planning_data[0], lot_id=planning_data[1])
-            self.tenders_ids_list.append(tender_item['id'])
+                if len(planning_data) == 1:
+                    logger.info('Tender {0} selected for planning'.format(*planning_data))
+                    self.start_auction_worker(planning_data[0])
+                elif len(planning_data) == 2:
+                    logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
+                    self.start_auction_worker(planning_data[0], lot_id=planning_data[1])
+                self.tenders_ids_list.append(tender_item['id'])
             sleep(1)
         logger.info("Re-planning auctions finished",
                     extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING})
