@@ -75,8 +75,7 @@
                                 {{ info_timer.msg|translate}}
                             </span>
                             <span ng-if="$parent.info_timer.start_time != true">
-                              {{ format_date($root.info_timer.start_time, lang,'Do MMMM YYYY') }} {{'at'|translate}} {{ format_date($root.info_timer.start_time, lang,'HH:mm') }}
-                            </span>
+                              {{ format_date($root.info_timer.start_time, lang,'Do MMMM YYYY') }} {{'at'|translate}} {{ format_date($root.info_timer.start_time, lang,'HH:mm') }}</span><span ng-if="$parent.info_timer.msg_ending">. {{ info_timer.msg_ending|translate}}.</span>
                         </span>
                     </span>
                 </div>
@@ -117,7 +116,7 @@
                 <div class="page-header">
                     <h2>{{ auction_doc.tenderID||"-" }}</h2>
                 </div>
-                <span class="lead">{{ ( auction_doc.procuringEntity['name_'+ lang]|| auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-" ) | characters:100 :true }} : {{ (auction_doc['title_'+ lang]||auction_doc['title']||auction_doc['title_en']||auction_doc['title_ru']||"") | characters:300 :true }}</span>
+                <span class="lead">{{ ( auction_doc.procuringEntity['name_'+ lang]|| auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-" ) | characters:100 :true }}: {{ (auction_doc['title_'+ lang]||auction_doc['title']||auction_doc['title_en']||auction_doc['title_ru']||"") | characters:300 :true }}<span ng-if="auction_doc.lot">: {{(auction_doc.lot['title_'+ lang]||auction_doc.lot['title']||auction_doc.lot['title_en']||auction_doc.lot['title_ru']||"") | characters:300 :true}}</span></span>
                 <ul>
                     <li ng-repeat="item in auction_doc.items">
                         <span>{{ ( item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" ) | characters:500 :true  }}</span> - {{ item.quantity|formatnumber }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
@@ -279,23 +278,23 @@
         <div class="auction-round"
             id="results-header"
             ng-if="auction_doc.current_stage >= 0" 
-            ng-class="{'current-round': auction_doc.current_stage == (auction_doc.stages.length - 1),
-                       'future-round': auction_doc.current_stage < (auction_doc.stages.length - 1)}">
+            ng-class="{'current-round': (auction_doc.stages[auction_doc.current_stage].type||'').indexOf('announcement') != -1,
+                       'future-round': (auction_doc.stages[auction_doc.current_stage].type||'').indexOf('announcement') == -1}">
             <div class="row">
                 <div class="col-xs-12 stage-item stage-round">
                     <div class="stage-item-lining">
                         <div class="stage-info">
                             <div class="stage-info-lining">
-                                <span ng-if="auction_doc.current_stage == (auction_doc.stages.length - 1)" class="stage-info-item stage-label" ><span translate>Announcement</span></span>
-                                <span ng-if="auction_doc.current_stage < (auction_doc.stages.length - 1)" class="stage-info-item stage-label" ><span translate>Possible results</span></span>
+                                <span ng-if="(auction_doc.stages[auction_doc.current_stage].type||'').indexOf('announcement') != -1" class="stage-info-item stage-label" ><span translate>Announcement</span></span>
+                                <span ng-if="(auction_doc.stages[auction_doc.current_stage].type||'').indexOf('announcement') == -1" class="stage-info-item stage-label" ><span translate>Possible results</span></span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div> 
             <div class="row auction-stage stage-item stage-bids past-stage"
-                 ng-class="{'past-stage': auction_doc.current_stage == (auction_doc.stages.length - 1),
-                            'future-stage': auction_doc.current_stage < (auction_doc.stages.length - 1)}"
+                 ng-class="{'past-stage': (auction_doc.stages[auction_doc.current_stage].type||'').indexOf('announcement') != -1,
+                            'future-stage': (auction_doc.stages[auction_doc.current_stage].type||'').indexOf('announcement') == -1}"
                  ng-repeat="bid_info in auction_doc.results">
                 <div class="stage-item-lining">
                     <i class="stage-icon"></i>
@@ -402,10 +401,10 @@
                 <h4>{{ auction_doc.tenderID }}</h4>
                 <p class="list-group-item-heading">
                     <strong ng-switch on="auction_doc.procuringEntity['name_'+ lang] == undefined" class="procuringEntity">
-                        <span>{{ (auction_doc.procuringEntity['name_'+ lang]||auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-") | characters:100 :true }}</span><span class="tenderTitle"> : {{ (auction_doc['title_'+ lang]||auction_doc.title||auction_doc.title_en||auction_doc.title_ru||"-") | characters:100 :true}}</span>
+                        <span>{{ (auction_doc.procuringEntity['name_'+ lang]||auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-") | characters:100 :true }}</span><span class="tenderTitle"> : {{ (auction_doc['title_'+ lang]||auction_doc.title||auction_doc.title_en||auction_doc.title_ru||"-") | characters:100 :true}} <span ng-if="auction_doc.lot">: {{(auction_doc.lot['title_'+ lang]||auction_doc.lot['title']||auction_doc.lot['title_en']||auction_doc.lot['title_ru']||"") | characters:300 :true}}</span></span>
                     </strong>
                 </p>
-                <p class="text-muted tenderDescription"><span> {{ ( auction_doc['description_'+ lang]||auction_doc.description||auction_doc.description||auction_doc.description||"" ) | characters:500 :true }} </span></p>
+                <p class="text-muted tenderDescription"><span>{{ ( auction_doc['description_'+ lang]||auction_doc.description||auction_doc.description||auction_doc.description||"" ) | characters:500 :true }} </span><span ng-if="auction_doc.lot">: {{(auction_doc.lot['description_'+ lang]||auction_doc.lot['description']||auction_doc.lot['description_en']||auction_doc.lot['description_ru']||"") | characters:500 :true}}</span></p>
                 <p ng-repeat="item in auction_doc.items">
                     <span>{{ ( item['description_'+ lang] || item.description || item.description_en || item.description_ru || "-" ) | characters:100 :true }}</span> - {{ item.quantity|formatnumber }} <span>{{item.unit['name_'+ lang]||item.unit.name||item.unit['name_en']||item.unit['name_ru']||item.unit.code||"-" }}</span>
                 </p>
