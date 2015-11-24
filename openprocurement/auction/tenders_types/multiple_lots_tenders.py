@@ -56,8 +56,8 @@ def get_auction_info(self, prepare=False):
                 ), extra={'JOURNAL_REQUEST_ID': self.request_id,
                           'MESSAGE_ID': AUCTION_WORKER_API_HANDLE})
             sys.exit(1)
-    self._lot_data = {item['id']: item for item in self._auction_data['data']['lots']}[self.lot_id]
-    self._lot_data['items'] = [item for item in self._auction_data['data']['items']
+    self._lot_data = dict({item['id']: item for item in self._auction_data['data']['lots']}[self.lot_id])
+    self._lot_data['items'] = [item for item in self._auction_data['data'].get('items', [])
                                if item['relatedLot'] == self.lot_id]
     self.startDate = self.convert_datetime(
         self._lot_data['auctionPeriod']['startDate']
@@ -183,7 +183,7 @@ def post_results_data(self):
                 patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["date"] = auction_bid_info["time"]
                 break
     results = patch_tender_data(
-        self.tender_url + '/auction', data=patch_data,
+        self.tender_url + '/auction/{}'.format(self.lot_id), data=patch_data,
         user=self.worker_defaults["TENDERS_API_TOKEN"],
         method='post',
         request_id=self.request_id, session=self.session
