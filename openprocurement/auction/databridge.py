@@ -35,10 +35,6 @@ MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}" # {TENDER_ID}_{LOT_ID}
 
 logger = logging.getLogger(__name__)
 
-# 
-from elasticsearch import Elasticsearch
-es = Elasticsearch()
-
 
 class AuctionsDataBridge(object):
 
@@ -74,7 +70,6 @@ class AuctionsDataBridge(object):
             if tenders_list:
                 logger.info("Client params: {}".format(self.client.params))
                 for item in tenders_list:
-                    es.index(index="tenders", doc_type='tender_0_10', id=item["id"], body=dict(item))
                     if item['status'] == "active.auction":
                         if 'auctionPeriod' in item and 'startDate' in item['auctionPeriod'] \
                                 and 'endDate' not in item['auctionPeriod']:
