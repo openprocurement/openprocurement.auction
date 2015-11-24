@@ -93,8 +93,9 @@ def get_auction_info(self, prepare=False):
                 'date': bid['date'],
                 'value': bid['value']
             })
-            self.bidders_features[bid["id"]] = bid["parameters"]
-            self.bidders_coeficient[bid["id"]] = calculate_coeficient(self.features, bid["parameters"])
+            if self.features:
+                self.bidders_features[bid["id"]] = bid["parameters"]
+                self.bidders_coeficient[bid["id"]] = calculate_coeficient(self.features, bid["parameters"])
         self.bidders_count = len(self.bidders_data)
 
         for index, uid in enumerate(self.bidders_data):
