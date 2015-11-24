@@ -148,13 +148,12 @@ class AuctionsDataBridge(object):
 
         if with_api_version:
             params += ['--with_api_version', with_api_version]
-        # result = do_until_success(
-        #     check_output,
-        #     args=(params,),
-        # )
-        result = ' '.join([str(x) for x in params])
-        # result = "OK"
-        logger.info("Auction planning command result: {}".format(result),
+        result = do_until_success(
+            check_output,
+            args=(params,),
+        )
+
+        logger.info("Auction planning command result: {}".format(repr(result)),
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_PROCESS})
 
     def planning_with_couch(self):
