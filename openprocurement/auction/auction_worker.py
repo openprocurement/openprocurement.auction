@@ -844,7 +844,7 @@ class Auction(object):
 
                 return True
         else:
-            logger.error(
+            logger.info(
                 "Auctions results not approved",
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_API}
