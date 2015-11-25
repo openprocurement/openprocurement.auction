@@ -250,6 +250,12 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
             elif response.status_code == 412 and response.text:
                 get_tender_data(tender_url, user=user, password=password,
                                 request_id=request_id, session=session)
+            elif response.status_code == 403:
+                logging.info("Response from {}: status: {} text: {}".format(
+                    tender_url, response.status_code, response.text),
+                    extra={"JOURNAL_REQUEST_ID": request_id}
+                )
+                return None
             else:
                 logging.error("Response from {}: status: {} text: {}".format(
                     tender_url, response.status_code, response.text),
