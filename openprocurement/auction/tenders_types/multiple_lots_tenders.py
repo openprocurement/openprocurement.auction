@@ -1,5 +1,5 @@
 import logging
-
+import copy
 import sys
 from ..templates import prepare_service_stage
 from ..utils import calculate_hash
@@ -58,6 +58,8 @@ def get_auction_info(self, prepare=False):
     self._lot_data = dict({item['id']: item for item in self._auction_data['data']['lots']}[self.lot_id])
     self._lot_data['items'] = [item for item in self._auction_data['data'].get('items', [])
                                if item['relatedLot'] == self.lot_id]
+    self._lot_data['features'] = [item for item in self._auction_data['data'].get('features', [])
+                                  if item['relatedLot'] == self.lot_id]
     self.startDate = self.convert_datetime(
         self._lot_data['auctionPeriod']['startDate']
     )
@@ -68,11 +70,14 @@ def get_auction_info(self, prepare=False):
         for bid_index, bid in enumerate(self._auction_data['data']['bids']):
             for lot_index, lot_bid in enumerate(bid['lotValues']):
                 if lot_bid['relatedLot'] == self.lot_id:
-                    self.bidders_data.append({
+                    bid_data = {
                         'id': bid['id'],
                         'date': lot_bid['date'],
                         'value': lot_bid['value']
-                    })
+                    }
+                    if 'parameters' in lot_bid:
+                        bid_data['parameters'] = copy.copy(lot_bid['parameters'])
+                    self.bidders_data.append(bid_data)
         self.bidders_count = len(self.bidders_data)
         logger.info('Bidders count: {}'.format(self.bidders_count),
                     extra={'JOURNAL_REQUEST_ID': self.request_id,
@@ -82,12 +87,11 @@ def get_auction_info(self, prepare=False):
             if (stage + self.bidders_count) % (self.bidders_count + 1) == 0:
                 self.rounds_stages.append(stage)
         self.mapping = {}
-        if 'features' in self._auction_data['data']:
-            # TODO: remove bidders_features, use bidders_coeficient instead
+        if 'features' in self._lot_data:
             self.bidders_features = {}
             self.bidders_coeficient = {}
-            self.features = self._auction_data['data']['features']
-            for bid in self._auction_data['data']['bids']:
+            self.features = self._lot_data['features']
+            for bid in self.bidders_data:
                 self.bidders_features[bid['id']] = bid['parameters']
                 self.bidders_coeficient[bid['id']] = calculate_coeficient(self.features, bid['parameters'])
         else:
