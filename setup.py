@@ -49,7 +49,8 @@ setup(name='openprocurement.auction',
           # ssl warning
           'pyopenssl',
           'ndg-httpsclient',
-          'pyasn1'
+          'pyasn1',
+          'openprocurement_client'
       ],
       entry_points={
           'console_scripts': [
