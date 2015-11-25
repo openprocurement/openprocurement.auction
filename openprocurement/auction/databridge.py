@@ -25,7 +25,7 @@ from systemd_msgs_ids import (
     DATA_BRIDGE_PLANNING_PROCESS
 )
 from yaml import load
-from .design import endDate_view, startDate_view
+from .design import endDate_view, startDate_view, PreAnnounce_view
 from .utils import do_until_success, generate_request_id
 
 SIMPLE_AUCTION_TYPE = 0
@@ -125,24 +125,57 @@ class AuctionsDataBridge(object):
                                                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
                                         continue
                                     yield (str(item["id"]), str(lot["id"]), )
-
+                    if item['status'] == "active.qualification" and 'lots' in item:
+                        for lot in item['lots']:
+                            if lot["status"] == "active":
+                                is_pre_announce = PreAnnounce_view(self.db)
+                                auction_id = MULTILOT_AUCTION_ID.format(item, lot)
+                                if [row.id for row in is_pre_announce.rows if row.id == auction_id]:
+                                    self.start_pre_announce(item['id'], lot_id=lot['id'],)
                     if item['status'] == "cancelled":
                         future_auctions = endDate_view(
                             self.db, startkey=time() * 1000
                         )
-                        if item["id"] in [i.id for i in future_auctions]:
-                            logger.info("Tender {} canceled".format(item["id"]),
-                                        extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
-                            auction_document = self.db[item["id"]]
-                            auction_document["current_stage"] = -100
-                            auction_document["endDate"] = datetime.now(self.tz).isoformat()
-                            self.db.save(auction_document)
-                            logger.info("Change auction {} status to 'canceled'".format(item["id"]),
-                                        extra={"JOURNAL_REQUEST_ID": request_id,
-                                               'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                        if 'lots' in item:
+                            for lot in item['lots']:
+                                auction_id = MULTILOT_AUCTION_ID.format(item, lot)
+                                if item["id"] in [i.id for i in future_auctions]:
+                                    self.cancel_auction(auction_id)
+                        else:
+                            if item["id"] in [i.id for i in future_auctions]:
+                                self.cancel_auction(item["id"])
+
 
             else:
                 break
+
+    def cancel_auction(self, auction_id):
+        logger.info("Auction {} canceled".format(auction_id),
+                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+        auction_document = self.db[auction_id]
+        auction_document["current_stage"] = -100
+        auction_document["endDate"] = datetime.now(self.tz).isoformat()
+        self.db.save(auction_document)
+        logger.info("Change auction {} status to 'canceled'".format(auction_id),
+                    extra={"JOURNAL_REQUEST_ID": request_id,
+                           'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+
+
+    def start_pre_announce(self, tender_id, with_api_version=None, lot_id=None):
+        params = [self.config_get('auction_worker'),
+                  'announce', tender_id,
+                  self.config_get('auction_worker_config')]
+        if lot_id:
+            params += ['--lot', lot_id]
+
+        if with_api_version:
+            params += ['--with_api_version', with_api_version]
+        result = do_until_success(
+            check_call,
+            args=(params,),
+        )
+        logger.info("Auction announce command result: {}".format(result),
+                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_PROCESS})
 
     def start_auction_worker(self, tender_id, with_api_version=None, lot_id=None):
         params = [self.config_get('auction_worker'),
