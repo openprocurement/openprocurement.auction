@@ -41,7 +41,6 @@ def get_auction_info(self, prepare=False):
             self._auction_data['data'].update(auction_data['data'])
             del auction_data
         else:
-            # TODO: behaviors for simple tender and multiple lots tenders
             self.get_auction_document()
             if self.auction_document:
                 self.auction_document['current_stage'] = -100
@@ -191,6 +190,26 @@ def post_results_data(self):
     return results
 
 
-def announce_results_data(self, results):
-    # TODO: Handle results data
+def announce_results_data(self, results=None):
+    if not results:
+        results = get_tender_data(
+            self.tender_url,
+            user=self.worker_defaults["TENDERS_API_TOKEN"],
+            request_id=self.request_id,
+            session=self.session
+        )
+    bids_information = {}
+    for bid in self._auction_data['data']['bids']:
+        for lot_bid in bid['lotValues']:
+            if lot_bid['relatedLot'] == self.lot_id:
+                bids_information[bid['id']] = bid["tenderers"]
+                break
+
+    for section in ['initial_bids', 'stages', 'results']:
+        for index, stage in enumerate(self.auction_document[section]):
+            if 'bidder_id' in stage and stage['bidder_id'] in bids_information:
+                self.auction_document[section][index]["label"]["uk"] = bids_information[stage['bidder_id']][0]["name"]
+                self.auction_document[section][index]["label"]["ru"] = bids_information[stage['bidder_id']][0]["name"]
+                self.auction_document[section][index]["label"]["en"] = bids_information[stage['bidder_id']][0]["name"]
+
     return None

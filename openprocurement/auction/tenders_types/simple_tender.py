@@ -76,7 +76,6 @@ def get_auction_info(self, prepare=False):
     if not prepare:
         self.bidders_data = []
         if self.features:
-            # TODO: remove bidders_features, use bidders_coeficient instead
             self.bidders_features = {}
             self.bidders_coeficient = {}
             self.features = self._auction_data["data"]["features"]
@@ -180,7 +179,14 @@ def post_results_data(self):
     )
 
 
-def announce_results_data(self, results):
+def announce_results_data(self, results=None):
+    if not results:
+        results = get_tender_data(
+            self.tender_url,
+            user=self.worker_defaults["TENDERS_API_TOKEN"],
+            request_id=self.request_id,
+            session=self.session
+        )
     bids_information = dict([(bid["id"], bid["tenderers"])
                              for bid in results["data"]["bids"]])
     for section in ['initial_bids', 'stages', 'results']:
