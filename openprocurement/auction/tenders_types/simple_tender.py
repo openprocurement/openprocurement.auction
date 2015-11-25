@@ -195,4 +195,5 @@ def announce_results_data(self, results=None):
                 self.auction_document[section][index]["label"]["uk"] = bids_information[stage['bidder_id']][0]["name"]
                 self.auction_document[section][index]["label"]["ru"] = bids_information[stage['bidder_id']][0]["name"]
                 self.auction_document[section][index]["label"]["en"] = bids_information[stage['bidder_id']][0]["name"]
+    self.auction_document["current_stage"] = (len(self.auction_document["stages"]) - 1)
     return bids_information
