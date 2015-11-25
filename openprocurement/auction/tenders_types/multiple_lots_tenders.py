@@ -87,7 +87,7 @@ def get_auction_info(self, prepare=False):
             if (stage + self.bidders_count) % (self.bidders_count + 1) == 0:
                 self.rounds_stages.append(stage)
         self.mapping = {}
-        if 'features' in self._lot_data:
+        if self._lot_data.get('features', None):
             self.bidders_features = {}
             self.bidders_coeficient = {}
             self.features = self._lot_data['features']
