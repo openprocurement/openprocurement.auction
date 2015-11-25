@@ -737,6 +737,8 @@ class Auction(object):
             extra={"JOURNAL_REQUEST_ID": self.request_id}
         )
 
+
+
     def approve_bids_information(self):
         if self.current_stage in self._bids_data:
             logger.debug(
@@ -815,7 +817,7 @@ class Auction(object):
 
         if results:
             if self.lot_id:
-                bids_information = multiple_lots_tenders.announce_results_data(self, results)
+                bids_information = None
             else:
                 bids_information = simple_tender.announce_results_data(self, results)
 
@@ -850,35 +852,57 @@ class Auction(object):
                        "MESSAGE_ID": AUCTION_WORKER_API}
             )
 
+    def post_announce(self):
+        self.generate_request_id()
+        self.get_auction_document()
+        if self.lot_id:
+            bids_information = simple_tender.announce_results_data(self, None)
+        else:
+            bids_information = simple_tender.announce_results_data(self, None)
+        self.save_auction_document()
 
 def cleanup():
-    now = datetime.now()
-    now = now.replace(now.year, now.month, now.day, 0, 0, 0)
+    today_datestamp = datetime.now()
+    today_datestamp = today_datestamp.replace(today_datestamp.year, today_datestamp.month, today_datestamp.day, 0, 0, 0)
     systemd_files_dir = os.path.join(os.path.expanduser('~'), SYSTEMD_DIRECORY)
-    for (dirpath, dirnames, filenames) in os.walk(systemd_files_dir):
-        for filename in filenames:
-            if filename.startswith('auction_') and filename.endswith('.timer'):
-                tender_id = filename[8:-6]
-                full_filename = os.path.join(systemd_files_dir, filename)
-                with open(full_filename) as timer_file:
-                    r = TIMER_STAMP.search(timer_file.read())
-                if r:
-                    datetime_args = [int(term) for term in r.groups()]
-                    if datetime(*datetime_args) < now:
-                        logger.info(
-                            'Remove systemd file: {}'.format(full_filename),
-                            extra={'JOURNAL_TENDER_ID': tender_id,
-                                   'MESSAGE_ID': AUCTION_WORKER_CLEANUP}
-                        )
+    for filename in os.listdir(systemd_files_dir):
+        if filename.startswith('auction_') and filename.endswith('.timer'):
+            tender_id = filename[8:-6]
+            full_filename = os.path.join(systemd_files_dir, filename)
+            with open(full_filename) as timer_file:
+                r = TIMER_STAMP.search(timer_file.read())
+            if r:
+                datetime_args = [int(term) for term in r.groups()]
+                if datetime(*datetime_args) < today_datestamp:
+                    code = call(['/usr/bin/systemctl', '--user',
+                         'stop', filename])
+                    logger.info(
+                        "systemctl stop {} - return code: {}".format(filename, code),
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS}
+                    )
 
-                        os.remove(full_filename)
-                        full_filename = full_filename[:-5] + 'service'
-                        logger.info(
-                            'Remove systemd file: {}'.format(full_filename),
-                            extra={'JOURNAL_TENDER_ID': tender_id,
-                                   'MESSAGE_ID': AUCTION_WORKER_CLEANUP}
-                        )
-                        os.remove(full_filename)
+                    code = call(['/usr/bin/systemctl', '--user',
+                                 'disable', filename, '--no-reload'])
+                    logger.info(
+                        "systemctl disable {} --no-reload - return code: {}".format(filename, code),
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS}
+                    )
+                    logger.info(
+                        'Remove systemd file: {}'.format(full_filename),
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP}
+                    )
+                    os.remove(full_filename)
+                    full_filename = full_filename[:-5] + 'service'
+                    logger.info(
+                        'Remove systemd file: {}'.format(full_filename),
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP}
+                    )
+                    os.remove(full_filename)
+    code = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
+    logger.info(
+        "systemctl --user daemon-reload - return code: {}".format(code),
+        extra={ "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+    )
 
 
 def main():
@@ -927,15 +951,16 @@ def main():
         if planning_procerude == PLANNING_FULL:
             auction.prepare_auction_document()
             if not auction.debug:
-                # auction.prepare_tasks(
-                #     auction._auction_data["data"]['tenderID'],
-                #     auction.startDate
-                # )
-                pass
+                auction.prepare_tasks(
+                    auction._auction_data["data"]['tenderID'],
+                    auction.startDate
+                )
         elif planning_procerude == PLANNING_PARTIAL_DB:
             auction.prepare_auction_document()
         elif planning_procerude == PLANNING_PARTIAL_CRON:
             auction.prepare_systemd_units()
+    elif args.cmd == 'announce':
+        auction.post_announce()
     elif args.cmd == 'cleanup':
         cleanup()
 
