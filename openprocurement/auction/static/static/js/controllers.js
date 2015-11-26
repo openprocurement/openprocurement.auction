@@ -36,7 +36,6 @@ angular.module('auction').controller('AuctionController', [
       if ($cookies.auctions_loggedin) {
         AuctionConfig.remote_db = AuctionConfig.remote_db + "_secured";
       }
-
       $scope.changes_options = {
         timeout: 40000 - Math.ceil(Math.random() * 10000),
         heartbeat: 10000,
@@ -81,7 +80,6 @@ angular.module('auction').controller('AuctionController', [
     /*      Time tick events    */
     $rootScope.$on('timer-tick', function(event) {
       if (($scope.auction_doc) && (event.targetScope.timerid == 1)) {
-
         if (((($rootScope.info_timer || {}).msg || "") === 'until your turn') && (event.targetScope.minutes == 1) && (event.targetScope.seconds == 50)) {
           $http.post('./check_authorization').success(function(data) {
             $log.debug("Authorization checked");
@@ -466,7 +464,6 @@ angular.module('auction').controller('AuctionController', [
       if (amount < 0) {
         return 0;
       }
-      $log.debug("max_bid_amount:", amount);
       $scope.calculated_max_bid_amount = amount;
       return amount;
     };
@@ -490,7 +487,6 @@ angular.module('auction').controller('AuctionController', [
 
         $scope.auction_doc.stages.forEach(filter_func);
         $scope.auction_doc.initial_bids.forEach(filter_func);
-
         $scope.minimal_bid = bids.sort(function(a, b) {
           if ($scope.auction_doc.auction_type == 'meat') {
             var diff = math.fraction(a.amount_features) - math.fraction(b.amount_features);
@@ -505,6 +501,7 @@ angular.module('auction').controller('AuctionController', [
       }
     };
     $scope.start_sync = function() {
+      $scope.start_changes = new Date();
       $scope.changes = $scope.db.changes($scope.changes_options).on('change', function(resp) {
         $log.debug('Change: ', resp);
         $scope.restart_retries = AuctionConfig.restart_retries;
@@ -517,6 +514,12 @@ angular.module('auction').controller('AuctionController', [
       }).on('error', function(err) {
         $log.error('Changes error: ', err, ', changes options: ', $scope.changes_options);
         $scope.changes_options['heartbeat'] = false;
+        $scope.end_changes = new Date()
+        if (($scope.end_changes - $scope.start_changes) < 40000)){
+          $scope.changes_options.heartbeat = false;
+
+        }
+        $log.error('Changes error: ', err);
         $timeout(function() {
           if ($scope.restart_retries != AuctionConfig.restart_retries) {
             growl.warning('Internet connection is lost. Attempt to restart after 1 sec', {
@@ -588,7 +591,6 @@ angular.module('auction').controller('AuctionController', [
           });
         } else {
           // TODO: CLEAR COOKIE
-
           // if ($cookieStore.get('auctions_loggedin')) {
           //   $cookieStore.remove('auctions_loggedin');
           //   $timeout(function() {
@@ -666,15 +668,12 @@ angular.module('auction').controller('AuctionController', [
 angular.module('auction').controller('OffCanvasController', ['$scope', '$modalInstance',
   function($scope, $modalInstance) {
     $scope.allert = function() {
-      console.log("ok");
       console.log($scope);
     };
     $scope.ok = function() {
-      console.log("ok");
       $modalInstance.close($scope.selected.item);
     };
     $scope.cancel = function() {
-      console.log("cancel");
       $modalInstance.dismiss('cancel');
     };
   }
@@ -731,7 +730,7 @@ angular.module('auction')
         });
       }
     };
-  }])
+  }]);
 
 
 angular.module('auction')
