@@ -868,33 +868,47 @@ class Auction(object):
 
 
 def cleanup():
-    now = datetime.now()
-    now = now.replace(now.year, now.month, now.day, 0, 0, 0)
+    today_datestamp = datetime.now()
+    today_datestamp = today_datestamp.replace(today_datestamp.year, today_datestamp.month, today_datestamp.day, 0, 0, 0)
     systemd_files_dir = os.path.join(os.path.expanduser('~'), SYSTEMD_DIRECORY)
-    for (dirpath, dirnames, filenames) in os.walk(systemd_files_dir):
-        for filename in filenames:
-            if filename.startswith('auction_') and filename.endswith('.timer'):
-                tender_id = filename[8:-6]
-                full_filename = os.path.join(systemd_files_dir, filename)
-                with open(full_filename) as timer_file:
-                    r = TIMER_STAMP.search(timer_file.read())
-                if r:
-                    datetime_args = [int(term) for term in r.groups()]
-                    if datetime(*datetime_args) < now:
-                        logger.info(
-                            'Remove systemd file: {}'.format(full_filename),
-                            extra={'JOURNAL_TENDER_ID': tender_id,
-                                   'MESSAGE_ID': AUCTION_WORKER_CLEANUP}
-                        )
+    for filename in os.listdir(systemd_files_dir):
+        if filename.startswith('auction_') and filename.endswith('.timer'):
+            tender_id = filename[8:-6]
+            full_filename = os.path.join(systemd_files_dir, filename)
+            with open(full_filename) as timer_file:
+                r = TIMER_STAMP.search(timer_file.read())
+            if r:
+                datetime_args = [int(term) for term in r.groups()]
+                if datetime(*datetime_args) < today_datestamp:
+                    code = call(['/usr/bin/systemctl', '--user',
+                         'stop', filename])
+                    logger.info(
+                        "systemctl stop {} - return code: {}".format(filename, code),
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS}
+                    )
 
-                        os.remove(full_filename)
-                        full_filename = full_filename[:-5] + 'service'
-                        logger.info(
-                            'Remove systemd file: {}'.format(full_filename),
-                            extra={'JOURNAL_TENDER_ID': tender_id,
-                                   'MESSAGE_ID': AUCTION_WORKER_CLEANUP}
-                        )
-                        os.remove(full_filename)
+                    code = call(['/usr/bin/systemctl', '--user',
+                                 'disable', filename, '--no-reload'])
+                    logger.info(
+                        "systemctl disable {} --no-reload - return code: {}".format(filename, code),
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS}
+                    )
+                    logger.info(
+                        'Remove systemd file: {}'.format(full_filename),
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP}
+                    )
+                    os.remove(full_filename)
+                    full_filename = full_filename[:-5] + 'service'
+                    logger.info(
+                        'Remove systemd file: {}'.format(full_filename),
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP}
+                    )
+                    os.remove(full_filename)
+    code = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
+    logger.info(
+        "systemctl --user daemon-reload - return code: {}".format(code),
+        extra={ "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+    )
 
 
 def main():
