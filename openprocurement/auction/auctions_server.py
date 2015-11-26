@@ -1,4 +1,5 @@
-from gevent import monkey, sleep
+from gevent import monkey
+
 monkey.patch_all()
 
 import time
@@ -15,7 +16,7 @@ from json import dumps
 from memoize import Memoizer
 from pytz import timezone as tz
 from restkit.conn import Connection
-from restkit.contrib.wsgi_proxy import HostProxy, TransparentProxy
+from restkit.contrib.wsgi_proxy import HostProxy
 from socketpool import ConnectionPool
 from sse import Sse as PySse
 from urlparse import urlparse, urljoin
