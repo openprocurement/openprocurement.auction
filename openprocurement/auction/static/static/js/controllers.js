@@ -25,6 +25,16 @@ angular.module('auction').controller('AuctionController', [
     $rootScope.alerts = [];
     $scope.default_http_error_timeout = 500;
     $scope.http_error_timeout = $scope.default_http_error_timeout;
+    $scope.changes_options = {
+        timeout: 40000 - Math.ceil(Math.random() * 10000),
+        heartbeat: 10000,
+        live: true,
+        style: 'main_only',
+        continuous: true,
+        include_docs: true,
+        doc_ids: [AuctionConfig.auction_doc_id],
+        since: 0
+    };
     $scope.start = function() {
       var params = AuctionUtils.parseQueryString(location.search);
       if ($cookies.auctions_loggedin) {
@@ -456,17 +466,8 @@ angular.module('auction').controller('AuctionController', [
       }
     };
     $scope.start_sync = function() {
-      $scope.changes = $scope.db.changes({
-        remote_server_timeout: 15000,
-        timeout: (50000 - Math.ceil(Math.random() * 10000)),
-        heartbeat: false,
-        live: true,
-        style: 'main_only',
-        continuous: true,
-        include_docs: true,
-        doc_ids: [AuctionConfig.auction_doc_id],
-        since: 0
-      }).on('change', function(resp) {
+      $scope.start_changes = new Date();
+      $scope.changes = $scope.db.changes($scope.changes_options).on('change', function(resp) {
         $log.debug('Change: ', resp);
         $scope.restart_retries = AuctionConfig.restart_retries;
         if (resp.id == AuctionConfig.auction_doc_id) {
@@ -476,6 +477,11 @@ angular.module('auction').controller('AuctionController', [
           }
         }
       }).on('error', function(err) {
+        $scope.end_changes = new Date()
+        if (($scope.end_changes - $scope.start_changes) < 40000)){
+          $scope.changes_options.heartbeat = false;
+
+        }
         $log.error('Changes error: ', err);
         $timeout(function() {
           if ($scope.restart_retries != AuctionConfig.restart_retries) {
