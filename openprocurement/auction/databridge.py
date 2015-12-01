@@ -47,7 +47,8 @@ class AuctionsDataBridge(object):
         self.client = ApiClient(
             '',
             host_url=self.config_get('tenders_api_server'),
-            api_version=self.config_get('tenders_api_version')
+            api_version=self.config_get('tenders_api_version'),
+            resource='auctions'
         )
         params = {'opt_fields': 'status,auctionPeriod', 'mode': '_all_'}
         if parse_version(self.config_get('tenders_api_version')) > parse_version('0.9'):
@@ -63,9 +64,6 @@ class AuctionsDataBridge(object):
 
     def config_get(self, name):
         return self.config.get('main').get(name)
-
-    def tender_url(self, tender_id):
-        return urljoin(self.tenders_url, 'tenders/{}/auction'.format(tender_id))
 
     def get_teders_list(self, re_planning=False):
         while True:
