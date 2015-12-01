@@ -14,7 +14,7 @@ def validate_bid_value(form, field):
     Bid must be greater then 0
     """
     if field.data <= 0.0 and field.data != -1:
-        raise ValidationError(u'To low value')
+        raise ValidationError(u'To high value')
 
 
 def validate_bid_change_on_bidding(form, field):
@@ -23,15 +23,15 @@ def validate_bid_change_on_bidding(form, field):
     """
     stage_id = form.document['current_stage']
     if form.auction.features:
-        minimal_bid = form.document['stages'][stage_id]['amount_features']
-        minimal = Fraction(minimal_bid) * form.auction.bidders_coeficient[form.data['bidder_id']]
-        minimal -= Fraction(form.document['minimalStep']['amount'])
-        if field.data > minimal:
-            raise ValidationError(u'To high value')
+        prev_bid = form.document['stages'][stage_id]['amount_features']
+        minimal = Fraction(prev_bid) * form.auction.bidders_coeficient[form.data['bidder_id']]
+        minimal += Fraction(form.document['minimalStep']['amount'])
+        if (field.data < minimal) and (field.data != -1):
+            raise ValidationError(u'To low value')
     else:
         minimal_bid = form.document['stages'][stage_id]['amount']
-        if field.data > (minimal_bid - form.document['minimalStep']['amount']):
-            raise ValidationError(u'To high value')
+        if (field.data < (minimal_bid + form.document['minimalStep']['amount'])) and (field.data != -1):
+            raise ValidationError(u'To low value')
 
 
 def validate_bidder_id_on_bidding(form, field):

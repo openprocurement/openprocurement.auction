@@ -106,7 +106,7 @@ class Auction(object):
             self.auction_doc_id = tender_id
         self.tender_url = urljoin(
             worker_defaults["TENDERS_API_URL"],
-            '/api/{0}/tenders/{1}'.format(
+            '/api/{0}/auctions/{1}'.format(
                 worker_defaults["TENDERS_API_VERSION"], tender_id
             )
         )

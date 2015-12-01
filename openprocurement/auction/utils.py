@@ -85,7 +85,7 @@ def get_time(item):
     return bid_time
 
 
-def sorting_by_amount(bids, reverse=True):
+def sorting_by_amount(bids, reverse=False):
     """
     >>> bids = [
     ...     {'amount': 3955.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:30.723296+03:00'},
@@ -117,7 +117,7 @@ def sorting_by_amount(bids, reverse=True):
         if full_amount_bid1 == full_amount_bid2:
             time_of_bid1 = get_time(bid1)
             time_of_bid2 = get_time(bid2)
-            return - cmp(time_of_bid2, time_of_bid1)
+            return cmp(time_of_bid2, time_of_bid1)
         else:
             return cmp((bid1["amount"]), Fraction(bid2["amount"]))
 

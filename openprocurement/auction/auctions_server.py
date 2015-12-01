@@ -142,7 +142,7 @@ def after_request(response):
     return response
 
 
-@auctions_server.route('/tenders/<auction_doc_id>')
+@auctions_server.route('/auctions/<auction_doc_id>')
 def auction_url(auction_doc_id):
     url_obj = urlparse(request.url)
     request_base = u'//' + url_obj.netloc + url_obj.path + u'/'
@@ -189,7 +189,7 @@ def auction_list_index():
     )
 
 
-@auctions_server.route('/tenders/<auction_doc_id>/<path:path>',
+@auctions_server.route('/auctions/<auction_doc_id>/<path:path>',
                        methods=['GET', 'POST'])
 def auctions_proxy(auction_doc_id, path):
     auctions_server.logger.debug('Auction_doc_id: {}'.format(auction_doc_id))
@@ -259,7 +259,7 @@ def make_auctions_app(global_conf,
                       external_couch_url='http://localhost:5000/auction',
                       internal_couch_url='http://localhost:9000/',
                       proxy_internal_couch_url='http://localhost:9000/',
-                      auctions_db='auctions',
+                      auctions_db='database',
                       hash_secret_key='',
                       timezone='Europe/Kiev',
                       preferred_url_scheme='http',
