@@ -105,7 +105,7 @@ def prepare_auction_document(self):
     self.auction_document.update(
         {"_id": self.auction_doc_id,
          "stages": [],
-         "tenderID": self._auction_data["data"].get("tenderID", ""),
+         "auctionID": self._auction_data["data"].get("auctionID", ""),
          "TENDERS_API_VERSION": self.worker_defaults["TENDERS_API_VERSION"],
          "initial_bids": [],
          "current_stage": -1,

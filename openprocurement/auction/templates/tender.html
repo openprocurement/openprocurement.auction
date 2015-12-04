@@ -114,7 +114,7 @@
         <div class="row">
             <div class="col-xs-12 hidden-xs">
                 <div class="page-header">
-                    <h2>{{ auction_doc.tenderID||"-" }}</h2>
+                    <h2>{{ auction_doc.auctionID||"-" }}</h2>
                 </div>
                 <span class="lead">{{ ( auction_doc.procuringEntity['name_'+ lang]|| auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-" ) | characters:100 :true }}: {{ (auction_doc['title_'+ lang]||auction_doc['title']||auction_doc['title_en']||auction_doc['title_ru']||"") | characters:300 :true }}<span ng-if="auction_doc.lot">: {{(auction_doc.lot['title_'+ lang]||auction_doc.lot['title']||auction_doc.lot['title_en']||auction_doc.lot['title_ru']||"") | characters:300 :true}}</span></span>
                 <ul>
@@ -398,7 +398,7 @@
         <ul class="list-group">
               <li class="list-group-item">
                 <span class="glyphicon glyphicon-info-sign text-primary pull-right" aria-hidden="true" style="font-size:2.5em; padding-left:0.2em"></span>
-                <h4>{{ auction_doc.tenderID }}</h4>
+                <h4>{{ auction_doc.auctionID }}</h4>
                 <p class="list-group-item-heading">
                     <strong ng-switch on="auction_doc.procuringEntity['name_'+ lang] == undefined" class="procuringEntity">
                         <span>{{ (auction_doc.procuringEntity['name_'+ lang]||auction_doc.procuringEntity.name||auction_doc.procuringEntity.name_en||auction_doc.procuringEntity.name_ru||"-") | characters:100 :true }}</span><span class="tenderTitle"> : {{ (auction_doc['title_'+ lang]||auction_doc.title||auction_doc.title_en||auction_doc.title_ru||"-") | characters:100 :true}} <span ng-if="auction_doc.lot">: {{(auction_doc.lot['title_'+ lang]||auction_doc.lot['title']||auction_doc.lot['title_en']||auction_doc.lot['title_ru']||"") | characters:300 :true}}</span></span>

@@ -238,7 +238,7 @@ class Auction(object):
     def prepare_audit(self):
         self.audit = {
             "id": self.auction_doc_id,
-            "tenderId": self._auction_data["data"].get("tenderID", ""),
+            "auctionId": self._auction_data["data"].get("auctionID", ""),
             "tender_id": self.tender_id,
             "timeline": {
                 "auction_start": {
@@ -472,7 +472,7 @@ class Auction(object):
         self.get_auction_document()
         if len(self.auction_document['stages']) >= 1:
             self.prepare_tasks(
-                self.auction_document['tenderID'],
+                self.auction_document['auctionID'],
                 self.convert_datetime(self.auction_document['stages'][0]['start'])
             )
         else:
@@ -952,7 +952,7 @@ def main():
             auction.prepare_auction_document()
             if not auction.debug:
                 auction.prepare_tasks(
-                    auction._auction_data["data"]['tenderID'],
+                    auction.auction_document['auctionID'],
                     auction.startDate
                 )
         elif planning_procerude == PLANNING_PARTIAL_DB:
