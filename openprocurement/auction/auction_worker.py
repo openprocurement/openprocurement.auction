@@ -737,8 +737,6 @@ class Auction(object):
             extra={"JOURNAL_REQUEST_ID": self.request_id}
         )
 
-
-
     def approve_bids_information(self):
         if self.current_stage in self._bids_data:
             logger.debug(
@@ -790,7 +788,8 @@ class Auction(object):
 
     def put_auction_data(self):
         doc_id = None
-        files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
+        files = {'file': ('audit_{}.yaml'.format(self.auction_doc_id),
+                          yaml_dump(self.audit, default_flow_style=False))}
         response = patch_tender_data(
             self.tender_url + '/documents', files=files,
             user=self.worker_defaults["TENDERS_API_TOKEN"],
@@ -823,7 +822,8 @@ class Auction(object):
 
             if doc_id and bids_information:
                 self.approve_audit_info_on_announcement(approved=bids_information)
-                files = {'file': ('audit.yaml', yaml_dump(self.audit, default_flow_style=False))}
+                files = {'file': ('audit_{}.yaml'.format(self.auction_doc_id),
+                                  yaml_dump(self.audit, default_flow_style=False))}
                 response = patch_tender_data(
                     self.tender_url + '/documents/{}'.format(doc_id), files=files,
                     user=self.worker_defaults["TENDERS_API_TOKEN"],
@@ -856,14 +856,18 @@ class Auction(object):
         self.generate_request_id()
         self.get_auction_document()
         if self.lot_id:
-            bids_information = simple_tender.announce_results_data(self, None)
+            simple_tender.announce_results_data(self, None)
         else:
-            bids_information = simple_tender.announce_results_data(self, None)
+            simple_tender.announce_results_data(self, None)
         self.save_auction_document()
+
 
 def cleanup():
     today_datestamp = datetime.now()
-    today_datestamp = today_datestamp.replace(today_datestamp.year, today_datestamp.month, today_datestamp.day, 0, 0, 0)
+    today_datestamp = today_datestamp.replace(
+        today_datestamp.year, today_datestamp.month, today_datestamp.day,
+        0, 0, 0
+    )
     systemd_files_dir = os.path.join(os.path.expanduser('~'), SYSTEMD_DIRECORY)
     for filename in os.listdir(systemd_files_dir):
         if filename.startswith('auction_') and filename.endswith('.timer'):
@@ -875,7 +879,7 @@ def cleanup():
                 datetime_args = [int(term) for term in r.groups()]
                 if datetime(*datetime_args) < today_datestamp:
                     code = call(['/usr/bin/systemctl', '--user',
-                         'stop', filename])
+                                 'stop', filename])
                     logger.info(
                         "systemctl stop {} - return code: {}".format(filename, code),
                         extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS}
@@ -901,7 +905,7 @@ def cleanup():
     code = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
     logger.info(
         "systemctl --user daemon-reload - return code: {}".format(code),
-        extra={ "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+        extra={"MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
     )
 
 
