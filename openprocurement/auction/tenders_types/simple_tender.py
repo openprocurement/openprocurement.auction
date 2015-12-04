@@ -12,7 +12,8 @@ from ..utils import (
 from ..systemd_msgs_ids import(
     AUCTION_WORKER_API_HANDLE,
     AUCTION_WORKER_SERVICE,
-    AUCTION_WORKER_API
+    AUCTION_WORKER_API,
+    AUCTION_WORKER_SET_AUCTION_URLS
 )
 from barbecue import calculate_coeficient
 
@@ -154,7 +155,13 @@ def prepare_auction_and_participation_urls(self):
             {"participationUrl": participation_url,
              "id": bid["id"]}
         )
-    return patch_data
+    logger.info("Set auction and participation urls for tender {}".format(self.tender_id),
+                extra={"JOURNAL_REQUEST_ID": self.request_id,
+                       "MESSAGE_ID": AUCTION_WORKER_SET_AUCTION_URLS})
+    logger.info(repr(patch_data))
+    patch_tender_data(self.tender_url + '/auction', patch_data,
+                      user=self.worker_defaults["TENDERS_API_TOKEN"],
+                      request_id=self.request_id, session=self.session)
 
 
 def post_results_data(self):

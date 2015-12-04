@@ -375,18 +375,10 @@ class Auction(object):
 
     def set_auction_and_participation_urls(self):
         if self.lot_id:
-            patch_data = multiple_lots_tenders.prepare_auction_and_participation_urls(self)
+            multiple_lots_tenders.prepare_auction_and_participation_urls(self)
         else:
-            patch_data = simple_tender.prepare_auction_and_participation_urls(self)
+            simple_tender.prepare_auction_and_participation_urls(self)
 
-        logger.info("Set auction and participation urls for tender {}".format(
-            self.tender_id),
-            extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SET_AUCTION_URLS})
-        logger.info(repr(patch_data))
-        patch_tender_data(self.tender_url + '/auction', patch_data,
-                          user=self.worker_defaults["TENDERS_API_TOKEN"],
-                          request_id=self.request_id, session=self.session)
 
     def prepare_tasks(self, tender_id, start_date):
         cmd = deepcopy(sys.argv)
