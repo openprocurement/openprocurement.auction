@@ -494,7 +494,7 @@ function(
           var diff = a.amount - b.amount;
         }
         if (diff == 0) {
-          return Date.parse(a.time || "") - Date.parse(b.time || "");
+          return Date.parse(b.time || "") - Date.parse(a.time || "");
         }
         return diff;
       })[bids.length - 1];

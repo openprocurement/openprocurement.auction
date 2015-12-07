@@ -13,7 +13,7 @@
         <div class="list-group">
             {% for auction in documents | reverse %}
             <div class="list-group-item text-center">
-                <a href="/tenders/{{ auction._id }}">
+                <a href="/auctions/{{ auction._id }}">
                     <h4 class="list-group-item-heading">
                     Аукціон {{ auction.auctionID }}
                 </h4>
