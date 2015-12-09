@@ -195,14 +195,12 @@ angular.module('auction')
               var scroll_tag_id = 'results-header';
             }
             var stage_elem = document.getElementById(scroll_tag_id);
-            $log.debug("scroll to stage:", scroll_tag_id);
             if (stage_elem){
               stage_elem.scrollIntoView(true);
               var stage_elem_dimensions = stage_elem.getBoundingClientRect();
               $window.scrollBy(0, stage_elem_dimensions.top - 96);
             }
           } else {
-            $log.debug("scroll to round:", scroll_tag_id);
             round_elem.scrollIntoView(true);
             var round_elem_dimensions = document.getElementById(scroll_tag_id).getBoundingClientRect()
             $window.scrollBy(0, round_elem_dimensions.top - 96);
@@ -268,6 +266,16 @@ angular.module('auction')
       };
     }
 
+    function generateUUID() {
+        var d = new Date().getTime();
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = (d + Math.random()*16)%16 | 0;
+            d = Math.floor(d/16);
+            return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+        });
+        return uuid;
+    };
+
     return {
       'prepare_info_timer_data': prepare_info_timer_data,
       'prepare_progress_timer_data': prepare_progress_timer_data,
@@ -280,7 +288,8 @@ angular.module('auction')
       'prepare_title_ending_data': prepare_title_ending_data,
       'pad': pad,
       'inIframe': inIframe,
-      'polarToCartesian': polarToCartesian
+      'polarToCartesian': polarToCartesian,
+      'generateUUID': generateUUID
     };
   }]);
 

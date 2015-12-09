@@ -1,4 +1,4 @@
-var app = angular.module('auction', ['ui.bootstrap', 'ngCookies', 'pascalprecht.translate', 'timer', 'angular-growl', 'angular-ellipses']);
+var app = angular.module('auction', ['ui.bootstrap', 'ngCookies', 'pascalprecht.translate', 'timer', 'angular-growl', 'angular-ellipses', 'GTMLogger']);
 var db = {};
 var bidder_id = "0";
 var auction_doc_id = auction_doc_id||"";
@@ -20,7 +20,8 @@ app.filter('formatnumber', ['$filter',
     }
 ]);
 
-app.config(['$logProvider', 'AuctionConfig', 'growlProvider', function($logProvider, AuctionConfig, growlProvider) {
+app.config(['$logProvider', 'AuctionConfig', 'growlProvider', 'GTMLoggerProvider', function($logProvider, AuctionConfig, growlProvider, GTMLoggerProvider) {
+    GTMLoggerProvider.level('INFO').includeTimestamp( true );
     $logProvider.debugEnabled(AuctionConfig.debug); // default is true
     growlProvider.globalTimeToLive({
         success: 4000,

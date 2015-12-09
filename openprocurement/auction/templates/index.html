@@ -283,7 +283,7 @@
                 </div>
             </div>
         </div>
-        <div ng-show="show_bids_form()" class="panel panel-default bg-warning fixed-bottom">
+        <div ng-show="view_bids_form" class="panel panel-default bg-warning fixed-bottom">
             <div class="panel-body bg-warning">
                 <div class="row">
                     <div class="col-xs-12">
@@ -343,6 +343,12 @@
                         <span ng-switch-when="true" translate>You</span>
                     </span> - IP: {{ client.ip }}</p>
               </li>
+
+            <li class="list-group-item">
+                <p>Browser ID:<span >{{browser_client_id}}</span></p>
+                <p>Session ID:<span >{{browser_session_id}}</span></p>
+            </li>
+
               <li ng-if="form.bid" class="list-group-item">
                 <h4 class="list-group-item-heading" translate>Your latest bid</h4>
                 <p>{{ form.bid }}<p>
