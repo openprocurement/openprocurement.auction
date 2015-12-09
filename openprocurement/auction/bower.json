@@ -1,5 +1,5 @@
 {
-  "name": "pouch_db_start",
+  "name": "auction",
   "version": "0.0.0",
   "authors": [
     "Taras Kozlovskyi <ktarasz@quintagroup.com>"
@@ -22,6 +22,7 @@
     "angular-translate-storage-local": "2.4.2",
     "event-source-polyfill": "0.0.3",
     "pouchdb": "http://op:x9W3jZ@dist.quintagroup.com/op/pouchdb-5.1.1-prerelease-openprocurement.tgz",
+    "angular-gtm-logger": "http://op:x9W3jZ@dist.quintagroup.com/op/angular-gtm-logger-1.0.1.tgz",
     "bootstrap": "~3.2.0",
     "angular-bootstrap": "0.11.2",
     "angular-timer": "http://op:x9W3jZ@dist.quintagroup.com/op/angular-timer-1.1.6.tgz",
