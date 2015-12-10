@@ -124,8 +124,6 @@ angular.module('auction').controller('AuctionController', [
     });
 
     /*      Kick client event    */
-
-    << << << < HEAD
     $scope.$on('kick_client', function(event, client_id, msg) {
       $log.info({
         message: 'disable connection for client' + client_id
@@ -690,6 +688,7 @@ angular.module('auction').controller('AuctionController', [
       $scope.calculate_rounds();
       $scope.calculate_minimal_bid_amount();
       $scope.scroll_to_stage();
+      $scope.show_bids_form();
       $scope.$apply();
     };
     $scope.calculate_rounds = function(argument) {
@@ -826,7 +825,6 @@ angular.module('auction')
             precision: 2
           }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ",")
         }
-        console.log(val);
         if (val) {
           if (coeficient) {
             return format_function(math.eval(math.format(math.fraction(val) * math.fraction(coeficient))).toFixed(2));
