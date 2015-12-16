@@ -12,7 +12,7 @@ from flask import Flask, render_template, request, abort, url_for, redirect, Res
 from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
 from http_parser.util import IOrderedDict
-from json import dumps
+from json import dumps, loads
 from memoize import Memoizer
 from pytz import timezone as tz
 from restkit.conn import Connection
@@ -23,7 +23,7 @@ from urlparse import urlparse, urljoin
 from werkzeug.exceptions import NotFound
 
 from .utils import StreamWrapper, unsuported_browser
-
+from systemd.journal import send
 
 def start_response_decorated(start_response_decorated):
     def inner(status, headers):
@@ -167,6 +167,23 @@ def archive_tenders_list_index():
                                          include_docs=True)
              ])
     )
+
+@auctions_server.route('/log', methods=['POST'])
+def log():
+
+    try:
+        data = loads(request.data)
+        if "MESSAGE" in data:
+            msg = data.get("MESSAGE")
+            del data["MESSAGE"]
+        else:
+            msg = ""
+        data["SYSLOG_IDENTIFIER"] = "AUCTION_CLIENT"
+        send(msg, **data)
+        return Response('ok')
+    except:
+        return Response('error')
+
 
 
 @auctions_server.route('/health')
