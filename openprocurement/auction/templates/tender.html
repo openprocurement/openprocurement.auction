@@ -43,7 +43,7 @@
         <div class="header-auction navbar navbar-fixed-top" role="navigation">
             <div class="navbar-header header-auction-lining">
                 <div class="header-auction-item header-auction-nav">
-                    <button type="button" class="navbar-toggle collapsed" ng-init="navbarCollapsed=true" ng-click="open_menu()">
+                    <button id="menu_button" type="button" class="navbar-toggle collapsed" ng-init="navbarCollapsed=true" ng-click="open_menu()">
                         <span class="sr-only">Toggle navigation</span>
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
@@ -79,19 +79,19 @@
                         </span>
                     </span>
                 </div>
-                <div class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'waiting'">
+                <div id="round_information_block" class="header-auction-item navbar-brand pull-right round-information" ng-if="get_round_number(auction_doc.current_stage).type == 'waiting'">
                     <p class="round-number" translate>Waiting</p>
                 </div>
-                <div class="header-auction-item navbar-brand pull-right round-information" ng-click="scroll_to_stage()" ng-if="get_round_number(auction_doc.current_stage).type == 'pause'">
+                <div id="round_information_block" class="header-auction-item navbar-brand pull-right round-information" ng-click="scroll_to_stage()" ng-if="get_round_number(auction_doc.current_stage).type == 'pause'">
                     <span class="round-number">
                         {{get_round_number(auction_doc.current_stage).data[0]}} &#8594; {{get_round_number(auction_doc.current_stage).data[1]}}
                     </span>
                 </div>
-                <div class="header-auction-item navbar-brand pull-right round-information" ng-click="scroll_to_stage()" ng-if="get_round_number(auction_doc.current_stage).type == 'round'">
+                <div id="round_information_block" class="header-auction-item navbar-brand pull-right round-information" ng-click="scroll_to_stage()" ng-if="get_round_number(auction_doc.current_stage).type == 'round'">
                     <p class="round-label" translate>Round</p>
                     <p class="round-number">{{get_round_number(auction_doc.current_stage).data}}</p>
                 </div>
-                <div class="header-auction-item navbar-brand pull-right round-information" ng-click="scroll_to_stage()" ng-if="get_round_number(auction_doc.current_stage).type == 'finish'">
+                <div id="round_information_block" class="header-auction-item navbar-brand pull-right round-information" ng-click="scroll_to_stage()" ng-if="get_round_number(auction_doc.current_stage).type == 'finish'">
                     <p class="round-number" translate>Finish</p>
                 </div>
             </div>
@@ -230,17 +230,17 @@
                                     </span>
 
                                     <span ng-if="(auction_doc.auction_type == 'meat') && (auction_doc.current_stage == (auction_doc.stages.length - 1))" tooltip="{{ auction_doc.stages[stage + $index + 1]['amount'] }} / {{ auction_doc.stages[stage + $index + 1]['coeficient']| eval_string }} = {{ auction_doc.stages[stage + $index + 1]['amount_features']|eval_string }}" tooltip-trigger="click" tooltip-placement="bottom">
-                                        <span class="label-price">
+                                        <strong class="label-price">
                                             {{ auction_doc.stages[stage + $index + 1]['amount']|fraction }} <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency|translate }}</span> / {{ auction_doc.stages[stage + $index + 1]['coeficient']|fraction }}
 
-                                        </span>
+                                        </strong>
                                     </span>
 
                                     <span ng-if="(auction_doc.auction_type||'default') == 'default'">
-                                        <span class="label-price">
+                                        <strong class="label-price">
                                             {{ auction_doc.stages[stage + $index + 1]['amount']|fraction }}
                                             <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency|translate }}</span>
-                                        </span>
+                                        </strong>
                                     </span>
                                 </span>
                                 <span class="label-price" ng-if="!auction_doc.stages[stage + $index + 1]['changed']">
@@ -364,7 +364,8 @@
                         <div class="container">
                             <alert ng-repeat="alert in alerts" type="{{alert.type}}" class="bids-form-alert" close="closeAlert(alert.msg_id)"><span class="bids-form-alert-msg">{{ alert.msg | translate }}</span></alert>
                             <form id="BidsForm" name="form.BidsForm" role="form">
-                                <label for="bid"><span translate>Your proposal</span>:</label><span ng-init="max_bid_amount()"> {{ calculated_max_bid_amount|fraction }} {{'or lower'|translate}}</span>
+                                <label for="bid"><span translate>Your proposal</span>:</label>
+                                <span ng-init="max_bid_amount()"><span id="max_bid_amount">{{ calculated_max_bid_amount|fraction }}</span> {{'or lower'|translate}}</span>
                                 <div class="input-group">
                                     <input id="bid-amount-input" ng-disabled="!allow_bidding" min="0" ng-focus="$root.form.bid_temp = $root.form.bid" ng-blur="set_bid_from_temp()" ng-change="calculate_bid_temp()" class="form-control" id="bid" name="bid" ng-model="$root.form.bid" required format>
                                     <span id="bid-amount-description" ng-if="bidder_coeficient && allow_bidding && !$root.normilized" tooltip="x {{bidder_coeficient| fraction_string}}" tooltip-trigger="focus" class="input-group-addon"> / {{bidder_coeficient| fraction}} = </span>
