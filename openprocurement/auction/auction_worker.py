@@ -910,6 +910,8 @@ def main():
     parser.add_argument('--auction_info', type=str, help='Auction File')
     parser.add_argument('--with_api_version', type=str, help='Tender Api Version')
     parser.add_argument('--lot', type=str, help='Specify lot in tender', default=None)
+    parser.add_argument('--planning_procerude', type=str, help='Override planning procerude',
+                        default=None, choices=[None, PLANNING_FULL, PLANNING_PARTIAL_DB, PLANNING_PARTIAL_CRON])
 
     args = parser.parse_args()
     if args.auction_info:
@@ -943,7 +945,10 @@ def main():
         auction.wait_to_end()
         SCHEDULER.shutdown()
     elif args.cmd == 'planning':
-        planning_procerude = worker_defaults.get('planning_procerude', PLANNING_FULL)
+        if args.planning_procerude:
+            planning_procerude = args.planning_procerude
+        else:
+            planning_procerude = worker_defaults.get('planning_procerude', PLANNING_FULL)
         if planning_procerude == PLANNING_FULL:
             auction.prepare_auction_document()
             if not auction.debug:
