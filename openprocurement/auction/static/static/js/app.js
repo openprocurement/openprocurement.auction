@@ -32,3 +32,11 @@ app.config(['$logProvider', 'AuctionConfig', 'growlProvider', 'GTMLoggerProvider
     growlProvider.globalPosition('top-center');
     growlProvider.onlyUniqueMessages(false);
 }]);
+
+function logMSG(MSG)
+{
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("POST", '/log', true);
+    xmlHttp.send(JSON.stringify(MSG));
+}
+
