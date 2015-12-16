@@ -27,7 +27,7 @@ angular.module('auction').controller('AuctionController', [
     $scope.default_http_error_timeout = 500;
     $scope.http_error_timeout = $scope.default_http_error_timeout;
     $scope.browser_client_id = AuctionUtils.generateUUID();
-    $scope.$watch('$cookies.logglytrackingsession', function(newValue, oldValue) {
+    $scope.$watch(function() {return $cookies.logglytrackingsession}, function(newValue, oldValue) {
       $scope.browser_session_id = $cookies.logglytrackingsession;
     })
     $log.info({
@@ -322,6 +322,7 @@ angular.module('auction').controller('AuctionController', [
           $log.info({
             message: "Allow view bid form"
           });
+          $scope.max_bid_amount()
           $scope.view_bids_form = true;
           return $scope.view_bids_form;
         }
@@ -497,7 +498,6 @@ angular.module('auction').controller('AuctionController', [
       var amount = 0;
       if ((angular.isString($scope.bidder_id)) && (angular.isObject($scope.auction_doc))) {
         var current_stage_obj = $scope.auction_doc.stages[$scope.auction_doc.current_stage] || null;
-
         if ((angular.isObject(current_stage_obj)) && (current_stage_obj.amount || current_stage_obj.amount_features)) {
           if ($scope.bidder_coeficient && ($scope.auction_doc.auction_type || "default" == "meat")) {
             amount = math.fraction(current_stage_obj.amount_features) * $scope.bidder_coeficient - math.fraction($scope.auction_doc.minimalStep.amount);
@@ -505,9 +505,9 @@ angular.module('auction').controller('AuctionController', [
             amount = math.fraction(current_stage_obj.amount) - math.fraction($scope.auction_doc.minimalStep.amount);
           }
         }
-
       };
       if (amount < 0) {
+        $scope.calculated_max_bid_amount = 0;
         return 0;
       }
       $scope.calculated_max_bid_amount = amount;
@@ -689,6 +689,7 @@ angular.module('auction').controller('AuctionController', [
       $scope.calculate_minimal_bid_amount();
       $scope.scroll_to_stage();
       $scope.show_bids_form();
+
       $scope.$apply();
     };
     $scope.calculate_rounds = function(argument) {
