@@ -35,11 +35,12 @@ def run_auction(tender_file_path):
 def main():
     tender_file_path = os.path.join(PWD, "data/tender_data.json")
     auction_process = run_auction(tender_file_path)
-    sleep(1)
+    sleep(4)
     # with mock_patch('sys.exit') as exit_mock:
     exit_code = 0
     try:
-        run_cli(['-v', 'tender_file_path:{}'.format(tender_file_path),
+        run_cli(['-L', 'DEBUG', '--exitonfailure',
+                 '-v', 'tender_file_path:{}'.format(tender_file_path),
                  '-v', 'auction_worker_defaults:{0}/etc/auction_worker_defaults.json'.format(CWD),
                  '-d', os.path.join(CWD, "logs"), PWD,])
     except SystemExit, e:
