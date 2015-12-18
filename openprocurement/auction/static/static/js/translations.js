@@ -144,7 +144,7 @@ angular.module('auction')
       'Your bid appears too low': 'Ви ввели дуже малу суму, ви впевнені?',
       'Return to Tender': 'Повернутися до Закупівлі',
       'Your latest bid': 'Ваша остання заявка',
-      'Tender cancelled': 'Закупілю скасовано',
+      'Tender cancelled': 'Закупівлю скасовано',
       'Bid canceled': 'Заявку відмінено',
       'Login is currently closed.': 'Вхід на даний момент закритий.',
       'Please try again later.': 'Спробуйте пізніше.',
