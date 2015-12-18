@@ -71,26 +71,28 @@ class AuctionsWSGIHandler(WSGIHandler):
 @app.route('/login')
 def login():
     if 'bidder_id' in request.args and 'hash' in request.args:
-        next_url = request.args.get('next') or request.referrer or None
-        if 'X-Forwarded-Path' in request.headers:
-            callback_url = urljoin(
-                request.headers['X-Forwarded-Path'],
-                'authorized'
-            )
-        else:
-            callback_url = url_for('authorized', next=next_url, _external=True)
-        response = app.remote_oauth.authorize(
-            callback=callback_url,
-            bidder_id=request.args['bidder_id'],
-            hash=request.args['hash']
-        )
-        if 'return_url' in request.args:
-            session['return_url'] = request.args['return_url']
-        session['login_bidder_id'] = request.args['bidder_id']
-        session['login_hash'] = request.args['hash']
-        session['login_callback'] = callback_url
-        app.logger.debug("Session: {}".format(repr(session)))
-        return response
+        for bidder_info in app.config['auction'].bidders_data:
+            if bidder_info['id'] == request.args['bidder_id']:
+                next_url = request.args.get('next') or request.referrer or None
+                if 'X-Forwarded-Path' in request.headers:
+                    callback_url = urljoin(
+                        request.headers['X-Forwarded-Path'],
+                        'authorized'
+                    )
+                else:
+                    callback_url = url_for('authorized', next=next_url, _external=True)
+                response = app.remote_oauth.authorize(
+                    callback=callback_url,
+                    bidder_id=request.args['bidder_id'],
+                    hash=request.args['hash']
+                )
+                if 'return_url' in request.args:
+                    session['return_url'] = request.args['return_url']
+                session['login_bidder_id'] = request.args['bidder_id']
+                session['login_hash'] = request.args['hash']
+                session['login_callback'] = callback_url
+                app.logger.debug("Session: {}".format(repr(session)))
+                return response
     return abort(401)
 
 
@@ -104,13 +106,18 @@ def authorized():
         app.logger.info("Get response from Oauth: {}".format(repr(resp)))
         session['remote_oauth'] = (resp['access_token'], '')
         session['client_id'] = os.urandom(16).encode('hex')
+    bidder_data = get_bidder_id(app, session)
+    app.logger.info("Bidder {} with client_id {} authorized".format(
+                    bidder_data['bidder_id'], session['client_id'],
+                    ), extra=prepare_extra_journal_fields(request.headers))
+
     app.logger.debug("Session: {}".format(repr(session)))
     response = redirect(
         urljoin(request.headers['X-Forwarded-Path'], '.').rstrip('/')
     )
     response.set_cookie('auctions_loggedin', '1',
                         path=app.config['SESSION_COOKIE_PATH'],
-                        secure=False, httponly=False
+                        secure=False, httponly=False, max_age=36000
                         )
     return response
 
@@ -122,6 +129,9 @@ def relogin():
         if 'amount' in request.args:
             session['amount'] = request.args['amount']
         app.logger.debug("Session: {}".format(repr(session)))
+        app.logger.info("Bidder {} with login_hash {} start re-login".format(
+                        session['login_bidder_id'], session['login_hash'],
+                        ), extra=prepare_extra_journal_fields(request.headers))
         return app.remote_oauth.authorize(
             callback=session['login_callback'],
             bidder_id=session['login_bidder_id'],
@@ -181,6 +191,7 @@ def post_bid():
         if bidder_data and bidder_data['bidder_id'] == request.json['bidder_id']:
             with auction.bids_actions:
                 form = BidsForm.from_json(request.json)
+                form.auction = auction
                 form.document = auction.db.get(auction.auction_doc_id)
                 current_time = datetime.now(timezone('Europe/Kiev'))
                 if form.validate():
@@ -250,7 +261,6 @@ def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
         consumer_secret=app.config['OAUTH_CLIENT_SECRET'],
         request_token_params={'scope': 'email'},
         base_url=app.config['OAUTH_BASE_URL'],
-        request_token_url=app.config['OAUTH_REQUEST_TOKEN_URL'],
         access_token_url=app.config['OAUTH_ACCESS_TOKEN_URL'],
         authorize_url=app.config['OAUTH_AUTHORIZE_URL']
     )

@@ -18,7 +18,10 @@ from gevent.baseserver import parse_address
 from redis import Redis
 import uuid
 
+from pkg_resources import parse_version
 from restkit.wrappers import BodyWrapper
+from barbecue import chef
+from fractions import Fraction
 
 
 EXTRA_LOGGING_VALUES = {
@@ -105,17 +108,23 @@ def sorting_by_amount(bids, reverse=True):
      {'amount': 3966.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:20+03:00'}]
     """
     def bids_compare(bid1, bid2):
-        if bid1["amount"] == bid2["amount"]:
+        if "amount_features" in bid1 and "amount_features" in bid2:
+            full_amount_bid1 = Fraction(bid1["amount_features"])
+            full_amount_bid2 = Fraction(bid2["amount_features"])
+        else:
+            full_amount_bid1 = bid1["amount"]
+            full_amount_bid2 = bid2["amount"]
+        if full_amount_bid1 == full_amount_bid2:
             time_of_bid1 = get_time(bid1)
             time_of_bid2 = get_time(bid2)
             return - cmp(time_of_bid2, time_of_bid1)
         else:
-            return cmp(bid1["amount"], bid2["amount"])
+            return cmp((bid1["amount"]), Fraction(bid2["amount"]))
 
     return sorted(bids, reverse=reverse, cmp=bids_compare)
 
 
-def sorting_start_bids_by_amount(bids, reverse=True):
+def sorting_start_bids_by_amount(bids, features=None, reverse=True):
     """
     >>> from json import load
     >>> import os
@@ -134,7 +143,8 @@ def sorting_start_bids_by_amount(bids, reverse=True):
     def get_amount(item):
         return item['value']['amount']
 
-    return sorted(bids, key=get_amount, reverse=reverse)
+    # return sorted(bids, key=get_amount, reverse=reverse)
+    return chef(bids, features=features)
 
 
 def sorting_by_time(bids, reverse=True):
@@ -152,7 +162,7 @@ def get_latest_start_bid_for_bidder(bids, bidder):
 
 
 def get_tender_data(tender_url, user="", password="", retry_count=10,
-                    request_id=None):
+                    request_id=None, session=requests):
     if not request_id:
         request_id = generate_request_id()
     extra_headers = {'content-type': 'application/json', 'X-Client-Request-ID': request_id}
@@ -165,8 +175,8 @@ def get_tender_data(tender_url, user="", password="", retry_count=10,
         try:
             logging.info("Get data from {}".format(tender_url),
                          extra={"JOURNAL_REQUEST_ID": request_id})
-            response = requests.get(tender_url, auth=auth, headers=extra_headers,
-                                    timeout=300)
+            response = session.get(tender_url, auth=auth, headers=extra_headers,
+                                   timeout=300)
             if response.ok:
                 logging.info("Response from {}: status: {} text: {}".format(
                     tender_url, response.status_code, response.text),
@@ -199,7 +209,9 @@ def get_tender_data(tender_url, user="", password="", retry_count=10,
 
 
 def patch_tender_data(tender_url, data=None, files=None, user="", password="",
-                      retry_count=10, method='patch', request_id=None):
+                      retry_count=10, method='patch', request_id=None, session=None):
+    if not session:
+        session = requests.Session()
     if not request_id:
         request_id = generate_request_id()
     extra_headers = {'X-Client-Request-ID': request_id}
@@ -213,7 +225,7 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
     for iteration in xrange(retry_count):
         try:
             if data:
-                response = getattr(requests, method)(
+                response = getattr(session, method)(
                     tender_url,
                     auth=auth,
                     headers=extra_headers,
@@ -221,7 +233,7 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
                     timeout=300
                 )
             else:
-                response = getattr(requests, method)(
+                response = getattr(session, method)(
                     tender_url,
                     auth=auth,
                     headers=extra_headers,
@@ -235,6 +247,15 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
                     extra={"JOURNAL_REQUEST_ID": request_id}
                 )
                 return response.json()
+            elif response.status_code == 412 and response.text:
+                get_tender_data(tender_url, user=user, password=password,
+                                request_id=request_id, session=session)
+            elif response.status_code == 403:
+                logging.info("Response from {}: status: {} text: {}".format(
+                    tender_url, response.status_code, response.text),
+                    extra={"JOURNAL_REQUEST_ID": request_id}
+                )
+                return None
             else:
                 logging.error("Response from {}: status: {} text: {}".format(
                     tender_url, response.status_code, response.text),
@@ -348,3 +369,24 @@ def get_bidder_id(app, session):
                 return resp.data
             else:
                 return False
+
+
+def unsuported_browser(request):
+    if request.user_agent.browser == 'msie':
+        if parse_version(request.user_agent.version) <= parse_version('9'):
+            return True
+        # Add to blacklist IE11
+        if parse_version(request.user_agent.version) >= parse_version('11'):
+            return True
+    elif request.user_agent.browser == 'opera':
+        if 'Opera Mini' in request.user_agent.string:
+            return True
+    return False
+
+
+def filter_amount(stage):
+    if 'amount' in stage:
+        del stage['amount']
+    if 'coeficient' in stage:
+        del stage['coeficient']
+    return stage

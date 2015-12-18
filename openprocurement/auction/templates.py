@@ -5,62 +5,56 @@ from json import loads
 JINJA_ENV = Environment(loader=PackageLoader('openprocurement.auction',
                                              'templates'))
 
-INITIAL_BIDS_TEMPLATE = Template(u'''{
-    "bidder_id": "{{ bidder_id }}",
-    "time": "{{ time }}",
-    "label": {"en": "Bidder #{{ bidder_name }}",
-              "ru": "Участник №{{ bidder_name }}",
-              "uk": "Учасник №{{ bidder_name }}"},
-    "amount": {{ amount }}
-}''')
-
-PAUSE_TEMPLATE = Template(u'''{
-    "type": "pause",
-    "start": "{{ start }}"
-}''')
-
-BIDS_TEMPLATE = Template(u'''{
-    "type": "bids",
-    "bidder_id": "{{ bidder_id }}",
-    "start": "{{ start }}",
-    {% if bidder_name %}
-    "label": {"en": "Bidder #{{ bidder_name }}",
-              "ru": "Участник №{{ bidder_name }}",
-              "uk": "Учасник №{{ bidder_name }}"},
-    {% else %}
-    "label": {"en": "",
-              "ru": "",
-              "uk": ""},
-    {% endif %}
-    "amount": {{ amount }},
-    "time": "{{ time }}"
-}''')
-
-ANNOUNCEMENT_TEMPLATE = Template(u'''{
-    "type": "announcement",
-    "start": "{{ start }}"
-}''')
-
-
-RESULTS_TEMPLATE = Template(u'''{
-    "bidder_id": "{{ bidder_id }}",
-    "label": {"en": "Bidder #{{ bidder_name }}",
-              "ru": "Участник №{{ bidder_name }}",
-              "uk": "Учасник №{{ bidder_name }}"},
-    "amount": {{ amount }},
-    "time": "{{ time }}"
-}''')
-
-
-def generate_bids_stage(exist_stage_params, params):
-    exist_stage_params.update(params)
-    return loads(
-        BIDS_TEMPLATE.render(**exist_stage_params)
+def prepare_initial_bid_stage(bidder_name="", bidder_id="", time="",
+                              amount_features="", coeficient="", amount=""):
+    stage = dict(bidder_id=bidder_id, time=str(time))
+    stage["label"] = dict(
+        en="Bidder #{}".format(bidder_name),
+        uk="Учасник №{}".format(bidder_name),
+        ru="Участник №{}".format(bidder_name)
     )
 
+    stage['amount'] = amount if amount else None
+    if amount_features:
+        stage['amount_features'] = str(amount_features)
+    if coeficient:
+        stage['coeficient'] = str(coeficient)
+    return stage
 
-def generate_resuls(params):
-    return loads(RESULTS_TEMPLATE.render(**params))
+prepare_results_stage = prepare_initial_bid_stage  # Looks identical
+
+def prepare_bids_stage(exist_stage_params, params={}):
+    exist_stage_params.update(params)
+    stage = dict(type="bids", bidder_id=exist_stage_params['bidder_id'],
+                 start=str(exist_stage_params['start']), time=str(exist_stage_params['time']))
+    stage["amount"] = exist_stage_params['amount'] if exist_stage_params['amount'] else None
+    if 'amount_features' in exist_stage_params:
+        stage["amount_features"] = exist_stage_params['amount_features']
+    if 'coeficient' in exist_stage_params:
+        stage["coeficient"] = exist_stage_params['coeficient']
+
+    if exist_stage_params['bidder_name']:
+        stage["label"] = {
+            "en": "Bidder #{}".format(exist_stage_params['bidder_name']),
+            "ru": "Участник №{}".format(exist_stage_params['bidder_name']),
+            "uk": "Учасник №{}".format(exist_stage_params['bidder_name'])
+        }
+    else:
+        stage["label"] = {
+            "en": "",
+            "ru": "",
+            "uk": ""
+        }
+    return stage
+
+
+def prepare_service_stage(**kwargs):
+    pause = {
+        "type": "pause",
+        "start": ""
+    }
+    pause.update(kwargs)
+    return pause
 
 
 def get_template(name):

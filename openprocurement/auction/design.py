@@ -25,8 +25,20 @@ startDate_view = ViewDefinition(
 )
 
 
+PreAnnounce_view = ViewDefinition(
+    "auctions",
+    "PreAnnounce",
+    ''' function(doc) {
+            if ((doc.stages.length - 2) == doc.current_stage){
+                emit(start, null);
+            }
+        }
+    '''
+)
+
+
 def sync_design(db):
-    views = [endDate_view, startDate_view]
+    views = [endDate_view, startDate_view, PreAnnounce_view]
     for view in views:
         view.sync(db)
     while True:

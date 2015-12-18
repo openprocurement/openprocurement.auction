@@ -367,3 +367,8 @@ body {
   }
 
 }
+
+
+.tooltip{
+  z-index: 1020;
+}

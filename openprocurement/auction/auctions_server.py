@@ -1,10 +1,10 @@
-from gevent import monkey, sleep
+from gevent import monkey
+
 monkey.patch_all()
 
 import time
 from collections import deque
 from Cookie import SimpleCookie
-from json import dumps
 from couchdb import Server, Session
 from datetime import datetime
 from design import sync_design, endDate_view
@@ -12,9 +12,8 @@ from flask import Flask, render_template, request, abort, url_for, redirect, Res
 from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
 from http_parser.util import IOrderedDict
+from json import dumps, loads
 from memoize import Memoizer
-from paste.proxy import make_proxy
-from pkg_resources import parse_version
 from pytz import timezone as tz
 from restkit.conn import Connection
 from restkit.contrib.wsgi_proxy import HostProxy
@@ -23,8 +22,8 @@ from sse import Sse as PySse
 from urlparse import urlparse, urljoin
 from werkzeug.exceptions import NotFound
 
-from .utils import StreamWrapper
-
+from .utils import StreamWrapper, unsuported_browser
+from systemd.journal import send
 
 def start_response_decorated(start_response_decorated):
     def inner(status, headers):
@@ -119,6 +118,7 @@ js = Bundle("vendor/pouchdb/dist/pouchdb.js",
             "vendor/angular-translate-storage-cookie/angular-translate-storage-cookie.min.js",
             "vendor/angular-translate-storage-local/angular-translate-storage-local.min.js",
             "vendor/angular-growl-2/build/angular-growl.js",
+            "vendor/angular-gtm-logger/angular-gtm-logger.min.js",
             "static/js/app.js",
             "static/js/utils.js",
             "static/js/translations.js",
@@ -127,7 +127,6 @@ js = Bundle("vendor/pouchdb/dist/pouchdb.js",
             "vendor/moment/locale/ru.js",
             filters='jsmin', output='min/all_js_%(version)s.js')
 assets.register('all_js', js)
-
 ################################################################################
 
 
@@ -146,23 +145,13 @@ def after_request(response):
 
 @auctions_server.route('/tenders/<auction_doc_id>')
 def auction_url(auction_doc_id):
-    unsupported_browser = False
-    if request.user_agent.browser == 'msie':
-        if parse_version(request.user_agent.version) <= parse_version('9'):
-            unsupported_browser = True
-        # Add to blacklist IE11
-        if parse_version(request.user_agent.version) >= parse_version('11'):
-            unsupported_browser = True
-    elif request.user_agent.browser == 'opera':
-        if 'Opera Mini' in request.user_agent.string:
-            unsupported_browser = True
     url_obj = urlparse(request.url)
     request_base = u'//' + url_obj.netloc + url_obj.path + u'/'
     return render_template(
-        'index.html',
+        'tender.html',
         db_url=auctions_server.config.get('EXT_COUCH_DB'),
         auction_doc_id=auction_doc_id,
-        unsupported_browser=unsupported_browser,
+        unsupported_browser=unsuported_browser(request),
         request_base=request_base
     )
 
@@ -179,12 +168,29 @@ def archive_tenders_list_index():
              ])
     )
 
+@auctions_server.route('/log', methods=['POST'])
+def log():
+
+    try:
+        data = loads(request.data)
+        if "MESSAGE" in data:
+            msg = data.get("MESSAGE")
+            del data["MESSAGE"]
+        else:
+            msg = ""
+        data["SYSLOG_IDENTIFIER"] = "AUCTION_CLIENT"
+        send(msg, **data)
+        return Response('ok')
+    except:
+        return Response('error')
+
+
 
 @auctions_server.route('/health')
 def health():
     data = auctions_server.couch_server.tasks()
     response = Response(dumps(data))
-    if not(data and data[0]['progress'] > 95):
+    if not(data and data[0]['progress'] > 90):
         response.status_code = 503
     return response
 
@@ -248,16 +254,22 @@ def auctions_server_current_server_time():
 
 def couch_server_proxy(path):
     """USED FOR DEBUG ONLY"""
-    return make_proxy(
-        {}, auctions_server.config['PROXY_COUCH_URL'], allowed_request_methods="",
-        suppress_http_headers="")
+    return StreamProxy(
+        auctions_server.config['PROXY_COUCH_URL'],
+        auctions_server.event_sources_pool,
+        pool=auctions_server.proxy_connection_pool,
+        backend="gevent"
+    )
 
 
 def auth_couch_server_proxy(path):
     """USED FOR DEBUG ONLY"""
-    return make_proxy(
-        {}, auctions_server.config['PROXY_COUCH_URL'], allowed_request_methods="",
-        suppress_http_headers="")
+    return StreamProxy(
+        auctions_server.config['PROXY_COUCH_URL'],
+        auctions_server.event_sources_pool,
+        pool=auctions_server.proxy_connection_pool,
+        backend="gevent"
+    )
 
 
 def make_auctions_app(global_conf,
