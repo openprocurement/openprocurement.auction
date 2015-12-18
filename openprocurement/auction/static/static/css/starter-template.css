@@ -372,3 +372,7 @@ body {
 .tooltip{
   z-index: 1020;
 }
+
+.gitter-chat-embed {
+  top:69px;
+}
