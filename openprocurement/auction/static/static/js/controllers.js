@@ -559,10 +559,13 @@ angular.module('auction').controller('AuctionController', [
           message: "Changes error",
           error_data: err
         });
-        $scope.changes_options['heartbeat'] = false;
         $scope.end_changes = new Date()
         if (($scope.end_changes - $scope.start_changes) < 40000) {
-          $scope.changes_options.heartbeat = false;
+          $scope.changes_options['heartbeat'] = false;
+          $log.info({
+            message: "Change to heartbeat to false",
+            heartbeat: false
+        });
         }
         $timeout(function() {
           if ($scope.restart_retries != AuctionConfig.restart_retries) {
