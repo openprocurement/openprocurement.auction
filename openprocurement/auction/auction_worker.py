@@ -861,6 +861,17 @@ class Auction(object):
             simple_tender.announce_results_data(self, None)
         self.save_auction_document()
 
+    def cancel_auction(self):
+        self.generate_request_id()
+        self.get_auction_document()
+        logger.info("Auction {} canceled".format(self.auction_doc_id),
+                    extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE})
+        self.auction_document["current_stage"] = -100
+        self.auction_document["endDate"] = datetime.now(tzlocal()).isoformat()
+        logger.info("Change auction {} status to 'canceled'".format(self.auction_doc_id),
+                    extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE})
+        self.save_auction_document()
+
 
 def cleanup():
     today_datestamp = datetime.now()
@@ -976,6 +987,8 @@ def main():
         auction.post_announce()
     elif args.cmd == 'activate':
         auction.activate_systemd_unit()
+    elif args.cmd == 'cancel':
+        auction.cancel_auction()
     elif args.cmd == 'cleanup':
         cleanup()
 

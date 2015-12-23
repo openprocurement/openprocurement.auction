@@ -39,7 +39,7 @@ from .utils import do_until_success, generate_request_id
 SIMPLE_AUCTION_TYPE = 0
 SINGLE_LOT_AUCTION_TYPE = 1
 
-MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}" # {TENDER_ID}_{LOT_ID}
+MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}"  # {TENDER_ID}_{LOT_ID}
 
 logger = logging.getLogger(__name__)
 
@@ -80,9 +80,6 @@ class AuctionsDataBridge(object):
 
     def config_get(self, name):
         return self.config.get('main').get(name)
-
-    def tender_url(self, tender_id):
-        return urljoin(self.tenders_url, 'tenders/{}/auction'.format(tender_id))
 
     def run_systemd_cmds(self):
         auctions = []
@@ -181,27 +178,15 @@ class AuctionsDataBridge(object):
                         if 'lots' in item:
                             for lot in item['lots']:
                                 auction_id = MULTILOT_AUCTION_ID.format(item, lot)
-                                if item["id"] in [i.id for i in future_auctions]:
-                                    self.cancel_auction(auction_id)
+                                if auction_id in [i.id for i in future_auctions]:
+                                    logger.info('Tender {0} selected for cancellation'.format(item['id']))
+                                    self.start_auction_worker_cmd('cancel', item['id'], lot_id=lot['id'])
                         else:
                             if item["id"] in [i.id for i in future_auctions]:
-                                self.cancel_auction(item["id"])
-
-
+                                logger.info('Tender {0} selected for cancellation'.format(item['id']))
+                                self.start_auction_worker_cmd('cancel', item["id"])
             else:
                 break
-
-    def cancel_auction(self, auction_id):
-        # TODO: MOVE TO AUCTION_WORKER
-        logger.info("Auction {} canceled".format(auction_id),
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
-        auction_document = self.db[auction_id]
-        auction_document["current_stage"] = -100
-        auction_document["endDate"] = datetime.now(self.tz).isoformat()
-        self.db.save(auction_document)
-        logger.info("Change auction {} status to 'canceled'".format(auction_id),
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
-
 
     def start_auction_worker_cmd(self, cmd, tender_id, with_api_version=None, lot_id=None):
         params = [self.config_get('auction_worker'),
