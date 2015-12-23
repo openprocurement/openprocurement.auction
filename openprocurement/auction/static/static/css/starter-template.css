@@ -368,7 +368,10 @@ body {
 
 }
 
-
 .tooltip{
   z-index: 1020;
+}
+
+.header-auction.navbar-fixed-top {
+  z-index:99;
 }
