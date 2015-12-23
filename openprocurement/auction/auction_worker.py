@@ -95,7 +95,8 @@ class Auction(object):
     def __init__(self, tender_id,
                  worker_defaults={},
                  auction_data={},
-                 lot_id=None):
+                 lot_id=None,
+                 activate=False):
         super(Auction, self).__init__()
         self.generate_request_id()
         self.tender_id = tender_id
@@ -110,6 +111,7 @@ class Auction(object):
                 worker_defaults["TENDERS_API_VERSION"], tender_id
             )
         )
+        self.activate = activate
         if auction_data:
             self.debug = True
             logger.setLevel(logging.DEBUG)
@@ -427,17 +429,21 @@ class Auction(object):
                 timestamp=start_time.strftime("%Y-%m-%d %H:%M:%S"),
                 description='Auction ' + tender_id)
             )
-        logger.info(
-            "Reload Systemd",
-            extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
-        )
-        response = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
-        logger.info(
-            "Systemctl return code: {}".format(response),
-            extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
-        )
+        if self.activate:
+            logger.info(
+                "Reload Systemd",
+                extra={"JOURNAL_REQUEST_ID": self.request_id,
+                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+            )
+            response = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
+            logger.info(
+                "Systemctl return code: {}".format(response),
+                extra={"JOURNAL_REQUEST_ID": self.request_id,
+                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+            )
+            self.activate_systemd_unit()
+
+    def activate_systemd_unit(self):
         logger.info(
             "Start timer",
             extra={"JOURNAL_REQUEST_ID": self.request_id,
@@ -458,6 +464,8 @@ class Auction(object):
             extra={"JOURNAL_REQUEST_ID": self.request_id,
                    "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
         )
+
+
 
     def prepare_systemd_units(self):
         self.generate_request_id()
@@ -912,6 +920,9 @@ def main():
     parser.add_argument('--lot', type=str, help='Specify lot in tender', default=None)
     parser.add_argument('--planning_procerude', type=str, help='Override planning procerude',
                         default=None, choices=[None, PLANNING_FULL, PLANNING_PARTIAL_DB, PLANNING_PARTIAL_CRON])
+    parser.add_argument('--activate',  action='store_true', default=False,
+                        help='Activate systemd unit in auction worker')
+
 
     args = parser.parse_args()
     if args.auction_info:
@@ -938,7 +949,8 @@ def main():
     auction = Auction(args.auction_doc_id,
                       worker_defaults=worker_defaults,
                       auction_data=auction_data,
-                      lot_id=args.lot)
+                      lot_id=args.lot,
+                      activate=args.activate)
     if args.cmd == 'run':
         SCHEDULER.start()
         auction.schedule_auction()
@@ -962,8 +974,11 @@ def main():
             auction.prepare_systemd_units()
     elif args.cmd == 'announce':
         auction.post_announce()
+    elif args.cmd == 'activate':
+        auction.activate_systemd_unit()
     elif args.cmd == 'cleanup':
         cleanup()
+
 
 
 ##############################################################

@@ -1,3 +1,7 @@
+from gevent import monkey
+monkey.patch_all()
+
+
 try:
     import urllib3.contrib.pyopenssl
     urllib3.contrib.pyopenssl.inject_into_urllib3()
@@ -14,6 +18,10 @@ from datetime import datetime
 from subprocess import check_call
 from time import sleep, mktime, time
 from urlparse import urljoin
+
+from apscheduler.schedulers.gevent import GeventScheduler
+from gevent.queue import Queue, Empty
+from gevent.subprocess import call, check_call
 
 from couchdb import Database, Session
 from dateutil.tz import tzlocal
@@ -40,10 +48,11 @@ class AuctionsDataBridge(object):
 
     """Auctions Data Bridge"""
 
-    def __init__(self, config):
+    def __init__(self, config, activate=False):
         super(AuctionsDataBridge, self).__init__()
         self.config = config
         self.tenders_ids_list = []
+        self.activate = activate
         self.client = ApiClient(
             '',
             host_url=self.config_get('tenders_api_server'),
@@ -54,6 +63,7 @@ class AuctionsDataBridge(object):
             params['opt_fields'] += ',lots'
         self.client.params.update(params)
         self.tz = tzlocal()
+
         self.couch_url = urljoin(
             self.config_get('couch_url'),
             self.config_get('auctions_db')
@@ -61,11 +71,43 @@ class AuctionsDataBridge(object):
         self.db = Database(self.couch_url,
                            session=Session(retry_delays=range(10)))
 
+        if self.activate:
+            self.queue = Queue()
+            self.scheduler = GeventScheduler()
+            self.scheduler.add_job(self.run_systemd_cmds, 'interval',  max_instances=1,
+                                   minutes=2, id='run_systemd_cmds')
+            self.scheduler.start()
+
     def config_get(self, name):
         return self.config.get('main').get(name)
 
     def tender_url(self, tender_id):
         return urljoin(self.tenders_url, 'tenders/{}/auction'.format(tender_id))
+
+    def run_systemd_cmds(self):
+        auctions = []
+        logger.info('Start systemd units activator')
+        while True:
+            try:
+                auctions.append(self.queue.get_nowait())
+            except Empty, e:
+                break
+        if auctions:
+            logger.info('Handle systemctl daemon-reload')
+            do_until_success(
+                check_call,
+                (['/usr/bin/systemctl', '--user', 'daemon-reload'],)
+            )
+            for planning_data in auctions:
+                if len(planning_data) == 1:
+                    logger.info('Tender {0} selected for activate'.format(*planning_data))
+                    self.start_auction_worker_cmd('activate', planning_data[0])
+                elif len(planning_data) == 2:
+                    logger.info('Lot {1} of tender {0} selected for activate'.format(*planning_data))
+                    self.start_auction_worker_cmd('activate', planning_data[0], lot_id=planning_data[1])
+        else:
+            logger.info('No auctions to activate')
+
 
     def get_teders_list(self, re_planning=False):
         while True:
@@ -131,7 +173,7 @@ class AuctionsDataBridge(object):
                                 is_pre_announce = PreAnnounce_view(self.db)
                                 auction_id = MULTILOT_AUCTION_ID.format(item, lot)
                                 if [row.id for row in is_pre_announce.rows if row.id == auction_id]:
-                                    self.start_pre_announce(item['id'], lot_id=lot['id'],)
+                                    self.start_auction_worker_cmd('announce', item['id'], lot_id=lot['id'],)
                     if item['status'] == "cancelled":
                         future_auctions = endDate_view(
                             self.db, startkey=time() * 1000
@@ -150,6 +192,7 @@ class AuctionsDataBridge(object):
                 break
 
     def cancel_auction(self, auction_id):
+        # TODO: MOVE TO AUCTION_WORKER
         logger.info("Auction {} canceled".format(auction_id),
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
         auction_document = self.db[auction_id]
@@ -157,41 +200,31 @@ class AuctionsDataBridge(object):
         auction_document["endDate"] = datetime.now(self.tz).isoformat()
         self.db.save(auction_document)
         logger.info("Change auction {} status to 'canceled'".format(auction_id),
-                    extra={"JOURNAL_REQUEST_ID": request_id,
-                           'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
 
 
-    def start_pre_announce(self, tender_id, with_api_version=None, lot_id=None):
+    def start_auction_worker_cmd(self, cmd, tender_id, with_api_version=None, lot_id=None):
         params = [self.config_get('auction_worker'),
-                  'announce', tender_id,
+                  cmd, tender_id,
                   self.config_get('auction_worker_config')]
         if lot_id:
             params += ['--lot', lot_id]
 
         if with_api_version:
             params += ['--with_api_version', with_api_version]
+
         result = do_until_success(
             check_call,
             args=(params,),
         )
-        logger.info("Auction announce command result: {}".format(result),
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_PROCESS})
 
-    def start_auction_worker(self, tender_id, with_api_version=None, lot_id=None):
-        params = [self.config_get('auction_worker'),
-                  'planning', tender_id,
-                  self.config_get('auction_worker_config')]
-        if lot_id:
-            params += ['--lot', lot_id]
-
-        if with_api_version:
-            params += ['--with_api_version', with_api_version]
-        result = do_until_success(
-            check_call,
-            args=(params,),
-        )
         logger.info("Auction planning command result: {}".format(result),
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_PROCESS})
+        if self.activate and cmd == 'planning':
+            if lot_id:
+                self.queue.put((tender_id, lot_id,))
+            else:
+                self.queue.put((tender_id, ))
 
     def planning_with_couch(self):
         logger.info('Start Auctions Bridge with feed to couchdb',
@@ -230,8 +263,7 @@ class AuctionsDataBridge(object):
                     tender_id = auction_item['id']
                     lot_id = None
 
-                self.start_auction_worker(
-                    tender_id, lot_id=lot_id,
+                self.start_auction_worker_cmd('planning', tender_id, lot_id=lot_id,
                     with_api_version=auction_item['doc'].get('TENDERS_API_VERSION', None)
                 )
 
@@ -251,10 +283,10 @@ class AuctionsDataBridge(object):
             for planning_data in self.get_teders_list():
                 if len(planning_data) == 1:
                     logger.info('Tender {0} selected for planning'.format(*planning_data))
-                    self.start_auction_worker(planning_data[0])
+                    self.start_auction_worker_cmd('planning', planning_data[0])
                 elif len(planning_data) == 2:
                     logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
-                    self.start_auction_worker(planning_data[0], lot_id=planning_data[1])
+                    self.start_auction_worker_cmd('planning', planning_data[0], lot_id=planning_data[1])
             logger.info('Sleep...',
                         extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
             sleep(100)
@@ -271,10 +303,10 @@ class AuctionsDataBridge(object):
             for planning_data in self.get_teders_list():
                 if len(planning_data) == 1:
                     logger.info('Tender {0} selected for planning'.format(*planning_data))
-                    self.start_auction_worker(planning_data[0])
+                    self.start_auction_worker_cmd('planning', planning_data[0])
                 elif len(planning_data) == 2:
                     logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
-                    self.start_auction_worker(planning_data[0], lot_id=planning_data[1])
+                    self.start_auction_worker_cmd('planning', planning_data[0], lot_id=planning_data[1])
                 self.tenders_ids_list.append(tender_item['id'])
             sleep(1)
         logger.info("Re-planning auctions finished",
@@ -290,17 +322,20 @@ def main():
     parser.add_argument(
         '--planning-with-couch', action='store_true', default=False,
         help='Use couchdb for tenders feed')
+    parser.add_argument(
+        '--activate', action='store_true', default=False,
+        help='Activate systemd units in databridge')
     params = parser.parse_args()
     if os.path.isfile(params.config):
         with open(params.config) as config_file_obj:
             config = load(config_file_obj.read())
         logging.config.dictConfig(config)
         if params.planning_with_couch:
-            AuctionsDataBridge(config).planning_with_couch()
+            AuctionsDataBridge(config, params.activate).planning_with_couch()
         elif params.re_planning:
-            AuctionsDataBridge(config).run_re_planning()
+            AuctionsDataBridge(config, params.activate).run_re_planning()
         else:
-            AuctionsDataBridge(config).run()
+            AuctionsDataBridge(config, params.activate).run()
 
 
 ##############################################################
