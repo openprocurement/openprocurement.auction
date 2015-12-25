@@ -221,6 +221,28 @@ angular.module('auction')
       }, 0);
     }
 
+    function detectIE() {
+        var ua = window.navigator.userAgent;
+
+        var msie = ua.indexOf('MSIE ');
+        if (msie > 0) {
+            return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+        }
+
+        var trident = ua.indexOf('Trident/');
+        if (trident > 0) {
+            var rv = ua.indexOf('rv:');
+            return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+        }
+
+        var edge = ua.indexOf('Edge/');
+        if (edge > 0) {
+           return parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+        }
+
+        return false;
+    }
+
     function parseQueryString(str) {
       if (typeof str !== 'string') {
         return {};
@@ -301,7 +323,8 @@ angular.module('auction')
       'pad': pad,
       'inIframe': inIframe,
       'polarToCartesian': polarToCartesian,
-      'generateUUID': generateUUID
+      'generateUUID': generateUUID,
+      'detectIE': detectIE
     };
   }]);
 
