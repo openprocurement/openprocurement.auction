@@ -917,6 +917,7 @@ def cleanup():
     logger.info(
         "systemctl --user daemon-reload - return code: {}".format(code),
         extra={"MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+
     )
 
 

@@ -44,9 +44,9 @@ angular.module('auction').controller('AuctionController', [
     $scope.start = function() {
       $log.info({
         message: "Setup connection to remote_db",
-        auctions_loggedin: $cookies.auctions_loggedin
+        auctions_loggedin: $cookies.auctions_loggedin||AuctionUtils.detectIE()
       })
-      if ($cookies.auctions_loggedin) {
+      if ($cookies.auctions_loggedin||AuctionUtils.detectIE()) {
         AuctionConfig.remote_db = AuctionConfig.remote_db + "_secured";
       }
       $scope.changes_options = {
@@ -630,14 +630,14 @@ angular.module('auction').controller('AuctionController', [
         $scope.document_exists = true;
         $scope.scroll_to_stage();
         if ($scope.auction_doc.current_stage != ($scope.auction_doc.stages.length - 1)) {
-          if ($cookieStore.get('auctions_loggedin')) {
+          if ($cookieStore.get('auctions_loggedin')||AuctionUtils.detectIE()) {
             $log.info({
               message: 'Start private session'
             });
             $scope.start_subscribe();
           } else {
             $log.info({
-              message: 'Start anonimous session'
+              message: 'Start anonymous session'
             });
             $scope.start_sync_event.resolve('start');
             if (!$scope.follow_login_allowed) {
