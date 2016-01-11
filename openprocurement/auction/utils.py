@@ -119,7 +119,7 @@ def sorting_by_amount(bids, reverse=True):
             time_of_bid2 = get_time(bid2)
             return - cmp(time_of_bid2, time_of_bid1)
         else:
-            return cmp((bid1["amount"]), Fraction(bid2["amount"]))
+            return cmp(full_amount_bid1, full_amount_bid2)
 
     return sorted(bids, reverse=reverse, cmp=bids_compare)
 
