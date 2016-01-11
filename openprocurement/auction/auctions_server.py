@@ -157,7 +157,7 @@ def auction_url(auction_doc_id):
 
 
 @auctions_server.route('/')
-def archive_tenders_list_index():
+def auction_list_index():
     return render_template(
         'list.html',
         documents=reversed(
@@ -196,14 +196,26 @@ def health():
 
 
 @auctions_server.route('/archive')
-def auction_list_index():
-    return render_template(
-        'list.html',
-        documents=[auction.doc
-                   for auction in endDate_view(auctions_server.db,
-                                               endkey=time.time() * 1000,
+def archive_auction_list_index():
+    offset = int(request.args.get('offset', default=time.time() * 1000))
+    startkey_docid = request.args.get('startid', default=None)
+    documents=[auction
+               for auction in endDate_view(auctions_server.db,
+                                               startkey=offset,
+                                               startkey_docid=startkey_docid,
+                                               limit=101,
+                                               descending=True,
                                                include_docs=True)
                    ]
+    if len(documents)>100:
+        offset, startid = documents[100].key, documents[100].id
+    else:
+        offset, startid = False, False
+    return render_template(
+        'archive.html',
+        documents=documents[:-1],
+        offset=offset,
+        startid=startid
     )
 
 
