@@ -187,6 +187,71 @@ body {
   text-align: center;
   padding: 2px 0 0;
   }
+.stage-amount {
+  padding: 7px 9px 9px;
+  }
+.stage-item {
+  position: relative;
+  }
+.stage-with-two-prices .label-minimum {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  font-size: 14px;
+  }
+.stage-with-two-prices .label-price {
+  text-align: left;
+  width: 100%;
+  float: left;  
+  }    
+.normalized-price {
+  padding-bottom: 7px;
+  font-weight: bold;
+  }
+.label-price .price-type {
+  display: block;
+  padding: 0px 0 6px;
+  font: 14px "Helvetica Neue",Helvetica,Arial,sans-serif;
+  }
+.panel.panel-default.bg-warning.fixed-bottom.ng-hide {
+  display: block !important;
+  }
+
+.full-price-group span,
+.normalized-price-group span {
+  display: block;
+  padding-bottom: 7px;
+  font-weight: bold;
+  }
+.full-price-group input,
+.normalized-price-group input {
+  border-radius: 0;
+  }
+#BidsForm label {
+  font-size: 18px;
+  font-weight: normal;
+  }
+.bidder-coeficient-wrap {
+  padding: 8px 0 5px;
+  padding: 33px 0 5px;  
+  }
+.bidder-coeficient-wrap span:first-child {
+  font-weight: bold;
+  }
+.input-group-btn {
+  padding-top: 24px;
+  }
+.full-price-group {
+  padding-left: 0; 
+  }
+.normalized-price-group {
+  padding-left: 5px;
+  }
+.default-amount {
+  background-color: #f2f2f2;
+  }
+  
+
 
 /* Bids stage forecast*/
 .future-stage {
@@ -235,6 +300,17 @@ body {
 .fixed-bottom .container {
   padding-right: 5px;
   padding-left: 5px; 
+  }
+.stage-item {
+  padding: 6px;
+  }
+.stage-amount {
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+  }
+.default-amount {
+  background-color: #f2f2f2;
   }
 }
 
