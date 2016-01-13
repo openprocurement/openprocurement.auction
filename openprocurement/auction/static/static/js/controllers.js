@@ -493,6 +493,9 @@ angular.module('auction').controller('AuctionController', [
     $scope.edit_bid = function() {
       $scope.allow_bidding = true;
     };
+    $scope.clear_bid = function() {
+      console.log("work")
+    };
 
     $scope.max_bid_amount = function() {
       var amount = 0;

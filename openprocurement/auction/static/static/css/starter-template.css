@@ -183,22 +183,22 @@ body {
 .label-minimum {
   color: #c00;
   display: block;
-  font-size: 10px;
+  font-size: 14px;
   line-height: 16px;
   text-align: center;
   padding: 2px 0 0;
   }
 .stage-amount {
   padding: 7px 9px 9px;
+  position: relative;
   }
 .stage-item {
   position: relative;
   }
 .stage-with-two-prices .label-minimum {
-  position: absolute;
-  left: 12px;
-  top: 10px;
-  font-size: 14px;
+  width: 100%;
+  float: left;
+  text-align: left;
   }
 .stage-with-two-prices .label-price {
   text-align: left;
@@ -229,12 +229,9 @@ body {
   font-weight: normal;
   }
 .bidder-coeficient-wrap {
-  padding: 8px 0 5px;
+  padding: 5px 0;
   padding: 33px 0 5px; 
   text-align: center;
-  }
-.bidder-coeficient-wrap span:first-child {
-  font-weight: bold;
   }
 .input-group-btn {
   padding-top: 27px;
@@ -248,9 +245,13 @@ body {
 .default-amount {
   background-color: #f2f2f2;
   }
+#place-bid-button {
+  margin-right: 15px;
+  }
+.btn {
+  border-radius: 0;
+  }
   
-
-
 /* Bids stage forecast*/
 .future-stage {
   color: #bbb;
@@ -311,7 +312,7 @@ body {
   padding-left: 0;
   }
 .bidder-coeficient-wrap {
-  padding: 10px 0 5px;
+  padding: 5px 0;
   clear: both;
   }
 .fixed-bottom .panel-body {
@@ -329,7 +330,7 @@ body {
   padding: 0 6px;
   }
 .input-group-btn {
-  padding: 2px 0;
+  padding: 22px 0;
   display: table-cell;
   vertical-align: top;
   }
@@ -338,11 +339,18 @@ body {
   }
 #cancel-bid-button,
 #place-bid-button,
-#edit-bid-button {
-  border-radius: 6px;
+#edit-bid-button,
+#clear-bid-button {
+  border-radius: 0px;
   white-space: normal;
   float: left;
   padding: 6px 12px;
+  }
+#place-bid-button {
+  margin-right: 0;
+  }
+#clear-bid-button {
+  margin-top: 36px;
   }
 #edit-bid-button {
   margin-top: 5px;
@@ -355,17 +363,6 @@ body {
   }
 .normalized-price-group span {
   float: left;
-  }
-.normalized-price-group input {
-  display: inline-block;
-  width: 45% !important;
-  float: left;
-  background-color: transparent;
-  height: 20px;
-  padding: 0;
-  box-shadow: none;
-  border: 0;
-  margin-left: 5px;
   }
 .default-amount {
   background-color: #f2f2f2;
