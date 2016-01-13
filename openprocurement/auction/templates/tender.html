@@ -368,21 +368,21 @@
                                 <label for="bid"><span translate>Your proposal</span>:</label>
                                 <span ng-init="max_bid_amount()"><span id="max_bid_amount">{{ calculated_max_bid_amount|fraction }}</span> {{'or lower'|translate}}</span>
                                 <div class="input-group">
-                                    <div class="full-price-group col-md-5">
+                                    <div class="full-price-group col-md-4 col-xs-11">
                                         <span translate>Full Price</span>
                                         <input id="bid-amount-input" ng-disabled="!allow_bidding" min="0" ng-focus="$root.form.bid_temp = $root.form.bid" ng-blur="set_bid_from_temp()" ng-change="calculate_bid_temp()" class="form-control" id="bid" name="bid" ng-model="$root.form.bid" required format>
                                     </div>                                    
-                                    <div class="bidder-coeficient-wrap col-md-2">
+                                    <div class="bidder-coeficient-wrap col-md-3 col-xs-11">
                                         <span translate>Bidder Coeficient</span>
                                         <span id="bid-amount-description" ng-if="bidder_coeficient && allow_bidding && !$root.normilized" tooltip="x {{bidder_coeficient| fraction_string}}" tooltip-trigger="focus"> {{bidder_coeficient| fraction}}</span>
                                     </div>
-                                    <div class="normalized-price-group col-md-5">
+                                    <div class="normalized-price-group col-md-4 col-xs-11">
                                         <span translate>Normilized Price</span>
                                         <input id="bid-amount-full-price" ng-if="bidder_coeficient && allow_bidding && !$root.normilized" ng-focus="$root.form.full_price_temp = $root.form.full_price" ng-blur="form.full_price = form.full_price_temp" ng-change="calculate_full_price_temp()" min="0" class="form-control" id="full_price" name="full_price" ng-model="$root.form.full_price" required format>
                                     </div>
                                     <div class="input-group-btn">
                                         <button id="place-bid-button" type="submit" ng-if="allow_bidding" ng-click="post_bid()" class="btn btn-success" ng-class="{'active': form.active}" translate>Place a bid</button>
-                                        <button id="cancel-bid-button" type="submit" ng-if="!allow_bidding" ng-click="post_bid(-1)" class="btn btn-success" ng-class="{'active': form.active}" translate>Cancel Bid</button>
+                                        <button id="cancel-bid-button" type="submit" ng-if="!allow_bidding" ng-click="post_bid(-1)" class="btn btn-danger" ng-class="{'active': form.active}" translate>Cancel Bid</button>
                                         <button id="edit-bid-button" type="submit" ng-if="!allow_bidding" ng-click="edit_bid()" class="btn btn-link" translate>Edit</button>
                                     </div>
                                 </div>

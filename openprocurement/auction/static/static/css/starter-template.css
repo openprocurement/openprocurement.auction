@@ -74,6 +74,7 @@ body {
   color: #fff;
   text-align: center;
   width: 80px;
+  padding: 0 6px;
   }
 .round-number{
   font-size: 23px;
@@ -213,10 +214,6 @@ body {
   padding: 0px 0 6px;
   font: 14px "Helvetica Neue",Helvetica,Arial,sans-serif;
   }
-.panel.panel-default.bg-warning.fixed-bottom.ng-hide {
-  display: block !important;
-  }
-
 .full-price-group span,
 .normalized-price-group span {
   display: block;
@@ -233,13 +230,14 @@ body {
   }
 .bidder-coeficient-wrap {
   padding: 8px 0 5px;
-  padding: 33px 0 5px;  
+  padding: 33px 0 5px; 
+  text-align: center;
   }
 .bidder-coeficient-wrap span:first-child {
   font-weight: bold;
   }
 .input-group-btn {
-  padding-top: 24px;
+  padding-top: 27px;
   }
 .full-price-group {
   padding-left: 0; 
@@ -308,6 +306,66 @@ body {
   -webkit-border-radius: 6px;
   -moz-border-radius: 6px;
   border-radius: 6px;
+  }
+.normalized-price-group {
+  padding-left: 0;
+  }
+.bidder-coeficient-wrap {
+  padding: 10px 0 5px;
+  clear: both;
+  }
+.fixed-bottom .panel-body {
+  padding: 10px 15px 5px;
+  }
+.round-information {
+  width: auto;
+  }
+.round-number,
+#round_information_block {
+  font-size: 16px;
+  font-weight: 700;
+  }
+#round_information_block {
+  padding: 0 6px;
+  }
+.input-group-btn {
+  padding: 2px 0;
+  display: table-cell;
+  vertical-align: top;
+  }
+.bidder-coeficient-wrap {
+  text-align: left;
+  }
+#cancel-bid-button,
+#place-bid-button,
+#edit-bid-button {
+  border-radius: 6px;
+  white-space: normal;
+  float: left;
+  padding: 6px 12px;
+  }
+#edit-bid-button {
+  margin-top: 5px;
+  }
+.full-price-group span {
+  padding-bottom: 2px;
+  }
+.header-auction-nav .navbar-toggle {
+  padding: 0 0px 2px 0;
+  }
+.normalized-price-group span {
+  float: left;
+  }
+.normalized-price-group input {
+  display: inline-block;
+  width: 45% !important;
+  float: left;
+  background-color: transparent;
+  height: 20px;
+  padding: 0;
+  box-shadow: none;
+  border: 0;
+  margin-left: 5px;
   }
 .default-amount {
   background-color: #f2f2f2;
