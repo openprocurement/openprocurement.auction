@@ -509,6 +509,7 @@ angular.module('auction').controller('AuctionController', [
         $scope.calculated_max_bid_amount = 0;
         return 0;
       }
+      console.log(amount);
       $scope.calculated_max_bid_amount = amount;
       return amount;
     };
@@ -729,10 +730,12 @@ angular.module('auction').controller('AuctionController', [
     };
     $scope.set_bid_from_temp = function() {
       $rootScope.form.bid = $rootScope.form.bid_temp;
-      $rootScope.form.BidsForm.bid.$setViewValue(math.format($rootScope.form.bid, {
-        notation: 'fixed',
-        precision: 2
-      }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ","));
+      if ($rootScope.form.bid){
+        $rootScope.form.BidsForm.bid.$setViewValue(math.format($rootScope.form.bid, {
+          notation: 'fixed',
+          precision: 2
+        }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ","));
+      }
     }
     $scope.start();
   }
