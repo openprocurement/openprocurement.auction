@@ -151,7 +151,6 @@ body {
   padding: 0 0 0 5px;
   vertical-align: middle;
   }
-
 .stage-info-item {
   display: table-cell;
   height: 45px;
@@ -168,14 +167,18 @@ body {
 .current-round .future-stage .stage-label {
   color: #333;
   }
+.stage-item {
+  position: relative;
+  }
 .stage-amount {
   border-radius: 6px 0 0 6px;
   font-size: 18px;
   line-height: 18px;
-  padding: 4px 5px 0;
   white-space: nowrap;
   width: 150px;
   text-align: center;
+  padding: 7px 9px 9px;
+  position: relative;
   }
 .minimal-amount {
   background-color: #fcc;
@@ -188,19 +191,12 @@ body {
   text-align: center;
   padding: 2px 0 0;
   }
-.stage-amount {
-  padding: 7px 9px 9px;
-  position: relative;
-  }
-.stage-item {
-  position: relative;
-  }
-.stage-with-two-prices .label-minimum {
+.auction-with-two-prices .label-minimum {
   width: 100%;
   float: left;
   text-align: left;
   }
-.stage-with-two-prices .label-price {
+.auction-with-two-prices .label-price {
   text-align: left;
   width: 100%;
   float: left;  
@@ -217,16 +213,8 @@ body {
 .full-price-group span,
 .normalized-price-group span {
   display: block;
-  padding-bottom: 7px;
+  padding-bottom: 3px;
   font-weight: bold;
-  }
-.full-price-group input,
-.normalized-price-group input {
-  border-radius: 0;
-  }
-#BidsForm label {
-  font-size: 18px;
-  font-weight: normal;
   }
 .bidder-coeficient-wrap {
   padding: 5px 0;
@@ -245,12 +233,6 @@ body {
 .default-amount {
   background-color: #f2f2f2;
   }
-#place-bid-button {
-  margin-right: 15px;
-  }
-.btn {
-  border-radius: 0;
-  }
   
 /* Bids stage forecast*/
 .future-stage {
@@ -259,9 +241,6 @@ body {
 .future-stage .stage-amount {
   font-size: 16px;
   }
-/*.bids-stage-forecast .default-amount {
-  background-color: #f5f5f5;
-  }*/
 .future-stage .minimal-amount {
   background-color: transparent;
   }
@@ -292,6 +271,23 @@ body {
   }
 .fixed-bottom .panel-body {
   padding: 15px 15px 20px;
+  }
+.full-price-group input,
+.normalized-price-group input {
+  border-radius: 0;
+  }
+#BidsForm label {
+  font-size: 18px;
+  font-weight: normal;
+  }
+#place-bid-button {
+  margin-right: 15px;
+  }
+.btn {
+  border-radius: 0;
+  }
+.auction-with-one-price .input-group-btn {
+  padding-top: 23px;
   }
 
 /*Mobile view */
@@ -330,7 +326,7 @@ body {
   padding: 0 6px;
   }
 .input-group-btn {
-  padding: 22px 0;
+  padding: 22px 0 10px;
   display: table-cell;
   vertical-align: top;
   }
@@ -350,7 +346,7 @@ body {
   margin-right: 0;
   }
 #clear-bid-button {
-  margin-top: 36px;
+  margin-top: 33px;
   }
 #edit-bid-button {
   margin-top: 5px;
@@ -366,6 +362,23 @@ body {
   }
 .default-amount {
   background-color: #f2f2f2;
+  }
+.auction-with-one-price .input-group {
+  display: block;
+  }
+.auction-with-one-price .input-group-btn {
+  padding-top: 15px;
+  clear: both;
+  display: block;
+  float: left;
+  width: 100%;
+  }
+.auction-with-one-price #cancel-bid-button, 
+.auction-with-one-price #place-bid-button, 
+.auction-with-one-price #edit-bid-button, 
+.auction-with-one-price #clear-bid-button {
+  white-space: nowrap;
+  margin: 0 15px 0 0;
   }
 }
 
