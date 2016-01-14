@@ -186,7 +186,7 @@ body {
 .label-minimum {
   color: #c00;
   display: block;
-  font-size: 14px;
+  font-size: 10px;
   line-height: 16px;
   text-align: center;
   padding: 2px 0 0;
@@ -218,11 +218,11 @@ body {
   }
 .bidder-coeficient-wrap {
   padding: 5px 0;
-  padding: 33px 0 5px; 
+  padding: 30px 0 5px; 
   text-align: center;
   }
 .input-group-btn {
-  padding-top: 27px;
+  padding-top: 23px;
   }
 .full-price-group {
   padding-left: 0; 
@@ -287,9 +287,9 @@ body {
   border-radius: 0;
   }
 .auction-with-one-price .input-group-btn {
-  padding-top: 23px;
+  padding-top: 0;
   }
-
+  
 /*Mobile view */
 @media (max-width: 768px) {
 .fixed-bottom .container {
