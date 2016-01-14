@@ -178,6 +178,11 @@ def log():
             del data["MESSAGE"]
         else:
             msg = ""
+        data['REMOTE_ADDR'] = ','.join(
+            [ip
+             for ip in request.environ.get('HTTP_X_FORWARDED_FOR', '').split(',')
+             if not ip.startswith('172.')]
+        )
         data["SYSLOG_IDENTIFIER"] = "AUCTION_CLIENT"
         send(msg, **data)
         return Response('ok')
