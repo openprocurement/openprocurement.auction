@@ -177,7 +177,7 @@ body {
   white-space: nowrap;
   width: 150px;
   text-align: center;
-  padding: 7px 9px 9px;
+  padding: 4px 5px 0;
   position: relative;
   }
 .minimal-amount {
@@ -194,16 +194,13 @@ body {
 .auction-with-two-prices .label-minimum {
   width: 100%;
   float: left;
-  text-align: left;
   }
 .auction-with-two-prices .label-price {
-  text-align: left;
   width: 100%;
   float: left;  
   }    
 .normalized-price {
   padding-bottom: 7px;
-  font-weight: bold;
   }
 .label-price .price-type {
   display: block;
@@ -229,9 +226,6 @@ body {
   }
 .normalized-price-group {
   padding-left: 5px;
-  }
-.default-amount {
-  background-color: #f2f2f2;
   }
   
 /* Bids stage forecast*/
@@ -296,9 +290,6 @@ body {
   padding-right: 5px;
   padding-left: 5px; 
   }
-.stage-item {
-  padding: 6px;
-  }
 .stage-amount {
   -webkit-border-radius: 6px;
   -moz-border-radius: 6px;
@@ -360,9 +351,6 @@ body {
 .normalized-price-group span {
   float: left;
   }
-.default-amount {
-  background-color: #f2f2f2;
-  }
 .auction-with-one-price .input-group {
   display: block;
   }
@@ -395,13 +383,21 @@ body {
   .header-auction .navbar-collapse.collapse.in {
     display: block !important; /* fix bootstrap.min.css */
     }
-
+  .input-group-btn {
+    padding-top: 23px;
+    }
+  /*.bidder-coeficient-wrap {*/
+  /*  padding: 20px 0 5px;*/
+  /*  }*/
+  .default-amount {
+    background-color: #f2f2f2;
+    }
   /*----- Stage -----*/
   .stage-item {
     border-width: 1px;
     border-radius: 10px;
     margin-bottom: 4px;
-    padding: 5px 10px 5px 12px;
+    padding: 5px 5px 5px 12px;
     }
   .stage-item.stage-round {
     border-width: 0;
@@ -430,15 +426,15 @@ body {
   .amount-currency {
     font-size: 16px;
     }
-  .default-amount {
-    background-color: #f2f2f2;
-    }
 }
 @media (min-width: 992px) {
   .container {
     width: 896px;
     }
-}
+  .bidder-coeficient-wrap {
+    padding: 30px 0 5px;
+    }
+  }
 @media (min-width: 1200px) {
   .container {
     width: 896px;
