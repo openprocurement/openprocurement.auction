@@ -59,8 +59,12 @@ def get_auction_info(self, prepare=False):
     self._lot_data = dict({item['id']: item for item in self._auction_data['data']['lots']}[self.lot_id])
     self._lot_data['items'] = [item for item in self._auction_data['data'].get('items', [])
                                if item['relatedLot'] == self.lot_id]
-    self._lot_data['features'] = [item for item in self._auction_data['data'].get('features', [])
-                                  if item['relatedLot'] == self.lot_id]
+    self._lot_data['features'] = [
+        item for item in self._auction_data['data'].get('features', [])
+        if item['featureOf'] == 'tenderer' \
+        or item['featureOf'] == 'lot' and item['relatedItem'] == self.lot_id \
+        or item['featureOf'] == 'item' and item['relatedItem'] in [i['id'] for i in self._lot_data['items']]
+    ]
     self.startDate = self.convert_datetime(
         self._lot_data['auctionPeriod']['startDate']
     )
