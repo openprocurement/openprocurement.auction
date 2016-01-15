@@ -71,6 +71,7 @@ def get_auction_info(self, prepare=False):
     self.bidders_features = None
     self.features = None
     if not prepare:
+        codes = [i['code'] for i in self._lot_data['features']]
         self.bidders_data = []
         for bid_index, bid in enumerate(self._auction_data['data']['bids']):
             for lot_index, lot_bid in enumerate(bid['lotValues']):
@@ -80,8 +81,9 @@ def get_auction_info(self, prepare=False):
                         'date': lot_bid['date'],
                         'value': lot_bid['value']
                     }
-                    if 'parameters' in lot_bid:
-                        bid_data['parameters'] = copy.copy(lot_bid['parameters'])
+                    if 'parameters' in bid:
+                        bid_data['parameters'] = [i for i in bid['parameters']
+                                                  if i['code'] in codes]
                     self.bidders_data.append(bid_data)
         self.bidders_count = len(self.bidders_data)
         logger.info('Bidders count: {}'.format(self.bidders_count),
