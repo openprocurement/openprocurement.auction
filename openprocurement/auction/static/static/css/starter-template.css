@@ -119,7 +119,6 @@ body {
   vertical-align: middle;
   width: 37px;
   }
-
 .stage-icon-visual {
   display: table-cell;
   height: 37px;
@@ -127,12 +126,10 @@ body {
   vertical-align: middle;
   width: 37px;
   }
-
 .stage-icon-svg {
   width: 37px;
   height: 37px;
   }
-
 .past-round .past-stage .stage-icon {
   background-image: url(../../static/img/past_round_stage.png);
   }
@@ -199,34 +196,6 @@ body {
   width: 100%;
   float: left;  
   }    
-.normalized-price {
-  padding-bottom: 7px;
-  }
-.label-price .price-type {
-  display: block;
-  padding: 0px 0 6px;
-  font: 14px "Helvetica Neue",Helvetica,Arial,sans-serif;
-  }
-.full-price-group span,
-.normalized-price-group span {
-  display: block;
-  padding-bottom: 3px;
-  font-weight: bold;
-  }
-.bidder-coeficient-wrap {
-  padding: 5px 0;
-  padding: 30px 0 5px; 
-  text-align: center;
-  }
-.input-group-btn {
-  padding-top: 23px;
-  }
-.full-price-group {
-  padding-left: 0; 
-  }
-.normalized-price-group {
-  padding-left: 5px;
-  }
   
 /* Bids stage forecast*/
 .future-stage {
@@ -255,6 +224,7 @@ body {
   }
 
 /*----- Fixed bottom -----*/
+
 .fixed-bottom {
   bottom: 0;
   left: 0;
@@ -269,6 +239,49 @@ body {
 .full-price-group input,
 .normalized-price-group input {
   border-radius: 0;
+  }
+/*.fixed-bottom.ng-hide:not(.ng-hide-animate) {*/
+/*  display: block !important;*/
+/*  }*/
+.price-inform-block {
+  float: left;
+  width: 100%;
+  padding-bottom: 2px;
+  }
+.main-price-block {
+  display: block;
+  float: left;
+  width: 100%;
+  }  
+.main-price-block .input-group-btn {
+  width: 33.33333333%;
+  text-align: right;
+  }
+.main-price-block .full-price-group span,
+.main-price-block .normalized-price-group span {
+  display: none;
+  } 
+.full-price-group > span:first-child,
+.normalized-price-group > span:first-child {
+  font-weight: bold;
+  }
+.bidder-coeficient-wrap {
+  padding: 7px 0;
+  text-align: center;
+  }  
+.full-price-group {
+  padding-left: 0; 
+  }
+.normalized-price-group {
+  padding-left: 5px;
+  }
+.normalized-price {
+  padding-bottom: 7px;
+  }
+.label-price .price-type {
+  display: block;
+  padding: 0px 0 6px;
+  font: 14px "Helvetica Neue",Helvetica,Arial,sans-serif;
   }
 #BidsForm label {
   font-size: 18px;
@@ -295,6 +308,22 @@ body {
   -moz-border-radius: 6px;
   border-radius: 6px;
   }
+.price-inform-block {
+  display: none;
+  }  
+.main-price-block .full-price-group span, 
+.main-price-block .normalized-price-group span {
+  display: inline-block;
+  }
+.main-price-block {
+  float: none;
+  display: table;
+  }
+.main-price-block .input-group-btn {
+  float: none !important;
+  width: 1%;
+  text-align: center;
+  }
 .normalized-price-group {
   padding-left: 0;
   }
@@ -317,12 +346,21 @@ body {
   padding: 0 6px;
   }
 .input-group-btn {
-  padding: 22px 0 10px;
+  padding: 24px 0 10px;
   display: table-cell;
   vertical-align: top;
   }
 .bidder-coeficient-wrap {
   text-align: left;
+  }
+.full-price-group #max_bid_amount, .normalized-price-group #max_bid_amount {
+  display: inline-block;
+  }
+.normalized-price-group #max_bid_amount {
+  padding-left: 5px;
+  }
+.normalized-price-group.not-allow-bidding {
+  margin-top: 5px;
   }
 #cancel-bid-button,
 #place-bid-button,
@@ -337,7 +375,7 @@ body {
   margin-right: 0;
   }
 #clear-bid-button {
-  margin-top: 33px;
+  margin-top: 30px;
   }
 #edit-bid-button {
   margin-top: 5px;
@@ -369,7 +407,25 @@ body {
   margin: 0 15px 0 0;
   }
 }
-
+@media (max-width: 480px) { 
+  
+.full-price-group>span:first-child, 
+.normalized-price-group>span:first-child,
+.full-price-group #max_bid_amount, 
+.normalized-price-group #max_bid_amount {
+  display: block;
+  width: 100%;
+  }
+.normalized-price-group #max_bid_amount {
+  padding-left: 0;
+  }
+.input-group-btn {
+  padding: 26px 0 10px;
+  }
+#clear-bid-button { 
+  margin-top: 70px;
+  }
+}
 /*Desctop view */
 @media (min-width: 768px) {
   /*----- Header -----*/
@@ -383,12 +439,6 @@ body {
   .header-auction .navbar-collapse.collapse.in {
     display: block !important; /* fix bootstrap.min.css */
     }
-  .input-group-btn {
-    padding-top: 23px;
-    }
-  /*.bidder-coeficient-wrap {*/
-  /*  padding: 20px 0 5px;*/
-  /*  }*/
   .default-amount {
     background-color: #f2f2f2;
     }
@@ -430,9 +480,6 @@ body {
 @media (min-width: 992px) {
   .container {
     width: 896px;
-    }
-  .bidder-coeficient-wrap {
-    padding: 30px 0 5px;
     }
   }
 @media (min-width: 1200px) {
