@@ -21,7 +21,7 @@
             </nav>
             {% for auction in documents %}
             <div class="list-group-item text-center">
-                <a href="/tenders/{{ auction._id }}">
+                <a href="/tenders/{{ auction.doc._id }}">
                     <h4 class="list-group-item-heading">
                     Тендер {{ auction.doc.tenderID }}
                 </h4>
