@@ -82,7 +82,8 @@ angular.module('auction')
       'Clear': 'Clear',
       'to General': 'to General',
       'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.',
-      'Waiting for the disclosure of the participants\' names': 'Waiting for the disclosure of the participants\' names'
+      'Waiting for the disclosure of the participants\' names': 'Waiting for the disclosure of the participants\' names',
+      'Unable to place a bid. Check that no more than 2 auctions are simultaneously opened in your browser.': 'Unable to place a bid. Check that no more than 2 auctions are simultaneously opened in your browser.'
     });
 
     $translateProvider.translations('uk', {
@@ -166,7 +167,8 @@ angular.module('auction')
       'Clear': 'Очистити',
       'to General': 'до Загальної',
       'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Подана вами пропозиція співпадає з пропозицією іншого учасника. Його пропозиція розглядатиметься першою, оскільки вона подана раніше.',
-      'Waiting for the disclosure of the participants\' names': 'Очікуємо на розкриття імен учасників'
+      'Waiting for the disclosure of the participants\' names': 'Очікуємо на розкриття імен учасників',
+      'Unable to place a bid. Check that no more than 2 auctions are simultaneously opened in your browser.': 'Не вдається зробити ставку. Перевірте, що в переглядачі відкрито не більше 2-ох аукціонів.'
     });
 
 
@@ -251,6 +253,7 @@ angular.module('auction')
       'Clear': 'Очистить',
       'to General': 'к Общей',
       'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Поданное вами предложение совпадает с предложением другого участника. Его предложение будет рассматриваться первым, поскольку оно подано раньше.',
-      'Waiting for the disclosure of the participants\' names': 'Ожидаем раскрытия имен участников'
+      'Waiting for the disclosure of the participants\' names': 'Ожидаем раскрытия имен участников',
+      'Unable to place a bid. Check that no more than 2 auctions are simultaneously opened in your browser.': 'Невозможно сделать ставку. Проверьте, что в браузере открыто не более 2-х аукционов.'
     });
   }]);

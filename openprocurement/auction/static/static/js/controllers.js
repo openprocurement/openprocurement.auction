@@ -349,7 +349,7 @@ angular.module('auction').controller('AuctionController', [
           progress_timer: $rootScope.progres_timer
         });
         var params = AuctionUtils.parseQueryString(location.search);
-        if ($scope.auction_doc.current_stage === -1 && params.wait) {
+        if ($scope.auction_doc.current_stage >= -1 && params.wait) {
           $scope.follow_login_allowed = true;
           if ($rootScope.progres_timer.countdown_seconds < 900) {
             $scope.follow_login = true;
@@ -369,11 +369,15 @@ angular.module('auction').controller('AuctionController', [
 
       });
     };
+    $scope.warning_post_bid = function(){
+      growl.error('Unable to place a bid. Check that no more than 2 auctions are simultaneously opened in your browser.');
+    };
     $scope.post_bid = function(bid) {
       $log.info({
         message: "Start post bid",
         bid_data: parseFloat(bid) || parseFloat($rootScope.form.bid) || 0
       });
+      
       if (parseFloat($rootScope.form.bid) == -1) {
         msg_id = Math.random();
         $rootScope.alerts.push({
@@ -399,10 +403,17 @@ angular.module('auction').controller('AuctionController', [
         $timeout(function() {
           $rootScope.form.active = false;
         }, 5000);
+        if (!$scope.post_bid_timeout) {
+          $scope.post_bid_timeout = $timeout($scope.warning_post_bid, 10000);
+        }
         $http.post('./postbid', {
             'bid': parseFloat(bid) || parseFloat($rootScope.form.bid) || 0,
             'bidder_id': $scope.bidder_id || bidder_id || "0"
           }).success(function(data) {
+            if ($scope.post_bid_timeout){
+              $timeout.cancel($scope.post_bid_timeout);
+              delete $scope.post_bid_timeout;
+            }
             $rootScope.form.active = false;
             var msg_id = '';
             if (data.status == 'failed') {
@@ -447,6 +458,9 @@ angular.module('auction').controller('AuctionController', [
                   message: "Handle cancel bid response on post bid"
                 });
                 $rootScope.form.bid = "";
+                $rootScope.form.full_price = '';
+                $rootScope.form.bid_temp = '';
+
               } else {
                 $log.info({
                   message: "Handle success response on post bid",
@@ -467,6 +481,10 @@ angular.module('auction').controller('AuctionController', [
               message: "Handle error on post bid",
               bid_data: status
             });
+            if ($scope.post_bid_timeout){
+              $timeout.cancel($scope.post_bid_timeout);
+              delete $scope.post_bid_timeout;
+            }
             if (status == 401) {
               $rootScope.alerts.push({
                 msg_id: Math.random(),
@@ -509,7 +527,6 @@ angular.module('auction').controller('AuctionController', [
         $scope.calculated_max_bid_amount = 0;
         return 0;
       }
-      console.log(amount);
       $scope.calculated_max_bid_amount = amount;
       return amount;
     };
@@ -617,9 +634,9 @@ angular.module('auction').controller('AuctionController', [
           $scope.start_sync_event.resolve('start');
         }, 5000);
         //
-        if (doc.current_stage === -1 && params.wait) {
+        if (doc.current_stage >= -1 && params.wait) {
           $scope.follow_login_allowed = true;
-          $log.error({
+          $log.info({
             message: 'client wait for login'
           });
         } else {
@@ -795,7 +812,12 @@ angular.module('auction')
               var newviewValue = viewValue;
               ctrl.prev_value = viewValue;
             } else {
-              var plainNumber = Number((ctrl.prev_value).replace(/ /g, '').replace(/,/g, "."));
+              try {
+                var plainNumber = Number((ctrl.prev_value || null ).replace(/ /g, '').replace(/,/g, "."));
+              }
+              catch (e) {
+                var plainNumber = null;
+              }
               var newviewValue = ctrl.prev_value;
             }
             ctrl.$viewValue = newviewValue;
