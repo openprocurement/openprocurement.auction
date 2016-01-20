@@ -168,6 +168,7 @@ def auction_list_index():
              ])
     )
 
+
 @auctions_server.route('/log', methods=['POST'])
 def log():
 
@@ -183,6 +184,8 @@ def log():
              for ip in request.environ.get('HTTP_X_FORWARDED_FOR', '').split(',')
              if not ip.startswith('172.')]
         )
+        if request.environ.get('REMOTE_ADDR', '') and data['REMOTE_ADDR'] == "":
+            data['REMOTE_ADDR'] += request.environ.get('REMOTE_ADDR', '')
         data["SYSLOG_IDENTIFIER"] = "AUCTION_CLIENT"
         send(msg, **data)
         return Response('ok')
