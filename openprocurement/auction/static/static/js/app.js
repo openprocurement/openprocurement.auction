@@ -21,7 +21,7 @@ app.filter('formatnumber', ['$filter',
 ]);
 
 app.config(['$logProvider', 'AuctionConfig', 'growlProvider', 'GTMLoggerProvider', function($logProvider, AuctionConfig, growlProvider, GTMLoggerProvider) {
-    GTMLoggerProvider.level('INFO').includeTimestamp( true );
+    GTMLoggerProvider.level('INFO').includeTimestamp( true )
     $logProvider.debugEnabled(AuctionConfig.debug); // default is true
     growlProvider.globalTimeToLive({
         success: 4000,
