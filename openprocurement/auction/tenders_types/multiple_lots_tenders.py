@@ -124,10 +124,7 @@ def prepare_auction_document(self):
          'value': self._lot_data.get('value', {}),
          'lot': {}}
     )
-    if self.features:
-        self.auction_document['auction_type'] = 'meat'
-    else:
-        self.auction_document['auction_type'] = 'default'
+    self.auction_document['auction_type'] = 'meat' if self.features else 'default'
 
     for key in MULTILINGUAL_FIELDS:
         for lang in ADDITIONAL_LANGUAGES:
