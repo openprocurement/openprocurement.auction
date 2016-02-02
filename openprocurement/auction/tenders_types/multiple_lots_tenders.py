@@ -237,7 +237,7 @@ def announce_results_data(self, results=None):
                     bid_data['parameters'] = [i for i in bid['parameters']
                                               if i['code'] in codes]
                     bid_data['coeficient'] =  str(calculate_coeficient(features, bid['parameters']))
-                    bid_data['amount_features'] = str(cooking(bid_data['value'], features, bid_ata['parameters']))
+                    bid_data['amount_features'] = str(cooking(bid_data['value'], features, bid_data['parameters']))
 
                 bidders_data[bid['id']] = bid_data
 
