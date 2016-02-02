@@ -14,7 +14,7 @@ from ..systemd_msgs_ids import(
     AUCTION_WORKER_API,
     AUCTION_WORKER_SET_AUCTION_URLS
 )
-from barbecue import calculate_coeficient
+from barbecue import calculate_coeficient, cooking
 
 MULTILINGUAL_FIELDS = ['title', 'description']
 ADDITIONAL_LANGUAGES = ['ru', 'en']
@@ -212,19 +212,45 @@ def announce_results_data(self, results=None):
             request_id=self.request_id,
             session=self.session
         )
-    bids_information = {}
-    for bid in self._auction_data['data']['bids']:
-        for lot_bid in bid['lotValues']:
+    items = [item for item in results['data'].get('items', [])
+             if item['relatedLot'] == self.lot_id]
+    features = [
+        item for item in results['data'].get('features', [])
+        if item['featureOf'] == 'tenderer' \
+        or item['featureOf'] == 'lot' and item['relatedItem'] == self.lot_id \
+        or item['featureOf'] == 'item' and item['relatedItem'] in [i['id'] for i in items]
+    ]
+    codes = [i['code'] for i in features]
+
+    bidders_data = {}
+
+    for bid_index, bid in enumerate(results['data']['bids']):
+        for lot_index, lot_bid in enumerate(bid['lotValues']):
             if lot_bid['relatedLot'] == self.lot_id:
-                bids_information[bid['id']] = bid["tenderers"]
-                break
+                bid_data = {
+                    'id': bid['id'],
+                    'date': lot_bid['date'],
+                    'value': lot_bid['value']['amount'],
+                    'name': bid['tenderers'][0]['name']
+                }
+                if features:
+                    bid_data['parameters'] = [i for i in bid['parameters']
+                                              if i['code'] in codes]
+                    bid_data['coeficient'] =  str(calculate_coeficient(features, bid['parameters']))
+                    bid_data['amount_features'] = str(cooking(bid_data['value'], features, bid_ata['parameters']))
+
+                bidders_data[bid['id']] = bid_data
 
     for section in ['initial_bids', 'stages', 'results']:
         for index, stage in enumerate(self.auction_document[section]):
-            if 'bidder_id' in stage and stage['bidder_id'] in bids_information:
-                self.auction_document[section][index]["label"]["uk"] = bids_information[stage['bidder_id']][0]["name"]
-                self.auction_document[section][index]["label"]["ru"] = bids_information[stage['bidder_id']][0]["name"]
-                self.auction_document[section][index]["label"]["en"] = bids_information[stage['bidder_id']][0]["name"]
+            if 'bidder_id' in stage and stage['bidder_id'] in bidders_data:
+                self.auction_document[section][index]["label"]["uk"] = bidders_data[stage['bidder_id']]["name"]
+                self.auction_document[section][index]["label"]["ru"] = bidders_data[stage['bidder_id']]["name"]
+                self.auction_document[section][index]["label"]["en"] = bidders_data[stage['bidder_id']]["name"]
+                self.auction_document[section][index]['amount'] =  bidders_data[stage['bidder_id']]['value']
+                if features:
+                    self.auction_document[section][index]['coeficient'] =  bidders_data[stage['bidder_id']]['coeficient']
+                    self.auction_document[section][index]['amount_features'] =  bidders_data[stage['bidder_id']]['amount_features']
     self.auction_document["current_stage"] = (len(self.auction_document["stages"]) - 1)
 
     return None

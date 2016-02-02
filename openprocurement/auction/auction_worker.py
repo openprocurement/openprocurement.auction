@@ -858,7 +858,7 @@ class Auction(object):
         self.generate_request_id()
         self.get_auction_document()
         if self.lot_id:
-            simple_tender.announce_results_data(self, None)
+            multiple_lots_tenders.announce_results_data(self, None)
         else:
             simple_tender.announce_results_data(self, None)
         self.save_auction_document()
