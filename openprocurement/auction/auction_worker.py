@@ -141,7 +141,8 @@ class Auction(object):
 
     def prepare_public_document(self):
         public_document = deepcopy(dict(self.auction_document))
-        not_last_stage = (len(self.auction_document["stages"]) - 1) != self.auction_document["current_stage"]
+        not_last_stage = self.auction_document["current_stage"] not in (len(self.auction_document["stages"]) - 1,
+                                                                        len(self.auction_document["stages"]) - 2,)
         if self.features and not_last_stage:
             for stage_name in ['initial_bids', 'stages', 'results']:
                 public_document[stage_name] = map(
