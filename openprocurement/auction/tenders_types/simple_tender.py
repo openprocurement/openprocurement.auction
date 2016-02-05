@@ -66,7 +66,9 @@ def get_auction_info(self, prepare=False):
     for stage in range((self.bidders_count + 1) * ROUNDS + 1):
         if (stage + self.bidders_count) % (self.bidders_count + 1) == 0:
             self.rounds_stages.append(stage)
-    self.bidders = [bid["id"] for bid in self._auction_data["data"]["bids"]]
+    self.bidders = [bid["id"]
+                    for bid in self._auction_data["data"]["bids"]
+                    if bid.get('status', 'active') == 'active']
     self.mapping = {}
     self.startDate = self.convert_datetime(
         self._auction_data['data']['auctionPeriod']['startDate']
@@ -81,21 +83,23 @@ def get_auction_info(self, prepare=False):
             self.bidders_coeficient = {}
             self.features = self._auction_data["data"]["features"]
             for bid in self._auction_data["data"]["bids"]:
-                self.bidders_features[bid["id"]] = bid["parameters"]
-                self.bidders_coeficient[bid["id"]] = calculate_coeficient(self.features, bid["parameters"])
+                if bid.get('status', 'active') == 'active':
+                    self.bidders_features[bid["id"]] = bid["parameters"]
+                    self.bidders_coeficient[bid["id"]] = calculate_coeficient(self.features, bid["parameters"])
         else:
             self.bidders_features = None
             self.features = None
 
         for bid in self._auction_data['data']['bids']:
-            self.bidders_data.append({
-                'id': bid['id'],
-                'date': bid['date'],
-                'value': bid['value']
-            })
-            if self.features:
-                self.bidders_features[bid["id"]] = bid["parameters"]
-                self.bidders_coeficient[bid["id"]] = calculate_coeficient(self.features, bid["parameters"])
+            if bid.get('status', 'active') == 'active':
+                self.bidders_data.append({
+                    'id': bid['id'],
+                    'date': bid['date'],
+                    'value': bid['value']
+                })
+                if self.features:
+                    self.bidders_features[bid["id"]] = bid["parameters"]
+                    self.bidders_coeficient[bid["id"]] = calculate_coeficient(self.features, bid["parameters"])
         self.bidders_count = len(self.bidders_data)
 
         for index, uid in enumerate(self.bidders_data):
@@ -173,9 +177,10 @@ def post_results_data(self):
     )
 
     for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
-        auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
-        self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
-        self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
+        if bid_info.get('status', 'active') == 'active':
+            auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
+            self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
+            self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
 
     data = {'data': {'bids': self._auction_data["data"]['bids']}}
     return patch_tender_data(

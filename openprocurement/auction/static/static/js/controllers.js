@@ -227,7 +227,7 @@ angular.module('auction').controller('AuctionController', [
           if ('coeficient' in data) {
             $scope.bidder_coeficient = math.fraction(data.coeficient);
             $log.info({
-              message: "Get coeficient" + $scope.bidder_coeficient
+              message: "Get coeficient " + $scope.bidder_coeficient
             });
           }
         });
@@ -349,6 +349,16 @@ angular.module('auction').controller('AuctionController', [
           progress_timer: $rootScope.progres_timer
         });
         var params = AuctionUtils.parseQueryString(location.search);
+        if ($scope.auction_doc.current_stage == -1){
+          if ($rootScope.progres_timer.countdown_seconds < 900) {
+            $scope.start_changes_feed = true;
+          }else{
+            $timeout(function() {
+              $scope.follow_login = true;
+              $scope.start_changes_feed = true;
+            }, ($rootScope.progres_timer.countdown_seconds - 900) * 1000);
+          }
+        }
         if ($scope.auction_doc.current_stage >= -1 && params.wait) {
           $scope.follow_login_allowed = true;
           if ($rootScope.progres_timer.countdown_seconds < 900) {
@@ -577,12 +587,14 @@ angular.module('auction').controller('AuctionController', [
           error_data: err
         });
         $scope.end_changes = new Date()
-        if (($scope.end_changes - $scope.start_changes) < 40000) {
+        if ((($scope.end_changes - $scope.start_changes) > 40000)||($scope.force_heartbeat)) {
+           $scope.force_heartbeat = true;
+        } else {
           $scope.changes_options['heartbeat'] = false;
           $log.info({
-            message: "Change to heartbeat to false",
+            message: "Change heartbeat to false (Use timeout)",
             heartbeat: false
-        });
+          });
         }
         $timeout(function() {
           if ($scope.restart_retries != AuctionConfig.restart_retries) {
@@ -630,9 +642,6 @@ angular.module('auction').controller('AuctionController', [
         var params = AuctionUtils.parseQueryString(location.search);
 
         $scope.start_sync_event = $q.defer();
-        $timeout(function() {
-          $scope.start_sync_event.resolve('start');
-        }, 5000);
         //
         if (doc.current_stage >= -1 && params.wait) {
           $scope.follow_login_allowed = true;
@@ -656,7 +665,18 @@ angular.module('auction').controller('AuctionController', [
             $log.info({
               message: 'Start anonymous session'
             });
-            $scope.start_sync_event.resolve('start');
+            if ($scope.auction_doc.current_stage == - 1){
+              $scope.$watch('start_changes_feed', function(newValue, oldValue){
+                if(newValue && !($scope.sync)){
+                   $log.info({
+                    message: 'Start changes feed'
+                  });
+                  $scope.sync = $scope.start_sync()
+                }
+              })
+            } else {
+              $scope.start_sync_event.resolve('start');
+            }
             if (!$scope.follow_login_allowed) {
               $timeout(function() {
                 growl.info($filter('translate')('You are an observer and cannot bid.'), {

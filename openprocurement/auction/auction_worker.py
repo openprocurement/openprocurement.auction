@@ -141,7 +141,8 @@ class Auction(object):
 
     def prepare_public_document(self):
         public_document = deepcopy(dict(self.auction_document))
-        not_last_stage = (len(self.auction_document["stages"]) - 1) != self.auction_document["current_stage"]
+        not_last_stage = self.auction_document["current_stage"] not in (len(self.auction_document["stages"]) - 1,
+                                                                        len(self.auction_document["stages"]) - 2,)
         if self.features and not_last_stage:
             for stage_name in ['initial_bids', 'stages', 'results']:
                 public_document[stage_name] = map(
@@ -175,7 +176,7 @@ class Auction(object):
             except Exception, e:
                 ecode = e.args[0]
                 if ecode in RETRYABLE_ERRORS:
-                    logger.error("Error while save document: {}".format(e),
+                    logger.error("Error while get document: {}".format(e),
                                  extra={'MESSAGE_ID': AUCTION_WORKER_DB})
                 else:
                     logger.critical("Unhandled error: {}".format(e),
@@ -300,6 +301,8 @@ class Auction(object):
 
     def prepare_auction_stages(self):
         # Initital Bids
+        self.auction_document['auction_type'] = 'meat' if self.features else 'default'
+
         for bid_info in self.bidders_data:
             self.auction_document["initial_bids"].append(
                 prepare_initial_bid_stage(
@@ -856,21 +859,24 @@ class Auction(object):
         self.generate_request_id()
         self.get_auction_document()
         if self.lot_id:
-            simple_tender.announce_results_data(self, None)
+            multiple_lots_tenders.announce_results_data(self, None)
         else:
             simple_tender.announce_results_data(self, None)
         self.save_auction_document()
 
     def cancel_auction(self):
         self.generate_request_id()
-        self.get_auction_document()
-        logger.info("Auction {} canceled".format(self.auction_doc_id),
-                    extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE})
-        self.auction_document["current_stage"] = -100
-        self.auction_document["endDate"] = datetime.now(tzlocal()).isoformat()
-        logger.info("Change auction {} status to 'canceled'".format(self.auction_doc_id),
-                    extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE})
-        self.save_auction_document()
+        if self.get_auction_document():
+            logger.info("Auction {} canceled".format(self.auction_doc_id),
+                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE})
+            self.auction_document["current_stage"] = -100
+            self.auction_document["endDate"] = datetime.now(tzlocal()).isoformat()
+            logger.info("Change auction {} status to 'canceled'".format(self.auction_doc_id),
+                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE})
+            self.save_auction_document()
+        else:
+            logger.info("Auction {} not found".format(self.auction_doc_id),
+                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE})
 
 
 def cleanup():
