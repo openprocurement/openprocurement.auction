@@ -27,11 +27,11 @@ def validate_bid_change_on_bidding(form, field):
         minimal = Fraction(minimal_bid) * form.auction.bidders_coeficient[form.data['bidder_id']]
         minimal -= Fraction(form.document['minimalStep']['amount'])
         if field.data > minimal:
-            raise ValidationError(u'To high value')
+            raise ValidationError(u'Too high value')
     else:
         minimal_bid = form.document['stages'][stage_id]['amount']
         if field.data > (minimal_bid - form.document['minimalStep']['amount']):
-            raise ValidationError(u'To high value')
+            raise ValidationError(u'Too high value')
 
 
 def validate_bidder_id_on_bidding(form, field):
