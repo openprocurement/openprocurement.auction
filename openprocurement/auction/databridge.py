@@ -28,9 +28,24 @@ from dateutil.tz import tzlocal
 from openprocurement_client.client import Client as ApiClient
 from pkg_resources import parse_version
 from systemd_msgs_ids import (
-    DATA_BRIDGE_RE_PLANNING,
-    DATA_BRIDGE_PLANNING,
-    DATA_BRIDGE_PLANNING_PROCESS
+    DATA_BRIDGE_PLANNING_START_BRIDGE,
+    DATA_BRIDGE_PLANNING_DATA_SYNC,
+    DATA_BRIDGE_PLANNING_TENDER_SKIP,
+    DATA_BRIDGE_PLANNING_TENDER_ALREADY_PLANNED,
+    DATA_BRIDGE_PLANNING_LOT_SKIP,
+    DATA_BRIDGE_PLANNING_LOT_ALREADY_PLANNED,
+    DATA_BRIDGE_PLANNING_SKIPED_TEST,
+    DATA_BRIDGE_PLANNING_SELECT_TENDER,
+    DATA_BRIDGE_PLANNING_DATA_SYNC_RESUME,
+    DATA_BRIDGE_PLANNING_PROCESS,
+    DATA_BRIDGE_PLANNING_SLEEP,
+    DATA_BRIDGE_PLANNING_RESUME,
+    DATA_BRIDGE_PLANNING_COUCH_FEED,
+    DATA_BRIDGE_PLANNING_COUCH_DATA_SYNC,
+    DATA_BRIDGE_RE_PLANNING_START_BRIDGE,
+    DATA_BRIDGE_RE_PLANNING_TENDER_ALREADY_PLANNED,
+    DATA_BRIDGE_RE_PLANNING_LOT_ALREADY_PLANNED,
+    DATA_BRIDGE_RE_PLANNING_FINISHED
 )
 from yaml import load
 from .design import endDate_view, startDate_view, PreAnnounce_view
@@ -126,15 +141,15 @@ class AuctionsDataBridge(object):
                             )
                             if datetime.now(self.tz) > start_date:
                                 logger.info("Tender {} start date in past. Skip it for planning".format(item['id']),
-                                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_TENDER_SKIP})
                                 continue
                             if re_planning and item['id'] in self.tenders_ids_list:
                                 logger.info("Tender {} already planned while replanning".format(item['id']),
-                                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                                            extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_TENDER_ALREADY_PLANNED})
                                 continue
                             elif not re_planning and [row.id for row in auctions_start_in_date.rows if row.id == item['id']]:
                                 logger.info("Tender {} already planned on same date".format(item['id']),
-                                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_TENDER_ALREADY_PLANNED})
                                 continue
                             yield (str(item['id']), )
                         elif 'lots' in item:
@@ -151,17 +166,17 @@ class AuctionsDataBridge(object):
                                         logger.info(
                                             "Start date for lot {} in tender {} is in past. Skip it for planning".format(
                                                 lot['id'], item['id']),
-                                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING}
+                                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_LOT_SKIP}
                                         )
                                         continue
                                     auction_id = MULTILOT_AUCTION_ID.format(item, lot)
                                     if re_planning and auction_id in self.tenders_ids_list:
                                         logger.info("Tender {} already planned while replanning".format(auction_id),
-                                                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                                                    extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_LOT_ALREADY_PLANNED})
                                         continue
                                     elif not re_planning and [row.id for row in auctions_start_in_date.rows if row.id == auction_id]:
                                         logger.info("Tender {} already planned on same date".format(auction_id),
-                                                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                                                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_LOT_ALREADY_PLANNED})
                                         continue
                                     yield (str(item["id"]), str(lot["id"]), )
                     if item['status'] == "active.qualification" and 'lots' in item:
@@ -213,9 +228,9 @@ class AuctionsDataBridge(object):
 
     def planning_with_couch(self):
         logger.info('Start Auctions Bridge with feed to couchdb',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_COUCH_FEED})
         logger.info('Start data sync...',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_COUCH_DATA_SYNC})
         self.planned_tenders = {}
         self.last_seq_id = 0
         while True:
@@ -231,8 +246,8 @@ class AuctionsDataBridge(object):
                     continue
 
                 if auction_item['doc'].get("mode", "") == "test":
-                    logger.info('Sciped test auction {}'.format(auction_item['id']),
-                                extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                    logger.info('Skiped test auction {}'.format(auction_item['id']),
+                                extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_SKIPED_TEST})
                     continue
 
                 if auction_item['id'] in self.planned_tenders and \
@@ -240,7 +255,7 @@ class AuctionsDataBridge(object):
                     logger.debug('Tender {} filtered'.format(auction_item['id']))
                     continue
                 logger.info('Tender {} selected for planning'.format(auction_item['id']),
-                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_SELECT_TENDER})
 
                 if "_" in auction_item['id']:
                     tender_id, lot_id = auction_item['id'].split("_")
@@ -257,13 +272,13 @@ class AuctionsDataBridge(object):
                 self.last_seq_id = auction_item['last_seq']
 
         logger.info('Resume data sync...',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_DATA_SYNC_RESUME})
 
     def run(self):
         logger.info('Start Auctions Bridge',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_START_BRIDGE})
         logger.info('Start data sync...',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_DATA_SYNC})
         while True:
             for planning_data in self.get_teders_list():
                 if len(planning_data) == 1:
@@ -273,16 +288,16 @@ class AuctionsDataBridge(object):
                     logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
                     self.start_auction_worker_cmd('planning', planning_data[0], lot_id=planning_data[1])
             logger.info('Sleep...',
-                        extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                        extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_SLEEP})
             sleep(100)
             logger.info('Resume data sync...',
-                        extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING})
+                        extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_RESUME})
 
     def run_re_planning(self):
         self.re_planning = True
         self.offset = ''
         logger.info('Start Auctions Bridge for re-planning...',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING})
+                    extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_START_BRIDGE})
         for tender_item in self.get_teders_list(re_planning=True):
             logger.debug('Tender {} selected for re-planning'.format(tender_item))
             for planning_data in self.get_teders_list():
@@ -295,7 +310,7 @@ class AuctionsDataBridge(object):
                 self.tenders_ids_list.append(tender_item['id'])
             sleep(1)
         logger.info("Re-planning auctions finished",
-                    extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING})
+                    extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_FINISHED})
 
 
 def main():

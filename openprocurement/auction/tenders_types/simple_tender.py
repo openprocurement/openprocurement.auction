@@ -10,9 +10,10 @@ from ..utils import (
     patch_tender_data
 )
 from ..systemd_msgs_ids import(
-    AUCTION_WORKER_API_HANDLE,
-    AUCTION_WORKER_SERVICE,
-    AUCTION_WORKER_API,
+    AUCTION_WORKER_API_AUCTION_CANCEL,
+    AUCTION_WORKER_API_AUCTION_NOT_EXIST,
+    AUCTION_WORKER_SERVICE_NUMBER_OF_BIDS,
+    AUCTION_WORKER_API_APPROVED_DATA,
     AUCTION_WORKER_SET_AUCTION_URLS
 )
 from barbecue import calculate_coeficient
@@ -51,17 +52,17 @@ def get_auction_info(self, prepare=False):
                 logger.warning("Cancel auction: {}".format(
                     self.auction_doc_id
                 ), extra={"JOURNAL_REQUEST_ID": self.request_id,
-                          "MESSAGE_ID": AUCTION_WORKER_API_HANDLE})
+                          "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_CANCEL})
             else:
                 logger.error("Auction {} not exists".format(
                     self.auction_doc_id
                 ), extra={"JOURNAL_REQUEST_ID": self.request_id,
-                          "MESSAGE_ID": AUCTION_WORKER_API_HANDLE})
+                          "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_NOT_EXIST})
             sys.exit(1)
     self.bidders_count = len(self._auction_data["data"]["bids"])
     logger.info("Bidders count: {}".format(self.bidders_count),
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SERVICE})
+                       "MESSAGE_ID": AUCTION_WORKER_SERVICE_NUMBER_OF_BIDS})
     self.rounds_stages = []
     for stage in range((self.bidders_count + 1) * ROUNDS + 1):
         if (stage + self.bidders_count) % (self.bidders_count + 1) == 0:
@@ -176,7 +177,7 @@ def post_results_data(self):
     logger.info(
         "Approved data: {}".format(all_bids),
         extra={"JOURNAL_REQUEST_ID": self.request_id,
-               "MESSAGE_ID": AUCTION_WORKER_API}
+               "MESSAGE_ID": AUCTION_WORKER_API_APPROVED_DATA}
     )
 
     for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
