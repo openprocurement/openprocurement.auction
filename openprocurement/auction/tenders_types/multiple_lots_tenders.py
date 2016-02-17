@@ -74,17 +74,18 @@ def get_auction_info(self, prepare=False):
         codes = [i['code'] for i in self._lot_data['features']]
         self.bidders_data = []
         for bid_index, bid in enumerate(self._auction_data['data']['bids']):
-            for lot_index, lot_bid in enumerate(bid['lotValues']):
-                if lot_bid['relatedLot'] == self.lot_id:
-                    bid_data = {
-                        'id': bid['id'],
-                        'date': lot_bid['date'],
-                        'value': lot_bid['value']
-                    }
-                    if 'parameters' in bid:
-                        bid_data['parameters'] = [i for i in bid['parameters']
-                                                  if i['code'] in codes]
-                    self.bidders_data.append(bid_data)
+            if bid.get('status', 'active') == 'active':
+                for lot_index, lot_bid in enumerate(bid['lotValues']):
+                    if lot_bid['relatedLot'] == self.lot_id and lot_bid.get('status', 'active') == 'active':
+                        bid_data = {
+                            'id': bid['id'],
+                            'date': lot_bid['date'],
+                            'value': lot_bid['value']
+                        }
+                        if 'parameters' in bid:
+                            bid_data['parameters'] = [i for i in bid['parameters']
+                                                      if i['code'] in codes]
+                        self.bidders_data.append(bid_data)
         self.bidders_count = len(self.bidders_data)
         logger.info('Bidders count: {}'.format(self.bidders_count),
                     extra={'JOURNAL_REQUEST_ID': self.request_id,
@@ -157,18 +158,18 @@ def prepare_auction_and_participation_urls(self):
             break
 
     for bid_index, bid in enumerate(self._auction_data['data']['bids']):
-        for lot_index, lot_bid in enumerate(bid['lotValues']):
-            if lot_bid['relatedLot'] == self.lot_id:
-
-                participation_url = self.worker_defaults['AUCTIONS_URL'].format(
-                    auction_id=self.auction_doc_id
-                )
-                participation_url += '/login?bidder_id={}&hash={}'.format(
-                    bid['id'],
-                    calculate_hash(bid['id'], self.worker_defaults['HASH_SECRET'])
-                )
-                patch_data['data']['bids'][bid_index]['lotValues'][lot_index]['participationUrl'] = participation_url
-                break
+        if bid.get('status', 'active') == 'active':
+            for lot_index, lot_bid in enumerate(bid['lotValues']):
+                if lot_bid['relatedLot'] == self.lot_id and lot_bid.get('status', 'active') == 'active':
+                    participation_url = self.worker_defaults['AUCTIONS_URL'].format(
+                        auction_id=self.auction_doc_id
+                    )
+                    participation_url += '/login?bidder_id={}&hash={}'.format(
+                        bid['id'],
+                        calculate_hash(bid['id'], self.worker_defaults['HASH_SECRET'])
+                    )
+                    patch_data['data']['bids'][bid_index]['lotValues'][lot_index]['participationUrl'] = participation_url
+                    break
     logger.info("Set auction and participation urls for tender {}".format(self.tender_id),
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_SET_AUCTION_URLS})
@@ -189,12 +190,13 @@ def post_results_data(self):
 
     patch_data = {'data': {'bids': list(self._auction_data['data']['bids'])}}
     for bid_index, bid in enumerate(self._auction_data['data']['bids']):
-        for lot_index, lot_bid in enumerate(bid['lotValues']):
-            if lot_bid['relatedLot'] == self.lot_id:
-                auction_bid_info = get_latest_bid_for_bidder(all_bids, bid["id"])
-                patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["value"]["amount"] = auction_bid_info["amount"]
-                patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["date"] = auction_bid_info["time"]
-                break
+        if bid.get('status', 'active') == 'active':
+            for lot_index, lot_bid in enumerate(bid['lotValues']):
+                if lot_bid['relatedLot'] == self.lot_id and lot_bid.get('status', 'active') == 'active':
+                    auction_bid_info = get_latest_bid_for_bidder(all_bids, bid["id"])
+                    patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["value"]["amount"] = auction_bid_info["amount"]
+                    patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["date"] = auction_bid_info["time"]
+                    break
     results = patch_tender_data(
         self.tender_url + '/auction/{}'.format(self.lot_id), data=patch_data,
         user=self.worker_defaults["TENDERS_API_TOKEN"],
@@ -216,13 +218,14 @@ def announce_results_data(self, results=None):
     bidders_data = {}
 
     for bid_index, bid in enumerate(results['data']['bids']):
-        for lot_index, lot_bid in enumerate(bid['lotValues']):
-            if lot_bid['relatedLot'] == self.lot_id:
-                bid_data = {
-                    'id': bid['id'],
-                    'name': bid['tenderers'][0]['name']
-                }
-                bidders_data[bid['id']] = bid_data
+        if bid.get('status', 'active') == 'active':
+            for lot_index, lot_bid in enumerate(bid['lotValues']):
+                if lot_bid['relatedLot'] == self.lot_id and lot_bid.get('status', 'active') == 'active':
+                    bid_data = {
+                        'id': bid['id'],
+                        'name': bid['tenderers'][0]['name']
+                    }
+                    bidders_data[bid['id']] = bid_data
 
     for section in ['initial_bids', 'stages', 'results']:
         for index, stage in enumerate(self.auction_document[section]):

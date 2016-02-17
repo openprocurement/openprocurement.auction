@@ -148,17 +148,20 @@ def prepare_auction_and_participation_urls(self):
     )
     patch_data = {"data": {"auctionUrl": auction_url, "bids": []}}
     for bid in self._auction_data["data"]["bids"]:
-        participation_url = self.worker_defaults["AUCTIONS_URL"].format(
-            auction_id=self.auction_doc_id
-        )
-        participation_url += '/login?bidder_id={}&hash={}'.format(
-            bid["id"],
-            calculate_hash(bid["id"], self.worker_defaults["HASH_SECRET"])
-        )
-        patch_data['data']['bids'].append(
-            {"participationUrl": participation_url,
-             "id": bid["id"]}
-        )
+        if bid.get('status', 'active') == 'active':
+            participation_url = self.worker_defaults["AUCTIONS_URL"].format(
+                auction_id=self.auction_doc_id
+            )
+            participation_url += '/login?bidder_id={}&hash={}'.format(
+                bid["id"],
+                calculate_hash(bid["id"], self.worker_defaults["HASH_SECRET"])
+            )
+            patch_data['data']['bids'].append(
+                {"participationUrl": participation_url,
+                 "id": bid["id"]}
+            )
+        else:
+            patch_data['data']['bids'].append({"id": bid["id"]})
     logger.info("Set auction and participation urls for tender {}".format(self.tender_id),
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_SET_AUCTION_URLS})
