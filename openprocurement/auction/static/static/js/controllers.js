@@ -874,6 +874,9 @@ angular.module('auction')
           }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ",")
         }
         if (val) {
+          if (angular.isNumber(val)){
+            return format_function(val);
+          }
           if (coeficient) {
             return format_function(math.eval(math.format(math.fraction(val) * math.fraction(coeficient))).toFixed(2));
           }
