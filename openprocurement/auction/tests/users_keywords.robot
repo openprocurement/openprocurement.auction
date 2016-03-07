@@ -30,16 +30,16 @@
 
 
 Поставити максимально допустиму ставку
-    Wait Until Page Contains Element    id=max_bid_amount
-    ${last_amount}=     Get Text    id=max_bid_amount
+    Wait Until Page Contains Element    id=max_bid_amount_price
+    ${last_amount}=     Get Text    id=max_bid_amount_price
     Highlight Elements With Text On Time    ${last_amount}
     Поставити ставку   ${last_amount}   Заявку прийнято
 
 
 Поставити велику ціну в ставці
     [Arguments]    ${extra_amount}
-    Wait Until Page Contains Element    id=max_bid_amount
-    ${last_amount}=     Get Text    id=max_bid_amount
+    Wait Until Page Contains Element    id=max_bid_amount_price
+    ${last_amount}=     Get Text    id=max_bid_amount_price
     Highlight Elements With Text On Time    ${last_amount}
     ${last_amount}=     convert_amount_to_number    ${last_amount}
     ${last_amount}=    Evaluate      ${last_amount}+${extra_amount}

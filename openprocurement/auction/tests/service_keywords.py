@@ -35,7 +35,6 @@ def convert_amount_to_number(amount_string):
     return float(amount_string.replace(' ', '').replace(',', '.'))
 
 
-
 def Highlight_Element(locator):
     seleniumlib = BuiltIn().get_library_instance('Selenium2Library')
     element = seleniumlib._element_find(locator, True, True)
