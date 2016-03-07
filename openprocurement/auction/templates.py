@@ -14,7 +14,7 @@ def prepare_initial_bid_stage(bidder_name="", bidder_id="", time="",
         ru="Участник №{}".format(bidder_name)
     )
 
-    stage['amount'] = amount if amount else None
+    stage['amount'] = amount if amount else 0
     if amount_features:
         stage['amount_features'] = str(amount_features)
     if coeficient:

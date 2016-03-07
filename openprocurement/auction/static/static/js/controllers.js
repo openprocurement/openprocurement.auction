@@ -873,7 +873,7 @@ angular.module('auction')
             precision: 2
           }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ",")
         }
-        if (val) {
+        if (!angular.isUndefined(val)) {
           if (angular.isNumber(val)){
             return format_function(val);
           }
