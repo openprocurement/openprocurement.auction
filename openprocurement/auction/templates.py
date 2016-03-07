@@ -27,7 +27,7 @@ def prepare_bids_stage(exist_stage_params, params={}):
     exist_stage_params.update(params)
     stage = dict(type="bids", bidder_id=exist_stage_params['bidder_id'],
                  start=str(exist_stage_params['start']), time=str(exist_stage_params['time']))
-    stage["amount"] = exist_stage_params['amount'] if exist_stage_params['amount'] else None
+    stage["amount"] = exist_stage_params['amount'] if exist_stage_params['amount'] else 0
     if 'amount_features' in exist_stage_params:
         stage["amount_features"] = exist_stage_params['amount_features']
     if 'coeficient' in exist_stage_params:

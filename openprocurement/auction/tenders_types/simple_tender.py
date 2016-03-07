@@ -174,11 +174,6 @@ def prepare_auction_and_participation_urls(self):
 
 def post_results_data(self):
     all_bids = self.auction_document["results"]
-    logger.info(
-        "Approved data: {}".format(all_bids),
-        extra={"JOURNAL_REQUEST_ID": self.request_id,
-               "MESSAGE_ID": AUCTION_WORKER_API_APPROVED_DATA}
-    )
 
     for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
         if bid_info.get('status', 'active') == 'active':
@@ -187,6 +182,11 @@ def post_results_data(self):
             self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
 
     data = {'data': {'bids': self._auction_data["data"]['bids']}}
+    logger.info(
+        "Approved data: {}".format(data),
+        extra={"JOURNAL_REQUEST_ID": self.request_id,
+               "MESSAGE_ID": AUCTION_WORKER_API_APPROVED_DATA}
+    )
     return patch_tender_data(
         self.tender_url + '/auction', data=data,
         user=self.worker_defaults["TENDERS_API_TOKEN"],
@@ -204,7 +204,8 @@ def announce_results_data(self, results=None):
             session=self.session
         )
     bids_information = dict([(bid["id"], bid["tenderers"])
-                             for bid in results["data"]["bids"]])
+                             for bid in results["data"]["bids"]
+                             if bid.get("status", "active") == "active"])
     for section in ['initial_bids', 'stages', 'results']:
         for index, stage in enumerate(self.auction_document[section]):
             if 'bidder_id' in stage and stage['bidder_id'] in bids_information:

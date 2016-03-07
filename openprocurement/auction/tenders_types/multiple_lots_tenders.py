@@ -134,7 +134,7 @@ def prepare_auction_document(self):
             if lang_key in self._auction_data['data']:
                 self.auction_document[lang_key] = self._auction_data['data'][lang_key]
             if lang_key in self._lot_data:
-                self.auction_document.lot[lang_key] = self._lot_data[lang_key]
+                self.auction_document['lot'][lang_key] = self._lot_data[lang_key]
         self.auction_document[key] = self._auction_data['data'].get(key, '')
         self.auction_document['lot'][key] = self._lot_data.get(key, '')
 
@@ -183,12 +183,6 @@ def prepare_auction_and_participation_urls(self):
 
 def post_results_data(self):
     all_bids = self.auction_document["results"]
-    logger.info(
-        "Approved data: {}".format(all_bids),
-        extra={"JOURNAL_REQUEST_ID": self.request_id,
-               "MESSAGE_ID": AUCTION_WORKER_API_APPROVED_DATA}
-    )
-
     patch_data = {'data': {'bids': list(self._auction_data['data']['bids'])}}
     for bid_index, bid in enumerate(self._auction_data['data']['bids']):
         if bid.get('status', 'active') == 'active':
@@ -198,6 +192,12 @@ def post_results_data(self):
                     patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["value"]["amount"] = auction_bid_info["amount"]
                     patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["date"] = auction_bid_info["time"]
                     break
+
+    logger.info(
+        "Approved data: {}".format(patch_data),
+        extra={"JOURNAL_REQUEST_ID": self.request_id,
+               "MESSAGE_ID": AUCTION_WORKER_API_APPROVED_DATA}
+    )
     results = patch_tender_data(
         self.tender_url + '/auction/{}'.format(self.lot_id), data=patch_data,
         user=self.worker_defaults["TENDERS_API_TOKEN"],
