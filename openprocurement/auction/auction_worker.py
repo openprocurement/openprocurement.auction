@@ -49,13 +49,43 @@ from barbecue import cooking
 from fractions import Fraction
 
 from .systemd_msgs_ids import(
-    AUCTION_WORKER_DB,
-    AUCTION_WORKER_API,
-    AUCTION_WORKER_SERVICE,
-    AUCTION_WORKER_SYSTEMD_UNITS,
-    AUCTION_WORKER_BIDS,
-    AUCTION_WORKER_CLEANUP,
-    AUCTION_WORKER_SET_AUCTION_URLS
+    AUCTION_WORKER_DB_GET_DOC,
+    AUCTION_WORKER_DB_GET_DOC_ERROR,
+    AUCTION_WORKER_DB_SAVE_DOC,
+    AUCTION_WORKER_DB_SAVE_DOC_ERROR,
+    AUCTION_WORKER_DB_GET_DOC_UNHANDLED_ERROR,
+    AUCTION_WORKER_DB_SAVE_DOC_UNHANDLED_ERROR,
+    AUCTION_WORKER_SYSTEMD_UNITS_WRITE_SERVICE_CONFIG,
+    AUCTION_WORKER_SYSTEMD_UNITS_START_DATE_IN_PAST,
+    AUCTION_WORKER_SYSTEMD_UNITS_NO_TIME,
+    AUCTION_WORKER_SYSTEMD_UNITS_WRITE_TIMER_CONFIG,
+    AUCTION_WORKER_SYSTEMD_UNITS_RELOAD,
+    AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_RESPONSE,
+    AUCTION_WORKER_SYSTEMD_UNITS_START_TIMER,
+    AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_RELOAD_OR_RESTART,
+    AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_ENABLE,
+    AUCTION_WORKER_SYSTEMD_UNITS_NOT_VALID_DOCUMENT,
+    AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_STOP_AUCTION_TIMER,
+    AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_DISABLE_AUCTION_TIMER,
+    AUCTION_WORKER_SYSTEMD_UNITS_DAEMON_RELOAD,
+    AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_TIMER,
+    AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_SERVICE,
+    AUCTION_WORKER_SERVICE_PREPARE_SERVER,
+    AUCTION_WORKER_SERVICE_STOP_AUCTION_WORKER,
+    AUCTION_WORKER_SERVICE_START_AUCTION,
+    AUCTION_WORKER_SERVICE_END_FIRST_PAUSE,
+    AUCTION_WORKER_SERVICE_END_BID_STAGE,
+    AUCTION_WORKER_SERVICE_START_STAGE,
+    AUCTION_WORKER_SERVICE_START_NEXT_STAGE,
+    AUCTION_WORKER_SERVICE_END_AUCTION,
+    AUCTION_WORKER_SERVICE_AUCTION_CANCELED,
+    AUCTION_WORKER_SERVICE_AUCTION_STATUS_CANCELED,
+    AUCTION_WORKER_SERVICE_AUCTION_NOT_FOUND,
+    AUCTION_WORKER_BIDS_LATEST_BID_CANCELLATION,
+    AUCTION_WORKER_API_AUDIT_LOG_APPROVED,
+    AUCTION_WORKER_API_AUDIT_LOG_NOT_APPROVED,
+    AUCTION_WORKER_API_AUCTION_RESULT_APPROVED,
+    AUCTION_WORKER_API_AUCTION_RESULT_NOT_APPROVED
 )
 
 MULTILINGUAL_FIELDS = ["title", "description"]
@@ -159,7 +189,7 @@ class Auction(object):
                 if public_document:
                     logger.info("Get auction document {0[_id]} with rev {0[_rev]}".format(public_document),
                                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                                       "MESSAGE_ID": AUCTION_WORKER_DB})
+                                       "MESSAGE_ID": AUCTION_WORKER_DB_GET_DOC})
                     if not hasattr(self, 'auction_document'):
                         self.auction_document = public_document
                     if force:
@@ -172,15 +202,15 @@ class Auction(object):
 
             except HTTPError, e:
                 logger.error("Error while get document: {}".format(e),
-                             extra={'MESSAGE_ID': AUCTION_WORKER_DB})
+                             extra={'MESSAGE_ID': AUCTION_WORKER_DB_GET_DOC_ERROR})
             except Exception, e:
                 ecode = e.args[0]
                 if ecode in RETRYABLE_ERRORS:
                     logger.error("Error while get document: {}".format(e),
-                                 extra={'MESSAGE_ID': AUCTION_WORKER_DB})
+                                 extra={'MESSAGE_ID': AUCTION_WORKER_DB_GET_DOC_ERROR})
                 else:
                     logger.critical("Unhandled error: {}".format(e),
-                                    extra={'MESSAGE_ID': AUCTION_WORKER_DB})
+                                    extra={'MESSAGE_ID': AUCTION_WORKER_DB_GET_DOC_UNHANDLED_ERROR})
             retries -= 1
 
     def save_auction_document(self):
@@ -192,20 +222,20 @@ class Auction(object):
                 if len(response) == 2:
                     logger.info("Saved auction document {0} with rev {1}".format(*response),
                                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                                       "MESSAGE_ID": AUCTION_WORKER_DB})
+                                       "MESSAGE_ID": AUCTION_WORKER_DB_SAVE_DOC})
                     self.auction_document['_rev'] = response[1]
                     return response
             except HTTPError, e:
                 logger.error("Error while save document: {}".format(e),
-                             extra={'MESSAGE_ID': AUCTION_WORKER_DB})
+                             extra={'MESSAGE_ID': AUCTION_WORKER_DB_SAVE_DOC_ERROR})
             except Exception, e:
                 ecode = e.args[0]
                 if ecode in RETRYABLE_ERRORS:
                     logger.error("Error while save document: {}".format(e),
-                                 extra={'MESSAGE_ID': AUCTION_WORKER_DB})
+                                 extra={'MESSAGE_ID': AUCTION_WORKER_DB_SAVE_DOC_ERROR})
                 else:
                     logger.critical("Unhandled error: {}".format(e),
-                                    extra={'MESSAGE_ID': AUCTION_WORKER_DB})
+                                    extra={'MESSAGE_ID': AUCTION_WORKER_DB_SAVE_DOC_UNHANDLED_ERROR})
             if "_rev" in public_document:
                 logger.debug("Retry save document changes")
             saved_auction_document = self.get_auction_document(force=True)
@@ -397,7 +427,7 @@ class Auction(object):
             logger.info(
                 "Write configuration to {}".format(service_file.name),
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS})
+                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_WRITE_SERVICE_CONFIG})
             service_file.write(
                 template.render(cmd=' '.join(cmd),
                                 description='Auction ' + tender_id,
@@ -410,14 +440,14 @@ class Auction(object):
             logger.warning(
                 'Planned auction\'s starts date in the past',
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_START_DATE_IN_PAST}
             )
             start_time = extra_start_time
             if start_time > start_date:
                 logger.error(
                     'We not have a time to start auction',
                     extra={"JOURNAL_REQUEST_ID": self.request_id,
-                           "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+                           "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_NO_TIME}
                 )
                 sys.exit()
 
@@ -426,7 +456,7 @@ class Auction(object):
             logger.info(
                 "Write configuration to {}".format(timer_file.name),
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_WRITE_TIMER_CONFIG}
             )
             timer_file.write(template.render(
                 timestamp=start_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -436,13 +466,13 @@ class Auction(object):
             logger.info(
                 "Reload Systemd",
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_RELOAD}
             )
             response = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
             logger.info(
                 "Systemctl return code: {}".format(response),
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_RESPONSE}
             )
             self.activate_systemd_unit()
 
@@ -450,7 +480,7 @@ class Auction(object):
         logger.info(
             "Start timer",
             extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_START_TIMER}
         )
         timer_file = 'auction_' + '.'.join([self.auction_doc_id, 'timer'])
         response = call(['/usr/bin/systemctl', '--user',
@@ -458,14 +488,14 @@ class Auction(object):
         logger.info(
             "Systemctl 'reload-or-restart' return code: {}".format(response),
             extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_RELOAD_OR_RESTART}
         )
         response = call(['/usr/bin/systemctl', '--user',
                          'enable', timer_file])
         logger.info(
             "Systemctl 'enable' return code: {}".format(response),
             extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_ENABLE}
         )
 
 
@@ -480,7 +510,7 @@ class Auction(object):
             )
         else:
             logger.error("Not valid auction_document",
-                         extra={'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS})
+                         extra={'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS_NOT_VALID_DOCUMENT})
 
     ###########################################################################
     #                       Runtime methods
@@ -539,7 +569,7 @@ class Auction(object):
         logger.info(
             "Prepare server ...",
             extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SERVICE}
+                   "MESSAGE_ID": AUCTION_WORKER_SERVICE_PREPARE_SERVER}
         )
         self.server = run_server(self, self.convert_datetime(self.auction_document['stages'][-2]['start']), logger)
 
@@ -547,7 +577,7 @@ class Auction(object):
         self._end_auction_event.wait()
         logger.info("Stop auction worker",
                     extra={"JOURNAL_REQUEST_ID": self.request_id,
-                           "MESSAGE_ID": AUCTION_WORKER_SERVICE})
+                           "MESSAGE_ID": AUCTION_WORKER_SERVICE_STOP_AUCTION_WORKER})
 
     def start_auction(self, switch_to_round=None):
         self.generate_request_id()
@@ -555,7 +585,7 @@ class Auction(object):
         logger.info(
             '---------------- Start auction ----------------',
             extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SERVICE}
+                   "MESSAGE_ID": AUCTION_WORKER_SERVICE_START_AUCTION}
         )
         self.get_auction_info()
         self.get_auction_document()
@@ -616,7 +646,7 @@ class Auction(object):
         logger.info(
             '---------------- End First Pause ----------------',
             extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SERVICE}
+                   "MESSAGE_ID": AUCTION_WORKER_SERVICE_END_FIRST_PAUSE}
         )
         self.bids_actions.acquire()
         self.get_auction_document()
@@ -636,7 +666,7 @@ class Auction(object):
         logger.info(
             '---------------- End Bids Stage ----------------',
             extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SERVICE}
+                   "MESSAGE_ID": AUCTION_WORKER_SERVICE_END_BID_STAGE}
         )
 
         self.current_round = self.get_round_number(
@@ -670,7 +700,7 @@ class Auction(object):
         logger.info('---------------- Start stage {0} ----------------'.format(
             self.auction_document["current_stage"]),
             extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SERVICE}
+                   "MESSAGE_ID": AUCTION_WORKER_SERVICE_START_STAGE}
         )
         self.save_auction_document()
         if self.auction_document["stages"][self.auction_document["current_stage"]]['type'] == 'pre_announcement':
@@ -693,14 +723,14 @@ class Auction(object):
         logger.info('---------------- Start stage {0} ----------------'.format(
             self.auction_document["current_stage"]),
             extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SERVICE}
+                   "MESSAGE_ID": AUCTION_WORKER_SERVICE_START_NEXT_STAGE}
         )
 
     def end_auction(self):
         logger.info(
             '---------------- End auction ----------------',
             extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SERVICE}
+                   "MESSAGE_ID": AUCTION_WORKER_SERVICE_END_AUCTION}
         )
         logger.debug("Stop server", extra={"JOURNAL_REQUEST_ID": self.request_id})
         if self.server:
@@ -755,7 +785,7 @@ class Auction(object):
                 logger.info(
                     "Latest bid is bid cancellation: {}".format(bid_info),
                     extra={"JOURNAL_REQUEST_ID": self.request_id,
-                           "MESSAGE_ID": AUCTION_WORKER_BIDS}
+                           "MESSAGE_ID": AUCTION_WORKER_BIDS_LATEST_BID_CANCELLATION}
                 )
                 return False
             bid_info = {key: bid_info[key] for key in BIDS_KEYS_FOR_COPY}
@@ -804,13 +834,13 @@ class Auction(object):
             logger.info(
                 "Audit log approved. Document id: {}".format(doc_id),
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_API}
+                       "MESSAGE_ID": AUCTION_WORKER_API_AUDIT_LOG_APPROVED}
             )
         else:
             logger.warning(
                 "Audit log not approved.",
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_API})
+                       "MESSAGE_ID": AUCTION_WORKER_API_AUDIT_LOG_NOT_APPROVED})
 
         if self.lot_id:
             results = multiple_lots_tenders.post_results_data(self)
@@ -838,13 +868,13 @@ class Auction(object):
                     logger.info(
                         "Audit log approved. Document id: {}".format(doc_id),
                         extra={"JOURNAL_REQUEST_ID": self.request_id,
-                               "MESSAGE_ID": AUCTION_WORKER_API}
+                               "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_RESULT_APPROVED}
                     )
                 else:
                     logger.warning(
                         "Audit log not approved.",
                         extra={"JOURNAL_REQUEST_ID": self.request_id,
-                               "MESSAGE_ID": AUCTION_WORKER_API}
+                               "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_RESULT_NOT_APPROVED}
                     )
 
                 return True
@@ -852,7 +882,7 @@ class Auction(object):
             logger.info(
                 "Auctions results not approved",
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_API}
+                       "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_RESULT_NOT_APPROVED}
             )
 
     def post_announce(self):
@@ -868,15 +898,15 @@ class Auction(object):
         self.generate_request_id()
         if self.get_auction_document():
             logger.info("Auction {} canceled".format(self.auction_doc_id),
-                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE})
+                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE_AUCTION_CANCELED})
             self.auction_document["current_stage"] = -100
             self.auction_document["endDate"] = datetime.now(tzlocal()).isoformat()
             logger.info("Change auction {} status to 'canceled'".format(self.auction_doc_id),
-                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE})
+                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE_AUCTION_STATUS_CANCELED})
             self.save_auction_document()
         else:
             logger.info("Auction {} not found".format(self.auction_doc_id),
-                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE})
+                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE_AUCTION_NOT_FOUND})
 
 
 def cleanup():
@@ -899,30 +929,30 @@ def cleanup():
                                  'stop', filename])
                     logger.info(
                         "systemctl stop {} - return code: {}".format(filename, code),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS}
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_STOP_AUCTION_TIMER}
                     )
 
                     code = call(['/usr/bin/systemctl', '--user',
                                  'disable', filename, '--no-reload'])
                     logger.info(
                         "systemctl disable {} --no-reload - return code: {}".format(filename, code),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS}
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_DISABLE_AUCTION_TIMER}
                     )
                     logger.info(
                         'Remove systemd file: {}'.format(full_filename),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP}
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_TIMER}
                     )
                     os.remove(full_filename)
                     full_filename = full_filename[:-5] + 'service'
                     logger.info(
                         'Remove systemd file: {}'.format(full_filename),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP}
+                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_SERVICE}
                     )
                     os.remove(full_filename)
     code = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
     logger.info(
         "systemctl --user daemon-reload - return code: {}".format(code),
-        extra={"MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS}
+        extra={"MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_DAEMON_RELOAD}
 
     )
 
