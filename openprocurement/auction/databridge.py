@@ -154,8 +154,8 @@ class AuctionsDataBridge(object):
                             yield (str(item['id']), )
                         elif 'lots' in item:
                             for lot in item['lots']:
-                                if lot["status"] == "active" and 'startDate' in lot['auctionPeriod'] \
-                                        and 'endDate' not in lot['auctionPeriod']:
+                                if lot["status"] == "active" and 'auctionPeriod' in lot \
+                                        and 'startDate' in lot['auctionPeriod'] and 'endDate' not in lot['auctionPeriod']:
                                     start_date = iso8601.parse_date(lot['auctionPeriod']['startDate'])
                                     start_date = start_date.astimezone(self.tz)
                                     auctions_start_in_date = startDate_view(
