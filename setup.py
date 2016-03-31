@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2.0.0.dev5'
+version = '2.0.0'
 
 
 setup(name='openprocurement.auction',
