@@ -56,6 +56,7 @@ def get_auction_info(self, prepare=False):
                     self.auction_doc_id
                 ), extra={'JOURNAL_REQUEST_ID': self.request_id,
                           'MESSAGE_ID': AUCTION_WORKER_API_AUCTION_NOT_EXIST})
+            self._end_auction_event.set()
             sys.exit(1)
     self._lot_data = dict({item['id']: item for item in self._auction_data['data']['lots']}[self.lot_id])
     self._lot_data['items'] = [item for item in self._auction_data['data'].get('items', [])

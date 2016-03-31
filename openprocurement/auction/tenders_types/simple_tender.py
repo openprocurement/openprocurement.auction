@@ -58,6 +58,7 @@ def get_auction_info(self, prepare=False):
                     self.auction_doc_id
                 ), extra={"JOURNAL_REQUEST_ID": self.request_id,
                           "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_NOT_EXIST})
+            self._end_auction_event.set()
             sys.exit(1)
     self.bidders_count = len(self._auction_data["data"]["bids"])
     logger.info("Bidders count: {}".format(self.bidders_count),
