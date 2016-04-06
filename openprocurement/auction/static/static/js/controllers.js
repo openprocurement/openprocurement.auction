@@ -757,7 +757,7 @@ angular.module('auction').controller('AuctionController', [
     };
     /* 2-WAY INPUT */
     $scope.calculate_bid_temp = function() {
-      $rootScope.form.bid_temp = Number(math.fraction(math.fix($rootScope.form.bid * 100), 100));
+      $rootScope.form.bid_temp = Number(math.fraction(($rootScope.form.bid * 100).toFixed(), 100));
       $rootScope.form.full_price = $rootScope.form.bid_temp / $scope.bidder_coeficient;
       $log.debug("Set bid_temp:", $rootScope.form);
     };
