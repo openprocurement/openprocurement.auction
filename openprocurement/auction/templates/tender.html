@@ -346,7 +346,7 @@
                                     <span class="label-price normalized-price">
                                         <span class="price-type" translate>Normilized Price</span>
                                         {{ bid_info['amount_features']|fraction }}
-                                        <span class="amount-currency" ng-if=!angular.isUndefined("bid_info['amount_features'])">{{ auction_doc.minimalStep.currency|translate }}</span>
+                                        <span class="amount-currency" ng-if="!angular.isUndefined(bid_info['amount_features'])">{{ auction_doc.minimalStep.currency|translate }}</span>
                                     </span>
                                     <span class="label-price full-price" >
                                         <span class="price-type" translate>Full Price</span>
