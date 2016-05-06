@@ -310,6 +310,25 @@ angular.module('auction')
         return uuid;
     };
 
+    function UnsupportedBrowser(){
+        var parser = new UAParser();
+        var Browser = parser.getBrowser();
+        if (Browser.name === "Opera"){
+          if (parseFloat(Browser.version) < 12.10 ){
+              return true
+            }
+        }
+        if (Browser.name === "IE"){
+          if (parseFloat(Browser.major) < 10 ){
+              return true
+            }
+        }
+        if (Browser.name === "Opera Mini"){
+           return true
+        }
+        return false;
+    }
+
     return {
       'prepare_info_timer_data': prepare_info_timer_data,
       'prepare_progress_timer_data': prepare_progress_timer_data,
@@ -324,7 +343,8 @@ angular.module('auction')
       'inIframe': inIframe,
       'polarToCartesian': polarToCartesian,
       'generateUUID': generateUUID,
-      'detectIE': detectIE
+      'detectIE': detectIE,
+      'UnsupportedBrowser': UnsupportedBrowser
     };
   }]);
 

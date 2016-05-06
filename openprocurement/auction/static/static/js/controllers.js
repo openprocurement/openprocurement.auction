@@ -142,13 +142,6 @@ angular.module('auction').controller('AuctionController', [
 
 
     $scope.start_subscribe = function(argument) {
-      var unsupported_browser = unsupported_browser || null;
-      if (unsupported_browser) {
-        $timeout(function() {
-          $scope.unsupported_browser = true;
-          growl.error($filter('translate')('Your browser is out of date, and this site may not work properly.') + '<a style="color: rgb(234, 4, 4); text-decoration: underline;" href="https://browser-update.org/uk/update.html">' + $filter('translate')('Learn how to update your browser.') + '</a>');
-        }, 500);
-      };
       $log.info({
         message: 'Start event source'
       });
@@ -654,6 +647,15 @@ angular.module('auction').controller('AuctionController', [
         $scope.title_ending = AuctionUtils.prepare_title_ending_data(doc, $scope.lang);
         $scope.replace_document(doc);
         $scope.document_exists = true;
+        if (AuctionUtils.UnsupportedBrowser()) {
+            $timeout(function() {
+              $scope.unsupported_browser = true;
+              growl.error($filter('translate')('Your browser is out of date, and this site may not work properly.') + '<a style="color: rgb(234, 4, 4); text-decoration: underline;" href="http://browser-update.org/uk/update.html">' + $filter('translate')('Learn how to update your browser.') + '</a>', {
+                  ttl: -1,
+                  disableCountDown: true
+                });
+            }, 500);
+        };
         $scope.scroll_to_stage();
         if ($scope.auction_doc.current_stage != ($scope.auction_doc.stages.length - 1)) {
           if ($cookieStore.get('auctions_loggedin')||AuctionUtils.detectIE()) {

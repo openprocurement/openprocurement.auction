@@ -23,16 +23,11 @@
 
 
 <body>
-    {% if unsupported_browser %}
-        <div class="container">
-            <div ng-hide="unsupported_browser" class="alert alert-danger" role="alert">Ваш переглядач застарів, і цей сайт може некоректно працювати. <a style="color: rgb(234, 4, 4); text-decoration: underline;" href="https://browser-update.org/uk/update.html">Дізнайтесь, як оновити Ваш браузер</a></div>
-            {% raw %}
-                <script type=text/javascript>
-                    var unsupported_browser = true;
-                </script>
-            {% endraw %}
-        </div>
-    {% endif %}
+    <noscript>
+     For full functionality of this site it is necessary to enable JavaScript.
+     Here are the http://www.enable-javascript.com
+     instructions how to enable JavaScript in your web browser.
+    </noscript>
     {% raw %}
     <div ng-if="document_not_found" translate ng-cloak>
         Not Found
@@ -520,7 +515,7 @@
 var db_url = location.protocol + '//' + location.host + '/auctions';
 var auction_doc_id = '{{ auction_doc_id }}';
 </script>
-
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/UAParser.js/0.7.10/ua-parser.min.js"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.8/angular.min.js"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.13.0/ui-bootstrap-tpls.min.js"></script>
