@@ -10,7 +10,6 @@ from datetime import datetime
 from design import sync_design, endDate_view
 from flask import Flask, render_template, request, abort, url_for, redirect, Response
 from flask.ext.assets import Environment, Bundle
-from flask_redis import Redis
 from http_parser.util import IOrderedDict
 from json import dumps, loads
 from memoize import Memoizer
@@ -22,7 +21,7 @@ from sse import Sse as PySse
 from urlparse import urlparse, urljoin
 from werkzeug.exceptions import NotFound
 
-from .utils import StreamWrapper, unsuported_browser
+from .utils import StreamWrapper, get_database
 from systemd.journal import send
 
 def start_response_decorated(start_response_decorated):
@@ -151,7 +150,6 @@ def auction_url(auction_doc_id):
         'tender.html',
         db_url=auctions_server.config.get('EXT_COUCH_DB'),
         auction_doc_id=auction_doc_id,
-        unsupported_browser=unsuported_browser(request),
         request_base=request_base
     )
 
@@ -233,7 +231,7 @@ def auctions_proxy(auction_doc_id, path):
     auctions_server.logger.debug('Auction_doc_id: {}'.format(auction_doc_id))
     proxy_path = auctions_server.proxy_mappings.get(
         str(auction_doc_id),
-        auctions_server.redis.get,
+        get_database(auctions_server.config['REDIS'], master=False).get,
         (str(auction_doc_id), ), max_age=60
     )
     auctions_server.logger.debug('Proxy path: {}'.format(proxy_path))
@@ -293,7 +291,11 @@ def auth_couch_server_proxy(path):
 
 
 def make_auctions_app(global_conf,
-                      redis_url='redis://localhost:7777/0',
+                      redis_url='redis://localhost:9002/1',
+                      redis_password='',
+                      redis_database='',
+                      sentinel_cluster_name='',
+                      sentinels='',
                       external_couch_url='http://localhost:5000/auction',
                       internal_couch_url='http://localhost:9000/',
                       proxy_internal_couch_url='http://localhost:9000/',
@@ -314,13 +316,22 @@ def make_auctions_app(global_conf,
     auctions_db = auction
     timezone = Europe/Kiev
     """
+    # import pdb; pdb.set_trace()  # debug ktarasz
     auctions_server.proxy_connection_pool = ConnectionPool(
         factory=Connection, max_size=20, backend="gevent"
     )
     auctions_server.proxy_mappings = Memoizer({})
     auctions_server.event_sources_pool = deque([])
     auctions_server.config['PREFERRED_URL_SCHEME'] = preferred_url_scheme
-    auctions_server.config['REDIS_URL'] = redis_url
+
+    auctions_server.config['REDIS'] = {
+        'redis': redis_url,
+        'redis_password': redis_password,
+        'redis_database': redis_database,
+        'sentinel_cluster_name': sentinel_cluster_name,
+        'sentinel': loads(sentinels)
+    }
+
     auctions_server.config['event_source_connection_limit'] = int(event_source_connection_limit)
     auctions_server.config['EXT_COUCH_DB'] = urljoin(
         external_couch_url,
@@ -352,7 +363,7 @@ def make_auctions_app(global_conf,
     auctions_server.config['PROXY_COUCH_URL'] = proxy_internal_couch_url
     auctions_server.config['COUCH_DB'] = auctions_db
     auctions_server.config['TIMEZONE'] = tz(timezone)
-    auctions_server.redis = Redis(auctions_server)
+
     auctions_server.couch_server = Server(
         auctions_server.config.get('INT_COUCH_URL'),
         session=Session(retry_delays=range(10))

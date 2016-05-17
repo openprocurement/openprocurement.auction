@@ -16,6 +16,7 @@ from hashlib import sha1
 from gevent.pywsgi import WSGIServer
 from gevent.baseserver import parse_address
 from redis import Redis
+from redis.sentinel import Sentinel
 import uuid
 
 from pkg_resources import parse_version
@@ -390,3 +391,14 @@ def filter_amount(stage):
     if 'coeficient' in stage:
         del stage['coeficient']
     return stage
+
+def get_database(config, master=True):
+    if config['sentinel']:
+        sentinal = Sentinel(config['sentinel'], socket_timeout=0.1,
+                            password=config['redis_password'], db=config['redis_database'])
+        if master:
+            return sentinal.master_for(config['sentinel_cluster_name'])
+        else:
+            return sentinal.slave_for(config['sentinel_cluster_name'])
+    else:
+        return Redis.from_url(config['redis'])
