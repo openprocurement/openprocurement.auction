@@ -738,7 +738,7 @@ class Auction(object):
         logger.debug(
             "Clear mapping", extra={"JOURNAL_REQUEST_ID": self.request_id}
         )
-        delete_mapping(self.worker_defaults["REDIS_URL"],
+        delete_mapping(self.worker_defaults,
                        self.auction_doc_id)
 
         start_stage, end_stage = self.get_round_stages(ROUNDS)

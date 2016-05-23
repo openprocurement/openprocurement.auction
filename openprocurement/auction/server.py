@@ -283,7 +283,7 @@ def run_server(auction, mapping_expire_time, logger, timezone='Europe/Kiev'):
     server.start()
     # Set mapping
     mapping_value = "http://{0}:{1}/".format(*lisener.getsockname())
-    create_mapping(auction.worker_defaults["REDIS_URL"],
+    create_mapping(auction.worker_defaults,
                    auction.auction_doc_id,
                    mapping_value)
     app.logger.info("Server mapping: {} -> {}".format(

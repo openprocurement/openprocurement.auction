@@ -314,14 +314,24 @@ def get_lisener(port, host=''):
     return lisener
 
 
-def create_mapping(redis_url, auction_id, auction_url):
-    mapings = Redis.from_url(redis_url)
-    return mapings.set(auction_id, auction_url)
+def get_database(config, master=True):
+    if config['sentinel']:
+        sentinal = Sentinel(config['sentinel'], socket_timeout=0.1,
+                            password=config['redis_password'], db=config['redis_database'])
+        if master:
+            return sentinal.master_for(config['sentinel_cluster_name'])
+        else:
+            return sentinal.slave_for(config['sentinel_cluster_name'])
+    else:
+        return Redis.from_url(config['redis'])
 
 
-def delete_mapping(redis_url, auction_id):
-    mapings = Redis.from_url(redis_url)
-    return mapings.delete(auction_id)
+def create_mapping(config, auction_id, auction_url):
+    return get_database(config).set(auction_id, auction_url)
+
+
+def delete_mapping(config, auction_id):
+    return get_database(config).delete(auction_id)
 
 
 def prepare_extra_journal_fields(headers):
@@ -392,13 +402,3 @@ def filter_amount(stage):
         del stage['coeficient']
     return stage
 
-def get_database(config, master=True):
-    if config['sentinel']:
-        sentinal = Sentinel(config['sentinel'], socket_timeout=0.1,
-                            password=config['redis_password'], db=config['redis_database'])
-        if master:
-            return sentinal.master_for(config['sentinel_cluster_name'])
-        else:
-            return sentinal.slave_for(config['sentinel_cluster_name'])
-    else:
-        return Redis.from_url(config['redis'])
