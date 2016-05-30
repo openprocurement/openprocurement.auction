@@ -60,7 +60,10 @@ def get_auction_info(self, prepare=False):
                           "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_NOT_EXIST})
             self._end_auction_event.set()
             sys.exit(1)
-    self.bidders_count = len(self._auction_data["data"]["bids"])
+    self.bidders = [bid["id"]
+                    for bid in self._auction_data["data"]["bids"]
+                    if bid.get('status', 'active') == 'active']
+    self.bidders_count = len(self.bidders)
     logger.info("Bidders count: {}".format(self.bidders_count),
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_SERVICE_NUMBER_OF_BIDS})
@@ -68,9 +71,6 @@ def get_auction_info(self, prepare=False):
     for stage in range((self.bidders_count + 1) * ROUNDS + 1):
         if (stage + self.bidders_count) % (self.bidders_count + 1) == 0:
             self.rounds_stages.append(stage)
-    self.bidders = [bid["id"]
-                    for bid in self._auction_data["data"]["bids"]
-                    if bid.get('status', 'active') == 'active']
     self.mapping = {}
     self.startDate = self.convert_datetime(
         self._auction_data['data']['auctionPeriod']['startDate']
