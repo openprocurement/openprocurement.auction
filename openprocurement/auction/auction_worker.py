@@ -675,7 +675,7 @@ class Auction(object):
         self.current_stage = self.auction_document["current_stage"]
 
         if self.approve_bids_information():
-
+            logger.info("Approved bid on current stage")
             start_stage, end_stage = self.get_round_stages(self.current_round)
             all_bids = deepcopy(
                 self.auction_document["stages"][start_stage:end_stage]
@@ -772,7 +772,7 @@ class Auction(object):
 
     def approve_bids_information(self):
         if self.current_stage in self._bids_data:
-            logger.debug(
+            logger.info(
                 "Current stage bids {}".format(self._bids_data[self.current_stage]),
                 extra={"JOURNAL_REQUEST_ID": self.request_id}
             )
