@@ -130,7 +130,7 @@ class AuctionsDataBridge(object):
                 logger.info("Client params: {}".format(self.client.params))
                 for item in tenders_list:
                     if item['status'] == "active.auction":
-                        if 'auctionPeriod' in item and 'startDate' in item['auctionPeriod'] \
+                        if 'lots' not in item and 'auctionPeriod' in item and 'startDate' in item['auctionPeriod'] \
                                 and 'endDate' not in item['auctionPeriod']:
 
                             start_date = iso8601.parse_date(item['auctionPeriod']['startDate'])
