@@ -46,6 +46,7 @@ class StreamProxy(HostProxy):
     def __init__(self, uri, event_sources_pool,
                  auction_doc_id="",
                  event_source_connection_limit=1000,
+                 rewrite_path = None,
                  **kwargs):
         super(StreamProxy, self).__init__(uri, **kwargs)
         self.auction_doc_id = auction_doc_id
@@ -79,6 +80,8 @@ class StreamProxy(HostProxy):
         else:
             environ['HTTP_X_FORWARDED_FOR'] = environ['REMOTE_ADDR']
         try:
+            if self.rewrite_path:
+                environ['PATH_INFO'] = environ['PATH_INFO'].replace(self.rewrite_path[0], self.rewrite_path[1])
             response = super(StreamProxy, self).__call__(
                 environ, start_response_decorated(start_response)
             )
@@ -275,6 +278,7 @@ def auth_couch_server_proxy(path):
     return StreamProxy(
         auctions_server.config['PROXY_COUCH_URL'],
         auctions_server.event_sources_pool,
+        rewrite_path=(auctions_server.config['COUCH_DB'] + "_secured", auctions_server.config['COUCH_DB']),
         pool=auctions_server.proxy_connection_pool,
         backend="gevent"
     )
