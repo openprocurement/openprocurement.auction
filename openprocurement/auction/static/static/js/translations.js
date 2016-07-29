@@ -35,11 +35,14 @@ angular.module('auction')
       'UAH': 'UAH',
       'shortTime': 'h:mm a',
       'Restart sync': 'Restart sync',
-      'To low value': 'To low value',
-      'To high value': 'To high value',
+      'Too low value': 'Too low value',
+      'Too high value': 'Too high value',
       'Not valid bidder': 'Not valid bidder',
       'Stage not for bidding': 'Stage not for bidding',
       'Bid placed': 'Bid placed',
+      'Normilized Price': 'Normalized price:',
+      'Full Price': 'Full price:',
+      'Bidder Coeficient':'Coeficient:',
       'Your proposal': 'Your proposal',
       'Finish': 'Finish',
       'days': 'days',
@@ -78,11 +81,12 @@ angular.module('auction')
       'Your browser is out of date, and this site may not work properly.': 'Your browser is out of date, and this site may not work properly.',
       'Learn how to update your browser.': 'Learn how to update your browser.',
       'Not Found': 'Not Found',
-      'Price normalization mode': 'Price normalization mode',
       'to Mine': 'to Mine',
+      'Clear': 'Clear',
       'to General': 'to General',
       'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.',
-      'Waiting for the disclosure of the participants\' names': 'Waiting for the disclosure of the participants\' names'
+      'Waiting for the disclosure of the participants\' names': 'Waiting for the disclosure of the participants\' names',
+      'Unable to place a bid. Check that no more than 2 auctions are simultaneously opened in your browser.': 'Unable to place a bid. Check that no more than 2 auctions are simultaneously opened in your browser.'
     });
 
     $translateProvider.translations('uk', {
@@ -119,11 +123,14 @@ angular.module('auction')
       'UAH': 'грн',
       'shortTime': 'HH:mm',
       'Restart sync': 'Перезапуск синхронізації',
-      'To low value': 'Надто низька заявка',
-      'To high value': 'Надто висока заявка',
+      'Too low value': 'Надто низька заявка',
+      'Too high value': 'Надто висока заявка',
       'Not valid bidder': 'Ви не є валідний користувачем',
       'Stage not for bidding': 'Даний етап аукціону не передбачає приймання заявок',
       'Bid placed': 'Заявку прийнято',
+      'Normilized Price': 'Приведена ціна:',
+      'Full Price': 'Повна ціна:',
+      'Bidder Coeficient':'Коефіцієнт:',
       'Your proposal': 'Ваша заявка',
       'Finish': 'Завершено',
       'days': 'дн',
@@ -150,7 +157,7 @@ angular.module('auction')
       'Your bid appears too low': 'Ви ввели дуже малу суму, ви впевнені?',
       'Return to Tender': 'Повернутися до Закупівлі',
       'Your latest bid': 'Ваша остання заявка',
-      'Tender cancelled': 'Закупілю скасовано',
+      'Tender cancelled': 'Закупівлю скасовано',
       'Bid canceled': 'Заявку відмінено',
       'Login is currently closed.': 'Вхід на даний момент закритий.',
       'Please try again later.': 'Спробуйте пізніше.',
@@ -162,11 +169,12 @@ angular.module('auction')
       'Your browser is out of date, and this site may not work properly.': 'Ваш переглядач застарів, і цей сайт може некоректно працювати.',
       'Learn how to update your browser.': 'Дізнайтесь, як оновити Ваш браузер.',
       'Not Found': 'Аукціону із даною Id не знайдено',
-      'Price normalization mode': 'Режим приведення ціни',
       'to Mine': 'до Моєї',
+      'Clear': 'Очистити',
       'to General': 'до Загальної',
       'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Подана вами пропозиція співпадає з пропозицією іншого учасника. Його пропозиція розглядатиметься першою, оскільки вона подана раніше.',
-      'Waiting for the disclosure of the participants\' names': 'Очікуємо на розкриття імен учасників'
+      'Waiting for the disclosure of the participants\' names': 'Очікуємо на розкриття імен учасників',
+      'Unable to place a bid. Check that no more than 2 auctions are simultaneously opened in your browser.': 'Не вдається зробити ставку. Перевірте, що в переглядачі відкрито не більше 2-ох аукціонів.'
     });
 
 
@@ -204,11 +212,14 @@ angular.module('auction')
       'UAH': 'грн',
       'shortTime': 'HH:mm',
       'Restart sync': 'Перезапуск синхронизации',
-      'To low value': 'Слишком низкая ставка',
-      'To high value': 'Слишком высокая ставка',
+      'Too low value': 'Слишком низкая ставка',
+      'Too high value': 'Слишком высокая ставка',
       'Not valid bidder': ' Вы не являетесь валидный пользователем',
       'Stage not for bidding': 'Данный этап аукциона не предусматривает приема ставок',
       'Bid placed': 'Ставку принято',
+      'Normilized Price': 'Приведённая цена:',
+      'Full Price': 'Фактическая цена:',
+      'Bidder Coeficient':'Коэффициент:',
       'Your proposal': 'Ваше предложение',
       'Finish': 'Окончен',
       'days': 'дн',
@@ -247,10 +258,11 @@ angular.module('auction')
       'Your browser is out of date, and this site may not work properly.': 'Ваш браузер устарел, и этот сайт может некорректно работать.',
       'Learn how to update your browser.': 'Узнайте, как обновить Ваш браузер.',
       'Not Found': 'Аукциона по данной Id не найдена',
-      'Price normalization mode': 'Режим приведения цены',
       'to Mine': 'к Моей',
+      'Clear': 'Очистить',
       'to General': 'к Общей',
       'The proposal you have submitted coincides with a proposal of the other participant. His proposal will be considered first, since it has been submitted earlier.': 'Поданное вами предложение совпадает с предложением другого участника. Его предложение будет рассматриваться первым, поскольку оно подано раньше.',
-      'Waiting for the disclosure of the participants\' names': 'Ожидаем раскрытия имен участников'
+      'Waiting for the disclosure of the participants\' names': 'Ожидаем раскрытия имен участников',
+      'Unable to place a bid. Check that no more than 2 auctions are simultaneously opened in your browser.': 'Невозможно сделать ставку. Проверьте, что в браузере открыто не более 2-х аукционов.'
     });
   }]);

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.2.0.eauctions_dev4'
+version = '2.0.4.eauctions_dev1'
 
 
 setup(name='openprocurement.auction',
@@ -52,13 +52,24 @@ setup(name='openprocurement.auction',
           'pyasn1',
           'openprocurement_client'
       ],
+      extras_require={
+          'test': [
+              'robotframework',
+              'robotframework-selenium2library',
+              'robotframework-debuglibrary',
+              'robotframework-selenium2screenshots',
+              'chromedriver',
+              'mock'
+          ]
+      },
       entry_points={
           'console_scripts': [
               'auction_worker = openprocurement.auction.auction_worker:main',
-              'auctions_data_bridge = openprocurement.auction.databridge:main'
+              'auctions_data_bridge = openprocurement.auction.databridge:main',
+              'auction_test = openprocurement.auction.tests.main:main [test]'
           ],
           'paste.app_factory': [
-              'auctions_server = openprocurement.auction.auctions_server:make_auctions_app'
+              'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',
           ]
       },
       )

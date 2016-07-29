@@ -27,7 +27,7 @@ angular.module('auction').controller('AuctionController', [
     $scope.default_http_error_timeout = 500;
     $scope.http_error_timeout = $scope.default_http_error_timeout;
     $scope.browser_client_id = AuctionUtils.generateUUID();
-    $scope.$watch('$cookies.logglytrackingsession', function(newValue, oldValue) {
+    $scope.$watch(function() {return $cookies.logglytrackingsession}, function(newValue, oldValue) {
       $scope.browser_session_id = $cookies.logglytrackingsession;
     })
     $log.info({
@@ -44,9 +44,9 @@ angular.module('auction').controller('AuctionController', [
     $scope.start = function() {
       $log.info({
         message: "Setup connection to remote_db",
-        auctions_loggedin: $cookies.auctions_loggedin
+        auctions_loggedin: $cookies.auctions_loggedin||AuctionUtils.detectIE()
       })
-      if ($cookies.auctions_loggedin) {
+      if ($cookies.auctions_loggedin||AuctionUtils.detectIE()) {
         AuctionConfig.remote_db = AuctionConfig.remote_db + "_secured";
       }
       $scope.changes_options = {
@@ -142,13 +142,6 @@ angular.module('auction').controller('AuctionController', [
 
 
     $scope.start_subscribe = function(argument) {
-      var unsupported_browser = unsupported_browser || null;
-      if (unsupported_browser) {
-        $timeout(function() {
-          $scope.unsupported_browser = true;
-          growl.error($filter('translate')('Your browser is out of date, and this site may not work properly.') + '<a style="color: rgb(234, 4, 4); text-decoration: underline;" href="https://browser-update.org/uk/update.html">' + $filter('translate')('Learn how to update your browser.') + '</a>');
-        }, 500);
-      };
       $log.info({
         message: 'Start event source'
       });
@@ -227,7 +220,7 @@ angular.module('auction').controller('AuctionController', [
           if ('coeficient' in data) {
             $scope.bidder_coeficient = math.fraction(data.coeficient);
             $log.info({
-              message: "Get coeficient" + $scope.bidder_coeficient
+              message: "Get coeficient " + $scope.bidder_coeficient
             });
           }
         });
@@ -322,6 +315,7 @@ angular.module('auction').controller('AuctionController', [
           $log.info({
             message: "Allow view bid form"
           });
+          $scope.max_bid_amount()
           $scope.view_bids_form = true;
           return $scope.view_bids_form;
         }
@@ -348,7 +342,17 @@ angular.module('auction').controller('AuctionController', [
           progress_timer: $rootScope.progres_timer
         });
         var params = AuctionUtils.parseQueryString(location.search);
-        if ($scope.auction_doc.current_stage === -1 && params.wait) {
+        if ($scope.auction_doc.current_stage == -1){
+          if ($rootScope.progres_timer.countdown_seconds < 900) {
+            $scope.start_changes_feed = true;
+          }else{
+            $timeout(function() {
+              $scope.follow_login = true;
+              $scope.start_changes_feed = true;
+            }, ($rootScope.progres_timer.countdown_seconds - 900) * 1000);
+          }
+        }
+        if ($scope.auction_doc.current_stage >= -1 && params.wait) {
           $scope.follow_login_allowed = true;
           if ($rootScope.progres_timer.countdown_seconds < 900) {
             $scope.follow_login = true;
@@ -368,11 +372,15 @@ angular.module('auction').controller('AuctionController', [
 
       });
     };
+    $scope.warning_post_bid = function(){
+      growl.error('Unable to place a bid. Check that no more than 2 auctions are simultaneously opened in your browser.');
+    };
     $scope.post_bid = function(bid) {
       $log.info({
         message: "Start post bid",
         bid_data: parseFloat(bid) || parseFloat($rootScope.form.bid) || 0
       });
+
       if (parseFloat($rootScope.form.bid) == -1) {
         msg_id = Math.random();
         $rootScope.alerts.push({
@@ -398,10 +406,17 @@ angular.module('auction').controller('AuctionController', [
         $timeout(function() {
           $rootScope.form.active = false;
         }, 5000);
+        if (!$scope.post_bid_timeout) {
+          $scope.post_bid_timeout = $timeout($scope.warning_post_bid, 10000);
+        }
         $http.post('./postbid', {
             'bid': parseFloat(bid) || parseFloat($rootScope.form.bid) || 0,
             'bidder_id': $scope.bidder_id || bidder_id || "0"
           }).success(function(data) {
+            if ($scope.post_bid_timeout){
+              $timeout.cancel($scope.post_bid_timeout);
+              delete $scope.post_bid_timeout;
+            }
             $rootScope.form.active = false;
             var msg_id = '';
             if (data.status == 'failed') {
@@ -446,6 +461,9 @@ angular.module('auction').controller('AuctionController', [
                   message: "Handle cancel bid response on post bid"
                 });
                 $rootScope.form.bid = "";
+                $rootScope.form.full_price = '';
+                $rootScope.form.bid_temp = '';
+
               } else {
                 $log.info({
                   message: "Handle success response on post bid",
@@ -466,6 +484,10 @@ angular.module('auction').controller('AuctionController', [
               message: "Handle error on post bid",
               bid_data: status
             });
+            if ($scope.post_bid_timeout){
+              $timeout.cancel($scope.post_bid_timeout);
+              delete $scope.post_bid_timeout;
+            }
             if (status == 401) {
               $rootScope.alerts.push({
                 msg_id: Math.random(),
@@ -489,6 +511,7 @@ angular.module('auction').controller('AuctionController', [
           });
       }
     };
+
     $scope.edit_bid = function() {
       $scope.allow_bidding = true;
     };
@@ -500,37 +523,19 @@ angular.module('auction').controller('AuctionController', [
 
         if ((angular.isObject(current_stage_obj)) && (current_stage_obj.amount || current_stage_obj.amount_features)) {
           if ($scope.bidder_coeficient && ($scope.auction_doc.auction_type || "default" == "meat")) {
-            amount = math.fraction(current_stage_obj.amount_features) * $scope.bidder_coeficient - math.fraction($scope.auction_doc.minimalStep.amount);
-          } else {
-            amount = math.fraction(current_stage_obj.amount) - math.fraction($scope.auction_doc.minimalStep.amount);
-          }
-        };
-      }
-    };
-    $scope.edit_bid = function() {
-      $scope.allow_bidding = true;
-    };
-
-    $scope.max_bid_amount = function() {
-      var amount = 0;
-      if ((angular.isString($scope.bidder_id)) && (angular.isObject($scope.auction_doc))) {
-        var current_stage_obj = $scope.auction_doc.stages[$scope.auction_doc.current_stage] || null;
-
-        if ((angular.isObject(current_stage_obj)) && (current_stage_obj.amount || current_stage_obj.amount_features)) {
-          if ($scope.bidder_coeficient && ($scope.auction_doc.auction_type || "default" == "meat")) {
-            amount = math.fraction(current_stage_obj.amount_features) * $scope.bidder_coeficient + math.fraction($scope.auction_doc.minimalStep.amount);
+            amount = math.fraction(current_stage_obj.amount_features) / $scope.bidder_coeficient + math.fraction($scope.auction_doc.minimalStep.amount);
           } else {
             amount = math.fraction(current_stage_obj.amount) + math.fraction($scope.auction_doc.minimalStep.amount);
           }
         }
       };
       if (amount < 0) {
+        $scope.calculated_max_bid_amount = 0;
         return 0;
       }
       $scope.calculated_max_bid_amount = amount;
       return amount;
     };
-
     $scope.calculate_minimal_bid_amount = function() {
       if ((angular.isObject($scope.auction_doc)) && (angular.isArray($scope.auction_doc.stages)) && (angular.isArray($scope.auction_doc.initial_bids))) {
         var bids = [];
@@ -577,10 +582,15 @@ angular.module('auction').controller('AuctionController', [
           message: "Changes error",
           error_data: err
         });
-        $scope.changes_options['heartbeat'] = false;
         $scope.end_changes = new Date()
-        if (($scope.end_changes - $scope.start_changes) < 40000) {
-          $scope.changes_options.heartbeat = false;
+        if ((($scope.end_changes - $scope.start_changes) > 40000)||($scope.force_heartbeat)) {
+           $scope.force_heartbeat = true;
+        } else {
+          $scope.changes_options['heartbeat'] = false;
+          $log.info({
+            message: "Change heartbeat to false (Use timeout)",
+            heartbeat: false
+          });
         }
         $timeout(function() {
           if ($scope.restart_retries != AuctionConfig.restart_retries) {
@@ -628,13 +638,10 @@ angular.module('auction').controller('AuctionController', [
         var params = AuctionUtils.parseQueryString(location.search);
 
         $scope.start_sync_event = $q.defer();
-        $timeout(function() {
-          $scope.start_sync_event.resolve('start');
-        }, 5000);
         //
-        if (doc.current_stage === -1 && params.wait) {
+        if (doc.current_stage >= -1 && params.wait) {
           $scope.follow_login_allowed = true;
-          $log.error({
+          $log.info({
             message: 'client wait for login'
           });
         } else {
@@ -643,18 +650,38 @@ angular.module('auction').controller('AuctionController', [
         $scope.title_ending = AuctionUtils.prepare_title_ending_data(doc, $scope.lang);
         $scope.replace_document(doc);
         $scope.document_exists = true;
+        if (AuctionUtils.UnsupportedBrowser()) {
+            $timeout(function() {
+              $scope.unsupported_browser = true;
+              growl.error($filter('translate')('Your browser is out of date, and this site may not work properly.') + '<a style="color: rgb(234, 4, 4); text-decoration: underline;" href="http://browser-update.org/uk/update.html">' + $filter('translate')('Learn how to update your browser.') + '</a>', {
+                  ttl: -1,
+                  disableCountDown: true
+                });
+            }, 500);
+        };
         $scope.scroll_to_stage();
         if ($scope.auction_doc.current_stage != ($scope.auction_doc.stages.length - 1)) {
-          if ($cookieStore.get('auctions_loggedin')) {
+          if ($cookieStore.get('auctions_loggedin')||AuctionUtils.detectIE()) {
             $log.info({
               message: 'Start private session'
             });
             $scope.start_subscribe();
           } else {
             $log.info({
-              message: 'Start anonimous session'
+              message: 'Start anonymous session'
             });
-            $scope.start_sync_event.resolve('start');
+            if ($scope.auction_doc.current_stage == - 1){
+              $scope.$watch('start_changes_feed', function(newValue, oldValue){
+                if(newValue && !($scope.sync)){
+                   $log.info({
+                    message: 'Start changes feed'
+                  });
+                  $scope.sync = $scope.start_sync()
+                }
+              })
+            } else {
+              $scope.start_sync_event.resolve('start');
+            }
             if (!$scope.follow_login_allowed) {
               $timeout(function() {
                 growl.info($filter('translate')('You are an observer and cannot bid.'), {
@@ -707,6 +734,7 @@ angular.module('auction').controller('AuctionController', [
       $scope.calculate_minimal_bid_amount();
       $scope.scroll_to_stage();
       $scope.show_bids_form();
+
       $scope.$apply();
     };
     $scope.calculate_rounds = function(argument) {
@@ -734,20 +762,22 @@ angular.module('auction').controller('AuctionController', [
     };
     /* 2-WAY INPUT */
     $scope.calculate_bid_temp = function() {
-      $rootScope.form.bid_temp = Number(math.fraction(math.fix($rootScope.form.bid * 100), 100));
-      $rootScope.form.full_price = $rootScope.form.bid_temp / $scope.bidder_coeficient;
+      $rootScope.form.bid_temp = Number(math.fraction(($rootScope.form.bid * 100).toFixed(), 100));
+      $rootScope.form.full_price = $rootScope.form.bid_temp * $scope.bidder_coeficient;
       $log.debug("Set bid_temp:", $rootScope.form);
     };
     $scope.calculate_full_price_temp = function() {
       $rootScope.form.bid = (math.fix((math.fraction($rootScope.form.full_price) * $scope.bidder_coeficient) * 100)) / 100;
-      $rootScope.form.full_price_temp = $rootScope.form.bid / $scope.bidder_coeficient;
+      $rootScope.form.full_price_temp = $rootScope.form.bid * $scope.bidder_coeficient;
     };
     $scope.set_bid_from_temp = function() {
       $rootScope.form.bid = $rootScope.form.bid_temp;
-      $rootScope.form.BidsForm.bid.$setViewValue(math.format($rootScope.form.bid, {
-        notation: 'fixed',
-        precision: 2
-      }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ","));
+      if ($rootScope.form.bid){
+        $rootScope.form.BidsForm.bid.$setViewValue(math.format($rootScope.form.bid, {
+          notation: 'fixed',
+          precision: 2
+        }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ","));
+      }
     }
     $scope.start();
   }
@@ -807,7 +837,12 @@ angular.module('auction')
               var newviewValue = viewValue;
               ctrl.prev_value = viewValue;
             } else {
-              var plainNumber = Number((ctrl.prev_value).replace(/ /g, '').replace(/,/g, "."));
+              try {
+                var plainNumber = Number((ctrl.prev_value || null ).replace(/ /g, '').replace(/,/g, "."));
+              }
+              catch (e) {
+                var plainNumber = null;
+              }
               var newviewValue = ctrl.prev_value;
             }
             ctrl.$viewValue = newviewValue;
@@ -843,7 +878,10 @@ angular.module('auction')
             precision: 2
           }).replace(/(\d)(?=(\d{3})+\.)/g, '$1 ').replace(/\./g, ",")
         }
-        if (val) {
+        if (!angular.isUndefined(val)) {
+          if (angular.isNumber(val)){
+            return format_function(val);
+          }
           if (coeficient) {
             return format_function(math.eval(math.format(math.fraction(val) * math.fraction(coeficient))).toFixed(2));
           }

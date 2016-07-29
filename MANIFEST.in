@@ -1,5 +1,6 @@
 recursive-include openprocurement *
 recursive-include docs *
+recursive-exclude dist *
 recursive-exclude openprocurement/auction/static/vendor *
 recursive-exclude openprocurement/auction/static/.webassets-cache *
 recursive-exclude openprocurement/auction/node_modules *

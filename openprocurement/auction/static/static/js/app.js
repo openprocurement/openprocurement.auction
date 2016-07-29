@@ -9,7 +9,7 @@ app.constant('AuctionConfig', {
   remote_db: db_url,
   restart_retries: 10,
   default_lang: 'uk',
-  debug: true
+  debug: false
 });
 
 app.filter('formatnumber', ['$filter',
@@ -21,7 +21,7 @@ app.filter('formatnumber', ['$filter',
 ]);
 
 app.config(['$logProvider', 'AuctionConfig', 'growlProvider', 'GTMLoggerProvider', function($logProvider, AuctionConfig, growlProvider, GTMLoggerProvider) {
-    GTMLoggerProvider.level('INFO').includeTimestamp( true );
+    GTMLoggerProvider.level('INFO').includeTimestamp( true )
     $logProvider.debugEnabled(AuctionConfig.debug); // default is true
     growlProvider.globalTimeToLive({
         success: 4000,
@@ -32,3 +32,11 @@ app.config(['$logProvider', 'AuctionConfig', 'growlProvider', 'GTMLoggerProvider
     growlProvider.globalPosition('top-center');
     growlProvider.onlyUniqueMessages(false);
 }]);
+
+function logMSG(MSG)
+{
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("POST", '/log', true);
+    xmlHttp.send(JSON.stringify(MSG));
+}
+

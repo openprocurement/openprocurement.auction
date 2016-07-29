@@ -12,7 +12,7 @@ from flask import Flask, render_template, request, abort, url_for, redirect, Res
 from flask.ext.assets import Environment, Bundle
 from flask_redis import Redis
 from http_parser.util import IOrderedDict
-from json import dumps
+from json import dumps, loads
 from memoize import Memoizer
 from pytz import timezone as tz
 from restkit.conn import Connection
@@ -23,7 +23,7 @@ from urlparse import urlparse, urljoin
 from werkzeug.exceptions import NotFound
 
 from .utils import StreamWrapper, unsuported_browser
-
+from systemd.journal import send
 
 def start_response_decorated(start_response_decorated):
     def inner(status, headers):
@@ -47,9 +47,11 @@ class StreamProxy(HostProxy):
     def __init__(self, uri, event_sources_pool,
                  auction_doc_id="",
                  event_source_connection_limit=1000,
+                 rewrite_path = None,
                  **kwargs):
         super(StreamProxy, self).__init__(uri, **kwargs)
         self.auction_doc_id = auction_doc_id
+        self.rewrite_path = rewrite_path
         self.event_source_connection_limit = event_source_connection_limit
         self.event_sources = event_sources_pool
 
@@ -80,6 +82,8 @@ class StreamProxy(HostProxy):
         else:
             environ['HTTP_X_FORWARDED_FOR'] = environ['REMOTE_ADDR']
         try:
+            if self.rewrite_path:
+                environ['PATH_INFO'] = environ['PATH_INFO'].replace(self.rewrite_path[0], self.rewrite_path[1])
             response = super(StreamProxy, self).__call__(
                 environ, start_response_decorated(start_response)
             )
@@ -157,7 +161,7 @@ def auction_url(auction_doc_id):
 
 
 @auctions_server.route('/')
-def archive_tenders_list_index():
+def auction_list_index():
     return render_template(
         'list.html',
         documents=reversed(
@@ -167,6 +171,31 @@ def archive_tenders_list_index():
                                          include_docs=True)
              ])
     )
+
+
+@auctions_server.route('/log', methods=['POST'])
+def log():
+
+    try:
+        data = loads(request.data)
+        if "MESSAGE" in data:
+            msg = data.get("MESSAGE")
+            del data["MESSAGE"]
+        else:
+            msg = ""
+        data['REMOTE_ADDR'] = ','.join(
+            [ip
+             for ip in request.environ.get('HTTP_X_FORWARDED_FOR', '').split(',')
+             if not ip.startswith('172.')]
+        )
+        if request.environ.get('REMOTE_ADDR', '') and data['REMOTE_ADDR'] == "":
+            data['REMOTE_ADDR'] += request.environ.get('REMOTE_ADDR', '')
+        data["SYSLOG_IDENTIFIER"] = "AUCTION_CLIENT"
+        send(msg, **data)
+        return Response('ok')
+    except:
+        return Response('error')
+
 
 
 @auctions_server.route('/health')
@@ -179,14 +208,26 @@ def health():
 
 
 @auctions_server.route('/archive')
-def auction_list_index():
-    return render_template(
-        'list.html',
-        documents=[auction.doc
-                   for auction in endDate_view(auctions_server.db,
-                                               endkey=time.time() * 1000,
+def archive_auction_list_index():
+    offset = int(request.args.get('offset', default=time.time() * 1000))
+    startkey_docid = request.args.get('startid', default=None)
+    documents=[auction
+               for auction in endDate_view(auctions_server.db,
+                                               startkey=offset,
+                                               startkey_docid=startkey_docid,
+                                               limit=101,
+                                               descending=True,
                                                include_docs=True)
                    ]
+    if len(documents)>100:
+        offset, startid = documents[100].key, documents[100].id
+    else:
+        offset, startid = False, False
+    return render_template(
+        'archive.html',
+        documents=documents[:-1],
+        offset=offset,
+        startid=startid
     )
 
 
@@ -250,6 +291,7 @@ def auth_couch_server_proxy(path):
     return StreamProxy(
         auctions_server.config['PROXY_COUCH_URL'],
         auctions_server.event_sources_pool,
+        rewrite_path=(auctions_server.config['COUCH_DB'] + "_secured", auctions_server.config['COUCH_DB']),
         pool=auctions_server.proxy_connection_pool,
         backend="gevent"
     )
