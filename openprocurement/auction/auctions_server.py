@@ -49,6 +49,7 @@ class StreamProxy(HostProxy):
                  rewrite_path = None,
                  **kwargs):
         super(StreamProxy, self).__init__(uri, **kwargs)
+        self.rewrite_path = rewrite_path
         self.auction_doc_id = auction_doc_id
         self.event_source_connection_limit = event_source_connection_limit
         self.event_sources = event_sources_pool
