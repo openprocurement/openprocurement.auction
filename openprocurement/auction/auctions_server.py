@@ -200,7 +200,8 @@ def log():
 def health():
     data = auctions_server.couch_server.tasks()
     response = Response(dumps(data))
-    if not(data and data[0]['progress'] > 90):
+    progress = [task['progress'] > 90 for task in data if 'type' in task and task['type'] == 'replication']
+    if not(progress and any(progress)):
         response.status_code = 503
     return response
 
