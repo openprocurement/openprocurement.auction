@@ -73,9 +73,7 @@ class AuctionsDataBridge(object):
             host_url=self.config_get('tenders_api_server'),
             api_version=self.config_get('tenders_api_version')
         )
-        params = {'opt_fields': 'status,auctionPeriod', 'mode': '_all_'}
-        if parse_version(self.config_get('tenders_api_version')) > parse_version('0.9'):
-            params['opt_fields'] += ',lots'
+        params = {'opt_fields': 'status,auctionPeriod,lots', 'mode': '_all_'}
         self.client.params.update(params)
         self.tz = tzlocal()
 
