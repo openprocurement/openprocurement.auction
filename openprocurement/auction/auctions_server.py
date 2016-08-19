@@ -291,7 +291,7 @@ def auth_couch_server_proxy(path):
     return StreamProxy(
         auctions_server.config['PROXY_COUCH_URL'],
         auctions_server.event_sources_pool,
-        rewrite_path=(auctions_server.config['COUCH_DB'] + "_secured", auctions_server.config['COUCH_DB']),
+        rewrite_path=(auctions_server.config['COUCH_DB'] + "_secured", auctions_server.config['COUCH_DB'], ),
         pool=auctions_server.proxy_connection_pool,
         backend="gevent"
     )
