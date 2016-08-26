@@ -71,7 +71,7 @@ def get_auction_info(self, prepare=False):
         self._lot_data['auctionPeriod']['startDate']
     )
     self.bidders_features = None
-    self.features = None
+    self.features = self._lot_data.get('features', None)
     if not prepare:
         codes = [i['code'] for i in self._lot_data['features']]
         self.bidders_data = []

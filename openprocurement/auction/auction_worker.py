@@ -1005,21 +1005,22 @@ def main():
         auction.wait_to_end()
         SCHEDULER.shutdown()
     elif args.cmd == 'planning':
-        if args.planning_procerude:
-            planning_procerude = args.planning_procerude
-        else:
-            planning_procerude = worker_defaults.get('planning_procerude', PLANNING_FULL)
-        if planning_procerude == PLANNING_FULL:
-            auction.prepare_auction_document()
-            if not auction.debug:
-                auction.prepare_tasks(
-                    auction._auction_data["data"]['tenderID'],
-                    auction.startDate
-                )
-        elif planning_procerude == PLANNING_PARTIAL_DB:
-            auction.prepare_auction_document()
-        elif planning_procerude == PLANNING_PARTIAL_CRON:
-            auction.prepare_systemd_units()
+        # if args.planning_procerude:
+        #     planning_procerude = args.planning_procerude
+        # else:
+        #     planning_procerude = worker_defaults.get('planning_procerude', PLANNING_FULL)
+        # if planning_procerude == PLANNING_FULL:
+        #     auction.prepare_auction_document()
+        #     if not auction.debug:
+        #         auction.prepare_tasks(
+        #             auction._auction_data["data"]['tenderID'],
+        #             auction.startDate
+        #         )
+        # elif planning_procerude == PLANNING_PARTIAL_DB:
+        #     auction.prepare_auction_document()
+        # elif planning_procerude == PLANNING_PARTIAL_CRON:
+        #     auction.prepare_systemd_units()
+        auction.prepare_auction_document()
     elif args.cmd == 'announce':
         auction.post_announce()
     elif args.cmd == 'activate':

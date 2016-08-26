@@ -65,6 +65,7 @@ setup(name='openprocurement.auction',
       entry_points={
           'console_scripts': [
               'auction_worker = openprocurement.auction.auction_worker:main',
+              'auctions_chronograph = openprocurement.auction.chronograph:main',
               'auctions_data_bridge = openprocurement.auction.databridge:main',
               'auction_test = openprocurement.auction.tests.main:main [test]'
           ],

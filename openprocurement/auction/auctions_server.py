@@ -312,7 +312,7 @@ def make_auctions_app(global_conf,
     auctions_db = auction
     timezone = Europe/Kiev
     """
-    # import pdb; pdb.set_trace()  # debug ktarasz
+
     auctions_server.proxy_connection_pool = ConnectionPool(
         factory=Connection, max_size=20, backend="gevent"
     )
