@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2.0.4.dev5+auction.main.sharding'
+version = '2.1.0.dev0+auction.worker.sharding'
 
 
 setup(name='openprocurement.auction',
