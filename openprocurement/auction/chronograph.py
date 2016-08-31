@@ -48,10 +48,10 @@ class AuctionsChronograph(object):
         ))
 
     def init_scheduler(self):
-        self.scheruler = AuctionScheduler(self.server_name, self.config, logger=logger,
+        self.scheduler = AuctionScheduler(self.server_name, self.config, logger=logger,
                                           timezone=self.timezone)
-        self.scheruler.chronograph = self
-        self.scheruler.start()
+        self.scheduler.chronograph = self
+        self.scheduler.start()
 
     def init_web_app(self):
         self.web_application = chronograph_webapp
@@ -68,12 +68,12 @@ class AuctionsChronograph(object):
 
             # ADD FILTER BY VALUE {start: '2016-09-10T14:36:40.378777+03:00', test: false}
             if datestamp < auction_item['value']['start']:
-                self.scheruler.schedule_auction(auction_item['id'], auction_item['value'])
+                self.scheduler.schedule_auction(auction_item['id'], auction_item['value'])
 
-            if self.scheruler.exit:
+            if self.scheduler.exit:
                 break
 
-        while not self.scheruler.execution_stopped:
+        while not self.scheduler.execution_stopped:
             sleep(10)
             logger.info('Wait until execution stopped')
 

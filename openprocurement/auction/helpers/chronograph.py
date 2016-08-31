@@ -24,7 +24,6 @@ MAX_AUCTION_START_TIME_RESERV = timedelta(seconds=15* 60)
 
 def get_server_name():
     try:
-        1/0
         r = request(AWS_META_DATA_URL)
         suffix = r.body_string()
     except Exception, e:
@@ -131,7 +130,7 @@ class AuctionScheduler(GeventScheduler):
         auction_start_date = self.convert_datetime(view_value['start'])
         if auction_start_date - now > MAX_AUCTION_START_TIME_RESERV:
             AW_date = auction_start_date - MAX_AUCTION_START_TIME_RESERV
-        if auction_start_date - now > MIN_AUCTION_START_TIME_RESERV:
+        elif auction_start_date - now > MIN_AUCTION_START_TIME_RESERV:
             self.logger.warning('Planned auction\'s starts date in the past')
             AW_date = now
         else:
