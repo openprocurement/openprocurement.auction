@@ -18,7 +18,6 @@ DEFAULT_API_KEY = ''
 DEFAULT_API_EXTRA_PARAMS = {'opt_fields': 'status,auctionPeriod,lots', 'mode': '_all_'}
 
 logger = logging.getLogger(__name__)
-print __name__
 
 
 def start_sync(host=DEFAULT_API_HOST, version=DEFAULT_API_VERSION,

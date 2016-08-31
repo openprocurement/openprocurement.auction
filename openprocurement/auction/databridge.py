@@ -58,11 +58,10 @@ class AuctionsDataBridge(object):
 
     """Auctions Data Bridge"""
 
-    def __init__(self, config, activate=False):
+    def __init__(self, config):
         super(AuctionsDataBridge, self).__init__()
         self.config = config
         self.tenders_ids_list = []
-        self.activate = False
         self.tz = tzlocal()
 
         self.couch_url = urljoin(
@@ -72,40 +71,8 @@ class AuctionsDataBridge(object):
         self.db = Database(self.couch_url,
                            session=Session(retry_delays=range(10)))
 
-        if self.activate:
-            self.queue = Queue()
-            self.scheduler = GeventScheduler()
-            self.scheduler.add_job(self.run_systemd_cmds, 'interval',  max_instances=1,
-                                   minutes=2, id='run_systemd_cmds')
-            self.scheduler.start()
-
     def config_get(self, name):
         return self.config.get('main').get(name)
-
-    def run_systemd_cmds(self):
-        auctions = []
-        logger.info('Start systemd units activator')
-        while True:
-            try:
-                auctions.append(self.queue.get_nowait())
-            except Empty, e:
-                break
-        if auctions:
-            logger.info('Handle systemctl daemon-reload')
-            do_until_success(
-                check_call,
-                (['/usr/bin/systemctl', '--user', 'daemon-reload'],)
-            )
-            for planning_data in auctions:
-                if len(planning_data) == 1:
-                    logger.info('Tender {0} selected for activate'.format(*planning_data))
-                    self.start_auction_worker_cmd('activate', planning_data[0])
-                elif len(planning_data) == 2:
-                    logger.info('Lot {1} of tender {0} selected for activate'.format(*planning_data))
-                    self.start_auction_worker_cmd('activate', planning_data[0], lot_id=planning_data[1])
-        else:
-            logger.info('No auctions to activate')
-
 
     def get_teders_list(self, re_planning=False):
         for item in get_tenders(host=self.config_get('tenders_api_server'),
@@ -193,66 +160,12 @@ class AuctionsDataBridge(object):
 
         if with_api_version:
             params += ['--with_api_version', with_api_version]
-        print " ".join(params)
         result = do_until_success(
             check_call,
             args=(params,),
         )
 
         logger.info("Auction command {} result: {}".format(params[1], result))
-        # if self.activate and cmd == 'planning':
-        #     if lot_id:
-        #         self.queue.put((tender_id, lot_id,))
-        #     else:
-        #         self.queue.put((tender_id, ))
-
-    def planning_with_couch(self):
-        logger.info('Start Auctions Bridge with feed to couchdb',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_COUCH_FEED})
-        logger.info('Start data sync...',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_COUCH_DATA_SYNC})
-        self.planned_tenders = {}
-        self.last_seq_id = 0
-        while True:
-            do_until_success(self.handle_continuous_feed)
-
-    def handle_continuous_feed(self):
-        change = self.db.changes(feed='continuous', filter="auctions/by_startDate",
-                                 since=self.last_seq_id, include_docs=True)
-        for auction_item in change:
-            if 'id' in auction_item:
-                start_date = auction_item['doc']['stages'][0]['start']
-                if auction_item['doc'].get("current_stage", "") == -100:
-                    continue
-
-                if auction_item['doc'].get("mode", "") == "test":
-                    logger.info('Skiped test auction {}'.format(auction_item['id']),
-                                extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_SKIPED_TEST})
-                    continue
-
-                if auction_item['id'] in self.planned_tenders and \
-                        self.planned_tenders[auction_item['id']] == start_date:
-                    logger.debug('Tender {} filtered'.format(auction_item['id']))
-                    continue
-                logger.info('Tender {} selected for planning'.format(auction_item['id']),
-                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_SELECT_TENDER})
-
-                if "_" in auction_item['id']:
-                    tender_id, lot_id = auction_item['id'].split("_")
-                else:
-                    tender_id = auction_item['id']
-                    lot_id = None
-
-                self.start_auction_worker_cmd('planning', tender_id, lot_id=lot_id,
-                    with_api_version=auction_item['doc'].get('TENDERS_API_VERSION', None)
-                )
-
-                self.planned_tenders[auction_item['id']] = start_date
-            elif 'last_seq' in auction_item:
-                self.last_seq_id = auction_item['last_seq']
-
-        logger.info('Resume data sync...',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_DATA_SYNC_RESUME})
 
     def run(self):
         logger.info('Start Auctions Bridge',
@@ -268,23 +181,24 @@ class AuctionsDataBridge(object):
                 self.start_auction_worker_cmd('planning', planning_data[0], lot_id=planning_data[1])
 
     def run_re_planning(self):
-        self.re_planning = True
-        self.offset = ''
-        logger.info('Start Auctions Bridge for re-planning...',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_START_BRIDGE})
-        for tender_item in self.get_teders_list(re_planning=True):
-            logger.debug('Tender {} selected for re-planning'.format(tender_item))
-            for planning_data in self.get_teders_list():
-                if len(planning_data) == 1:
-                    logger.info('Tender {0} selected for planning'.format(*planning_data))
-                    self.start_auction_worker_cmd('planning', planning_data[0])
-                elif len(planning_data) == 2:
-                    logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
-                    self.start_auction_worker_cmd('planning', planning_data[0], lot_id=planning_data[1])
-                self.tenders_ids_list.append(tender_item['id'])
-            sleep(1)
-        logger.info("Re-planning auctions finished",
-                    extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_FINISHED})
+        pass
+        # self.re_planning = True
+        # self.offset = ''
+        # logger.info('Start Auctions Bridge for re-planning...',
+        #             extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_START_BRIDGE})
+        # for tender_item in self.get_teders_list(re_planning=True):
+        #     logger.debug('Tender {} selected for re-planning'.format(tender_item))
+        #     for planning_data in self.get_teders_list():
+        #         if len(planning_data) == 1:
+        #             logger.info('Tender {0} selected for planning'.format(*planning_data))
+        #             self.start_auction_worker_cmd('planning', planning_data[0])
+        #         elif len(planning_data) == 2:
+        #             logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
+        #             self.start_auction_worker_cmd('planning', planning_data[0], lot_id=planning_data[1])
+        #         self.tenders_ids_list.append(tender_item['id'])
+        #     sleep(1)
+        # logger.info("Re-planning auctions finished",
+        #             extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_FINISHED})
 
 
 def main():
@@ -293,23 +207,15 @@ def main():
     parser.add_argument(
         '--re-planning', action='store_true', default=False,
         help='Not ignore auctions which already scheduled')
-    parser.add_argument(
-        '--planning-with-couch', action='store_true', default=False,
-        help='Use couchdb for tenders feed')
-    parser.add_argument(
-        '--activate', action='store_true', default=False,
-        help='Activate systemd units in databridge')
     params = parser.parse_args()
     if os.path.isfile(params.config):
         with open(params.config) as config_file_obj:
             config = load(config_file_obj.read())
         logging.config.dictConfig(config)
-        if params.planning_with_couch:
-            AuctionsDataBridge(config, params.activate).planning_with_couch()
-        elif params.re_planning:
-            AuctionsDataBridge(config, params.activate).run_re_planning()
+        if params.re_planning:
+            AuctionsDataBridge(config).run_re_planning()
         else:
-            AuctionsDataBridge(config, params.activate).run()
+            AuctionsDataBridge(config).run()
 
 
 ##############################################################
