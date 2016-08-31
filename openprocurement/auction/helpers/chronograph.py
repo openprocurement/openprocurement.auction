@@ -134,6 +134,9 @@ class AuctionScheduler(GeventScheduler):
         if auction_start_date - now > MIN_AUCTION_START_TIME_RESERV:
             self.logger.warning('Planned auction\'s starts date in the past')
             AW_date = now
+        else:
+            return
+
         if "_" in document_id:
             tender_id, lot_id = document_id.split("_")
         else:

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2.1.0.dev0+auction.worker.sharding'
+version = '2.1.0.dev1+auction.worker.sharding'
 
 
 setup(name='openprocurement.auction',
@@ -50,7 +50,8 @@ setup(name='openprocurement.auction',
           'pyopenssl',
           'ndg-httpsclient',
           'pyasn1',
-          'openprocurement_client'
+          'openprocurement_client',
+          'python-consul'
       ],
       extras_require={
           'test': [
