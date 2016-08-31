@@ -8,19 +8,19 @@ import consul
 import iso8601
 from datetime import timedelta, datetime
 from apscheduler.schedulers.gevent import GeventScheduler
-from gevent.subprocess import check_call
+from gevent.subprocess import check_call, CalledProcessError
 
 from uuid import uuid4
 
 LOCK_RETRIES = 6
 SLEEP_BETWEEN_TRIES_LOCK = 10
-WORKER_TIME_RUN = 3600
+WORKER_TIME_RUN = 16 * 60
 
 AWS_META_DATA_URL = 'http://169.254.169.254/latest/meta-data/instance-id'
 SERVER_NAME_PREFIX = 'AUCTION_WORKER_{}'
 
 MIN_AUCTION_START_TIME_RESERV = timedelta(seconds=60)
-MAX_AUCTION_START_TIME_RESERV = timedelta(seconds=15* 60)
+MAX_AUCTION_START_TIME_RESERV = timedelta(seconds=15 * 60)
 
 def get_server_name():
     try:
@@ -47,7 +47,20 @@ class AuctionExecutor(GeventExecutor):
         while len(self._instances) > 0:
             sleep(1)
 
+    def _run_job_success(self, job_id, events):
+        """Called by the executor with the list of generated events when `run_job` has been successfully called."""
+        super(GeventExecutor, self)._run_job_success(job_id, events)
+        self.cleanup_jobs_instances(job_id)
 
+    def _run_job_error(self, job_id, exc, traceback=None):
+        """Called by the executor with the exception if there is an error calling `run_job`."""
+        super(GeventExecutor, self)._run_job_error(job_id, exc, traceback=traceback)
+        self.cleanup_jobs_instances(job_id)
+
+    def cleanup_jobs_instances(self, job_id):
+        with self._lock:
+            if self._instances[job_id] == 0:
+                del self._instances[job_id]
 
 class AuctionScheduler(GeventScheduler):
     def __init__(self, server_name, config,
@@ -110,10 +123,11 @@ class AuctionScheduler(GeventScheduler):
 
                 if view_value['api_version']:
                     params += ['--with_api_version', view_value['api_version']]
-                rc = check_call(params)
-                if rc:
+                try:
+                    rc = check_call(params)
+                except CalledProcessError, error:
                     self.logger.error("Exit with error {}".format(document_id))
-                self.logger.info("Return code of {}: {}".format(document_id, rc))
+                self.logger.info("Finished {}".format(document_id))
                 self.consul.session.destroy(session)
                 with self._limit_pool_lock:
                     self._count_auctions -= 1
@@ -121,7 +135,7 @@ class AuctionScheduler(GeventScheduler):
             sleep(SLEEP_BETWEEN_TRIES_LOCK)
             i -= 1
 
-        self.logger.info("Locked on other server")
+        self.logger.debug("Locked on other server")
         self.consul.session.destroy(session)
 
     def schedule_auction(self, document_id, view_value):
