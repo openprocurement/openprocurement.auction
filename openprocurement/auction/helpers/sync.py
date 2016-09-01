@@ -134,7 +134,7 @@ def retriever_backward(queue, client, origin_cookie, params):
         response = client.sync_tenders(params)
         if origin_cookie != client.headers['Cookie']:
             raise Exception('LB Server mismatch')
-        logger.debug('Backward: pause between requests')
+        logger.info('Backward: pause between requests')
         sleep(RETRIEVER_DOWN_REQUESTS_SLEEP)
     logger.info('Backward: finished')
     return 0
@@ -154,10 +154,10 @@ def retriever_forward(queue, client, origin_cookie, params):
             if origin_cookie != client.headers['Cookie']:
                 raise Exception('LB Server mismatch')
             if len(response.data) != 0:
-                logger.debug('Forward: pause between requests')
+                logger.info('Forward: pause between requests')
                 sleep(RETRIEVER_UP_REQUESTS_SLEEP)
 
-        logger.debug('Forward: pause after empty response')
+        logger.info('Forward: pause after empty response')
         sleep(RETRIEVER_UP_WAIT_SLEEP)
 
         params['offset'] = response.next_page.offset
