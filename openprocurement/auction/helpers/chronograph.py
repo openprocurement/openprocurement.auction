@@ -139,9 +139,17 @@ class AuctionScheduler(GeventScheduler):
         self.consul.session.destroy(session)
 
     def schedule_auction(self, document_id, view_value):
+        auction_start_date = self.convert_datetime(view_value['start'])
+        if self._executors['default']._instances.get(document_id):
+            return
+        job = self.get_job(document_id)
+        if job:
+            job_auction_start_date = job.args[2]['start'] # job.args[2] view_value
+            if job_auction_start_date == auction_start_date:
+                return
+            self.logger.warning("Changed start date: {}".format(document_id))
 
         now = datetime.now(self.timezone)
-        auction_start_date = self.convert_datetime(view_value['start'])
         if auction_start_date - now > MAX_AUCTION_START_TIME_RESERV:
             AW_date = auction_start_date - MAX_AUCTION_START_TIME_RESERV
         elif auction_start_date - now > MIN_AUCTION_START_TIME_RESERV:
