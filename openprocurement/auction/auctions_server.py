@@ -21,7 +21,7 @@ from sse import Sse as PySse
 from urlparse import urlparse, urljoin
 from werkzeug.exceptions import NotFound
 
-from .utils import StreamWrapper, get_database
+from .utils import StreamWrapper, get_mapping
 from systemd.journal import send
 
 def start_response_decorated(start_response_decorated):
@@ -226,8 +226,8 @@ def auctions_proxy(auction_doc_id, path):
     auctions_server.logger.debug('Auction_doc_id: {}'.format(auction_doc_id))
     proxy_path = auctions_server.proxy_mappings.get(
         str(auction_doc_id),
-        get_database(auctions_server.config['REDIS'], master=False).get,
-        (str(auction_doc_id), ), max_age=60
+        get_mapping,
+        (auctions_server.config['REDIS'], str(auction_doc_id), False), max_age=60
     )
     auctions_server.logger.debug('Proxy path: {}'.format(proxy_path))
     if proxy_path:

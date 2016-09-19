@@ -51,7 +51,8 @@ setup(name='openprocurement.auction',
           'ndg-httpsclient',
           'pyasn1',
           'openprocurement_client',
-          'python-consul'
+          'python-consul',
+          'retrying',
       ],
       extras_require={
           'test': [

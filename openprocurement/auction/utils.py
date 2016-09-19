@@ -4,6 +4,8 @@ try:
 except ImportError:
     pass
 
+from retrying import retry
+
 import iso8601
 from datetime import MINYEAR, datetime
 from pytz import timezone
@@ -325,11 +327,15 @@ def get_database(config, master=True):
     else:
         return Redis.from_url(config['redis'])
 
-
+@retry(stop_max_attempt_number=3)
 def create_mapping(config, auction_id, auction_url):
     return get_database(config).set(auction_id, auction_url)
 
+@retry(stop_max_attempt_number=3)
+def get_mapping(config, auction_id, master=False):
+    return get_database(config).get(auction_id)
 
+@retry(stop_max_attempt_number=3)
 def delete_mapping(config, auction_id):
     return get_database(config).delete(auction_id)
 
