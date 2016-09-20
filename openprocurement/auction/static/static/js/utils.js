@@ -9,6 +9,13 @@ angular.module('auction')
 
     function prepare_info_timer_data(current_time, auction, bidder_id, Rounds) {
       var i;
+      if (auction.current_stage === -101) {
+        return {
+          'countdown': false,
+          'start_time': true,
+          'msg': 'Auction has not started and will be rescheduled'
+        };
+      }
       if (auction.current_stage === -100) {
         return {
           'countdown': false,
@@ -96,7 +103,7 @@ angular.module('auction')
     }
 
     function prepare_progress_timer_data(current_time, auction) {
-      if ((((auction.stages[auction.current_stage] || {}).type || '').indexOf('announcement') != -1) || (auction.current_stage === -100)) {
+      if ((((auction.stages[auction.current_stage] || {}).type || '').indexOf('announcement') != -1) || (auction.current_stage === -100) || (auction.current_stage === -101)) {
         return {
           'countdown_seconds': false,
           'rounds_seconds': 0,
