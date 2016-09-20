@@ -75,8 +75,8 @@ class AuctionScheduler(GeventScheduler):
         self.consul = consul.Consul()
         self.logger = logger
         self._limit_pool_lock = self._create_lock()
-        self._limit_auctions = int(limit_auctions)
-        self._limit_free_memory = float(limit_free_memory)
+        self._limit_auctions = self.config['main'].get('limit_auctions', int(limit_auctions))
+        self._limit_free_memory = self.config['main'].get('limit_free_memory', float(limit_free_memory))
         self._count_auctions = 0
         self.exit = False
 
