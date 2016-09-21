@@ -24,6 +24,11 @@ from werkzeug.exceptions import NotFound
 from .utils import StreamWrapper, get_mapping
 from systemd.journal import send
 
+LIMIT_REPLICATIONS_LIMIT_FUNCTIONS = {
+    'any': any,
+    'all': all
+}
+
 def start_response_decorated(start_response_decorated):
     def inner(status, headers):
         headers_obj = IOrderedDict(headers)
@@ -200,8 +205,12 @@ def log():
 def health():
     data = auctions_server.couch_server.tasks()
     response = Response(dumps(data))
-    progress = [task['progress'] > 90 for task in data if 'type' in task and task['type'] == 'replication']
-    if not(progress and any(progress)):
+    progress = [
+        task['progress'] > auctions_server.config.get('limit_replications_progress', 99)
+        for task in data if 'type' in task and task['type'] == 'replication'
+    ]
+    limit_replications_func = LIMIT_REPLICATIONS_LIMIT_FUNCTIONS.get(auctions_server.config.get('limit_replications_func', 'any'))
+    if not(progress and limit_replications_func(progress)):
         response.status_code = 503
     return response
 
@@ -301,7 +310,9 @@ def make_auctions_app(global_conf,
                       preferred_url_scheme='http',
                       debug=False,
                       auto_build=False,
-                      event_source_connection_limit=1000
+                      event_source_connection_limit=1000,
+                      limit_replications_progress=99,
+                      limit_replications_func='any'
                       ):
     """
     [app:main]
@@ -319,6 +330,8 @@ def make_auctions_app(global_conf,
     auctions_server.proxy_mappings = Memoizer({})
     auctions_server.event_sources_pool = deque([])
     auctions_server.config['PREFERRED_URL_SCHEME'] = preferred_url_scheme
+    auctions_server.config['limit_replications_progress'] = float(limit_replications_progress)
+    auctions_server.config['limit_replications_func'] = limit_replications_func
 
     auctions_server.config['REDIS'] = {
         'redis': redis_url,
