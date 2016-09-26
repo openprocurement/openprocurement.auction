@@ -173,14 +173,14 @@ def prepare_auction_and_participation_urls(self):
                       request_id=self.request_id, session=self.session)
 
 
-def post_results_data(self):
-    all_bids = self.auction_document["results"]
+def post_results_data(self, with_auctions_results=True):
 
-    for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
-        if bid_info.get('status', 'active') == 'active':
-            auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
-            self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
-            self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
+    if with_auctions_results:
+        for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
+            if bid_info.get('status', 'active') == 'active':
+                auction_bid_info = get_latest_bid_for_bidder(self.auction_document["results"], bid_info["id"])
+                self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
+                self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
 
     data = {'data': {'bids': self._auction_data["data"]['bids']}}
     logger.info(

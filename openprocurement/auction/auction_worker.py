@@ -330,6 +330,80 @@ class Auction(object):
         else:
             simple_tender.get_auction_info(self, prepare)
 
+    def prepare_auction_stages_fast_forward(self):
+        self.auction_document['auction_type'] = 'meat' if self.features else 'default'
+        bids = deepcopy(self.bidders_data)
+        self.auction_document["initial_bids"] = []
+        bids_info = sorting_start_bids_by_amount(bids, features=self.features)
+        for index, bid in enumerate(bids_info):
+            amount = bid["value"]["amount"]
+            if self.features:
+                amount_features = cooking(
+                    amount,
+                    self.features, self.bidders_features[bid["id"]]
+                )
+                coeficient = self.bidders_coeficient[bid["id"]]
+
+            else:
+                coeficient = None
+                amount_features = None
+            initial_bid_stage = prepare_initial_bid_stage(
+                time=bid["date"] if "date" in bid else self.startDate,
+                bidder_id=bid["id"],
+                bidder_name=self.mapping[bid["id"]],
+                amount=amount,
+                coeficient=coeficient,
+                amount_features=amount_features
+            )
+            self.auction_document["initial_bids"].append(
+                initial_bid_stage
+            )
+        self.auction_document['stages'] = []
+        next_stage_timedelta = datetime.now(tzlocal())
+        for round_id in xrange(ROUNDS):
+            # Schedule PAUSE Stage
+            pause_stage = prepare_service_stage(
+                start=next_stage_timedelta.isoformat(),
+                stage="pause"
+            )
+            self.auction_document['stages'].append(pause_stage)
+            # Schedule BIDS Stages
+            for index in xrange(self.bidders_count):
+                bid_stage = prepare_bids_stage({
+                    'start': next_stage_timedelta.isoformat(),
+                    'bidder_id': '',
+                    'bidder_name': '',
+                    'amount': '0',
+                    'time': ''
+                })
+                self.auction_document['stages'].append(bid_stage)
+                next_stage_timedelta += timedelta(seconds=BIDS_SECONDS)
+
+        self.auction_document['stages'].append(
+            prepare_service_stage(
+                start=next_stage_timedelta.isoformat(),
+                type="pre_announcement"
+            )
+        )
+        self.auction_document['stages'].append(
+            prepare_service_stage(
+                start="",
+                type="announcement"
+            )
+        )
+        all_bids = deepcopy(self.auction_document["initial_bids"])
+        minimal_bids = []
+        for bid_info in self.bidders_data:
+            minimal_bids.append(get_latest_bid_for_bidder(
+                all_bids, str(bid_info['id'])
+            ))
+
+        minimal_bids = self.filter_bids_keys(sorting_by_amount(minimal_bids))
+        self.update_future_bidding_orders(minimal_bids)
+
+        self.auction_document['endDate'] = next_stage_timedelta.isoformat()
+        self.auction_document["current_stage"] = len(self.auction_document["stages"]) - 1
+
     def prepare_auction_stages(self):
         # Initital Bids
         self.auction_document['auction_type'] = 'meat' if self.features else 'default'
@@ -391,7 +465,6 @@ class Auction(object):
 
     def prepare_auction_document(self):
         self.generate_request_id()
-        self.get_auction_info(prepare=True)
         public_document = self.get_auction_document()
 
         self.auction_document = {}
@@ -399,6 +472,31 @@ class Auction(object):
             self.auction_document = {"_rev": public_document["_rev"]}
         if self.debug:
             self.auction_document['mode'] = 'test'
+
+        self.get_auction_info(prepare=True)
+        if self.worker_defaults.get('sandbox_mode', False):
+            submissionMethodDetails = self._auction_data['data'].get('submissionMethodDetails', '')
+            if submissionMethodDetails == 'quick(mode:no-auction)':
+                if self.lot_id:
+                    results = multiple_lots_tenders.post_results_data(self, with_auctions_results=False)
+                else:
+                    results = simple_tender.post_results_data(self, with_auctions_results=False)
+                return 0
+            elif submissionMethodDetails == 'quick(mode:fast-forward)':
+                if self.lot_id:
+                    self.auction_document = multiple_lots_tenders.prepare_auction_document(self)
+                else:
+                    self.auction_document = simple_tender.prepare_auction_document(self)
+                if not self.debug:
+                    self.set_auction_and_participation_urls()
+                self.get_auction_info()
+                self.prepare_auction_stages_fast_forward()
+                self.save_auction_document()
+                if self.lot_id:
+                    results = multiple_lots_tenders.post_results_data(self, with_auctions_results=False)
+                else:
+                    results = simple_tender.post_results_data(self, with_auctions_results=False)
+                return
 
         if self.lot_id:
             self.auction_document = multiple_lots_tenders.prepare_auction_document(self)
@@ -1017,21 +1115,6 @@ def main():
         auction.wait_to_end()
         SCHEDULER.shutdown()
     elif args.cmd == 'planning':
-        # if args.planning_procerude:
-        #     planning_procerude = args.planning_procerude
-        # else:
-        #     planning_procerude = worker_defaults.get('planning_procerude', PLANNING_FULL)
-        # if planning_procerude == PLANNING_FULL:
-        #     auction.prepare_auction_document()
-        #     if not auction.debug:
-        #         auction.prepare_tasks(
-        #             auction._auction_data["data"]['tenderID'],
-        #             auction.startDate
-        #         )
-        # elif planning_procerude == PLANNING_PARTIAL_DB:
-        #     auction.prepare_auction_document()
-        # elif planning_procerude == PLANNING_PARTIAL_CRON:
-        #     auction.prepare_systemd_units()
         auction.prepare_auction_document()
     elif args.cmd == 'announce':
         auction.post_announce()

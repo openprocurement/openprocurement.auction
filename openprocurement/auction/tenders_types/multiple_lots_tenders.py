@@ -182,17 +182,17 @@ def prepare_auction_and_participation_urls(self):
     return patch_data
 
 
-def post_results_data(self):
-    all_bids = self.auction_document["results"]
+def post_results_data(self, with_auctions_results=True):
     patch_data = {'data': {'bids': list(self._auction_data['data']['bids'])}}
-    for bid_index, bid in enumerate(self._auction_data['data']['bids']):
-        if bid.get('status', 'active') == 'active':
-            for lot_index, lot_bid in enumerate(bid['lotValues']):
-                if lot_bid['relatedLot'] == self.lot_id and lot_bid.get('status', 'active') == 'active':
-                    auction_bid_info = get_latest_bid_for_bidder(all_bids, bid["id"])
-                    patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["value"]["amount"] = auction_bid_info["amount"]
-                    patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["date"] = auction_bid_info["time"]
-                    break
+    if with_auctions_results:
+        for bid_index, bid in enumerate(self._auction_data['data']['bids']):
+            if bid.get('status', 'active') == 'active':
+                for lot_index, lot_bid in enumerate(bid['lotValues']):
+                    if lot_bid['relatedLot'] == self.lot_id and lot_bid.get('status', 'active') == 'active':
+                        auction_bid_info = get_latest_bid_for_bidder(self.auction_document["results"], bid["id"])
+                        patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["value"]["amount"] = auction_bid_info["amount"]
+                        patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["date"] = auction_bid_info["time"]
+                        break
 
     logger.info(
         "Approved data: {}".format(patch_data),
