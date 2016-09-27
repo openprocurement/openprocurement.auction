@@ -493,9 +493,12 @@ class Auction(object):
                 self.prepare_auction_stages_fast_forward()
                 self.save_auction_document()
                 if self.lot_id:
-                    results = multiple_lots_tenders.post_results_data(self, with_auctions_results=False)
+                    multiple_lots_tenders.post_results_data(self, with_auctions_results=False)
+                    multiple_lots_tenders.announce_results_data(self, None)
                 else:
-                    results = simple_tender.post_results_data(self, with_auctions_results=False)
+                    simple_tender.post_results_data(self, with_auctions_results=False)
+                    simple_tender.announce_results_data(self, None)
+                    self.save_auction_document()
                 return
 
         if self.lot_id:
