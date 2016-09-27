@@ -402,7 +402,7 @@ class Auction(object):
         self.update_future_bidding_orders(minimal_bids)
 
         self.auction_document['endDate'] = next_stage_timedelta.isoformat()
-        self.auction_document["current_stage"] = len(self.auction_document["stages"]) - 1
+        self.auction_document["current_stage"] = len(self.auction_document["stages"]) - 2
 
     def prepare_auction_stages(self):
         # Initital Bids
@@ -494,11 +494,10 @@ class Auction(object):
                 self.save_auction_document()
                 if self.lot_id:
                     multiple_lots_tenders.post_results_data(self, with_auctions_results=False)
-                    multiple_lots_tenders.announce_results_data(self, None)
                 else:
                     simple_tender.post_results_data(self, with_auctions_results=False)
                     simple_tender.announce_results_data(self, None)
-                    self.save_auction_document()
+                self.save_auction_document()
                 return
 
         if self.lot_id:
