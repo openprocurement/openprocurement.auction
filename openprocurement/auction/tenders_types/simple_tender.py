@@ -97,7 +97,8 @@ def get_auction_info(self, prepare=False):
                 self.bidders_data.append({
                     'id': bid['id'],
                     'date': bid['date'],
-                    'value': bid['value']
+                    'value': bid['value'],
+                    'owner': bid.get('owner', '')
                 })
                 if self.features:
                     self.bidders_features[bid["id"]] = bid["parameters"]

@@ -272,7 +272,8 @@ class Auction(object):
         self.audit = {
             "id": self.auction_doc_id,
             "auctionId": self._auction_data["data"].get("auctionID", ""),
-            "tender_id": self.tender_id,
+            "auction_id": self.tender_id,
+            "items": self._auction_data["data"].get("items", []),
             "timeline": {
                 "auction_start": {
                     "initial_bids": []
@@ -598,7 +599,8 @@ class Auction(object):
             audit_info = {
                 "bidder": bid["id"],
                 "date": bid["date"],
-                "amount": amount
+                "amount": amount,
+                "owner": bid.get('owner', '')
             }
             if self.features:
                 amount_features = cooking(

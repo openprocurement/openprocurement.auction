@@ -82,7 +82,8 @@ def get_auction_info(self, prepare=False):
                         bid_data = {
                             'id': bid['id'],
                             'date': lot_bid['date'],
-                            'value': lot_bid['value']
+                            'value': lot_bid['value'],
+                            'owner': bid.get('owner', '')
                         }
                         if 'parameters' in bid:
                             bid_data['parameters'] = [i for i in bid['parameters']
