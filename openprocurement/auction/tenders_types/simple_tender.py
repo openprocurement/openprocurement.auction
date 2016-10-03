@@ -205,14 +205,14 @@ def announce_results_data(self, results=None):
             request_id=self.request_id,
             session=self.session
         )
-    bids_information = dict([(bid["id"], bid["tenderers"])
+    bids_information = dict([(bid["id"], bid)
                              for bid in results["data"]["bids"]
                              if bid.get("status", "active") == "active"])
     for section in ['initial_bids', 'stages', 'results']:
         for index, stage in enumerate(self.auction_document[section]):
             if 'bidder_id' in stage and stage['bidder_id'] in bids_information:
-                self.auction_document[section][index]["label"]["uk"] = bids_information[stage['bidder_id']][0]["name"]
-                self.auction_document[section][index]["label"]["ru"] = bids_information[stage['bidder_id']][0]["name"]
-                self.auction_document[section][index]["label"]["en"] = bids_information[stage['bidder_id']][0]["name"]
+                self.auction_document[section][index]["label"]["uk"] = bids_information[stage['bidder_id']]["tenderers"][0]["name"]
+                self.auction_document[section][index]["label"]["ru"] = bids_information[stage['bidder_id']]["tenderers"][0]["name"]
+                self.auction_document[section][index]["label"]["en"] = bids_information[stage['bidder_id']]["tenderers"][0]["name"]
     self.auction_document["current_stage"] = (len(self.auction_document["stages"]) - 1)
     return bids_information

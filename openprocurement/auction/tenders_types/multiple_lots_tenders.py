@@ -224,18 +224,14 @@ def announce_results_data(self, results=None):
         if bid.get('status', 'active') == 'active':
             for lot_index, lot_bid in enumerate(bid['lotValues']):
                 if lot_bid['relatedLot'] == self.lot_id and lot_bid.get('status', 'active') == 'active':
-                    bid_data = {
-                        'id': bid['id'],
-                        'name': bid['tenderers'][0]['name']
-                    }
-                    bidders_data[bid['id']] = bid_data
+                    bidders_data[bid['id']] = bid
 
     for section in ['initial_bids', 'stages', 'results']:
         for index, stage in enumerate(self.auction_document[section]):
             if 'bidder_id' in stage and stage['bidder_id'] in bidders_data:
-                self.auction_document[section][index]["label"]["uk"] = bidders_data[stage['bidder_id']]["name"]
-                self.auction_document[section][index]["label"]["ru"] = bidders_data[stage['bidder_id']]["name"]
-                self.auction_document[section][index]["label"]["en"] = bidders_data[stage['bidder_id']]["name"]
+                self.auction_document[section][index]["label"]["uk"] = bidders_data[stage['bidder_id']]['tenderers'][0]['name']
+                self.auction_document[section][index]["label"]["ru"] = bidders_data[stage['bidder_id']]['tenderers'][0]['name']
+                self.auction_document[section][index]["label"]["en"] = bidders_data[stage['bidder_id']]['tenderers'][0]['name']
     self.auction_document["current_stage"] = (len(self.auction_document["stages"]) - 1)
 
-    return None
+    return bidders_data

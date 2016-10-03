@@ -318,7 +318,8 @@ class Auction(object):
                 'time': bid['time']
             }
             if approved:
-                bid_result_audit["identification"] = approved[bid['bidder_id']]
+                bid_result_audit["identification"] = approved[bid['bidder_id']].get('tenderers', [])
+                bid_result_audit["owner"] = approved[bid['bidder_id']].get('owner', '')
             self.audit['timeline']['results']['bids'].append(bid_result_audit)
 
     def convert_datetime(self, datetime_stamp):
@@ -599,8 +600,7 @@ class Auction(object):
             audit_info = {
                 "bidder": bid["id"],
                 "date": bid["date"],
-                "amount": amount,
-                "owner": bid.get('owner', '')
+                "amount": amount
             }
             if self.features:
                 amount_features = cooking(
