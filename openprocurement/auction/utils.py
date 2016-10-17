@@ -304,18 +304,6 @@ def calculate_hash(bidder_id, hash_secret):
     return digest.hexdigest()
 
 
-def get_lisener(port, host=''):
-    lisener = None
-    while lisener is None:
-        family, address = parse_address((host, port))
-        try:
-            lisener = WSGIServer.get_listener(address, family=family)
-        except Exception, e:
-            pass
-        port += 1
-    return lisener
-
-
 def get_database(config, master=True):
     if config['sentinel']:
         sentinal = Sentinel(config['sentinel'], socket_timeout=0.1,

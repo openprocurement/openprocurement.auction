@@ -11,7 +11,8 @@ import errno
 from datetime import datetime, timedelta
 from pytz import timezone
 from openprocurement.auction.forms import BidsForm
-from openprocurement.auction.utils import get_lisener, create_mapping, prepare_extra_journal_fields, get_bidder_id
+from openprocurement.auction.helpers.system import get_lisener
+from openprocurement.auction.utils import create_mapping, prepare_extra_journal_fields, get_bidder_id
 from openprocurement.auction.event_source import (
     sse, send_event, send_event_to_client, remove_client,
     push_timestamps_events, check_clients
