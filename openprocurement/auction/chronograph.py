@@ -57,7 +57,7 @@ class AuctionsChronograph(object):
     def init_web_app(self):
         self.web_application = chronograph_webapp
         self.web_application.chronograph = self
-        self.server = WSGIServer(get_lisener(config['main'].get('web_app')), self.web_application, spawn=100)
+        self.server = WSGIServer(get_lisener(self.config['main'].get('web_app')), self.web_application, spawn=100)
         self.server.start()
 
     def run(self):
