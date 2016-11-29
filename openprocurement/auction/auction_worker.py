@@ -149,12 +149,12 @@ class Auction(object):
             self._auction_data = auction_data
         else:
             self.debug = False
-        self.session = RequestsSession()
-        if self.worker_defaults.get('with_document_service', False):
-            self.session_ds = RequestsSession()
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
+        self.session = RequestsSession()
         self.worker_defaults = worker_defaults
+        if self.worker_defaults.get('with_document_service', False):
+            self.session_ds = RequestsSession()
         self._bids_data = {}
         self.db = Database(str(self.worker_defaults["COUCH_DATABASE"]),
                            session=Session(retry_delays=range(10)))
