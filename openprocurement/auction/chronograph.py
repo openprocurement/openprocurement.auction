@@ -88,7 +88,6 @@ def main():
         with open(params.config) as config_file_obj:
             config = load(config_file_obj.read())
         logging.config.dictConfig(config)
-
         AuctionsChronograph(config).run()
 
 

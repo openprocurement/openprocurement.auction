@@ -27,7 +27,7 @@ from .utils import (
     sorting_by_amount,
     get_latest_bid_for_bidder,
     sorting_start_bids_by_amount,
-    patch_tender_data,
+    make_request,
     delete_mapping,
     generate_request_id,
     filter_amount
@@ -150,6 +150,8 @@ class Auction(object):
         else:
             self.debug = False
         self.session = RequestsSession()
+        if self.worker_defaults.get('with_document_service', False):
+            self.session_ds = RequestsSession()
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
         self.worker_defaults = worker_defaults
@@ -920,16 +922,27 @@ class Auction(object):
         for item in bids:
             self.auction_document["results"].append(prepare_results_stage(**item))
 
-    def put_auction_data(self):
-        doc_id = None
+    def upload_audit_file_with_document_service(self, doc_id=None):
         files = {'file': ('audit_{}.yaml'.format(self.auction_doc_id),
                           yaml_dump(self.audit, default_flow_style=False))}
-        response = patch_tender_data(
-            self.tender_url + '/documents', files=files,
-            user=self.worker_defaults["TENDERS_API_TOKEN"],
-            method='post', request_id=self.request_id, session=self.session,
-            retry_count=2
-        )
+        ds_response = make_request(self.worker_defaults["DOCUMENT_SERVICE"]["url"],
+                                   files=files, method='post',
+                                   user=self.worker_defaults["DOCUMENT_SERVICE"]["username"],
+                                   password=self.worker_defaults["DOCUMENT_SERVICE"]["password"],
+                                   session=self.session_ds, retry_count=3)
+
+        if doc_id:
+            method = 'put'
+            path = self.tender_url + '/documents/{}'.format(doc_id)
+        else:
+            method = 'post'
+            path = self.tender_url + '/documents'
+
+        response = make_request(path, data=ds_response,
+                                user=self.worker_defaults["TENDERS_API_TOKEN"],
+                                method=method, request_id=self.request_id, session=self.session,
+                                retry_count=2
+                                )
         if response:
             doc_id = response["data"]['id']
             logger.info(
@@ -937,11 +950,47 @@ class Auction(object):
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_API_AUDIT_LOG_APPROVED}
             )
+            return doc_id
         else:
             logger.warning(
                 "Audit log not approved.",
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_API_AUDIT_LOG_NOT_APPROVED})
+
+    def upload_audit_file_without_document_service(self, doc_id=None):
+        files = {'file': ('audit_{}.yaml'.format(self.auction_doc_id),
+                          yaml_dump(self.audit, default_flow_style=False))}
+        if doc_id:
+            method = 'put'
+            path = self.tender_url + '/documents/{}'.format(doc_id)
+        else:
+            method = 'post'
+            path = self.tender_url + '/documents'
+
+        response = make_request(path, files=files,
+                                user=self.worker_defaults["TENDERS_API_TOKEN"],
+                                method=method, request_id=self.request_id, session=self.session,
+                                retry_count=2
+                                )
+        if response:
+            doc_id = response["data"]['id']
+            logger.info(
+                "Audit log approved. Document id: {}".format(doc_id),
+                extra={"JOURNAL_REQUEST_ID": self.request_id,
+                       "MESSAGE_ID": AUCTION_WORKER_API_AUDIT_LOG_APPROVED}
+            )
+            return doc_id
+        else:
+            logger.warning(
+                "Audit log not approved.",
+                extra={"JOURNAL_REQUEST_ID": self.request_id,
+                       "MESSAGE_ID": AUCTION_WORKER_API_AUDIT_LOG_NOT_APPROVED})
+
+    def put_auction_data(self):
+        if self.worker_defaults.get('with_document_service', False):
+            doc_id = self.upload_audit_file_with_document_service()
+        else:
+            doc_id = self.upload_audit_file_without_document_service()
 
         if self.lot_id:
             results = multiple_lots_tenders.post_results_data(self)
@@ -956,27 +1005,10 @@ class Auction(object):
 
             if doc_id and bids_information:
                 self.approve_audit_info_on_announcement(approved=bids_information)
-                files = {'file': ('audit_{}.yaml'.format(self.auction_doc_id),
-                                  yaml_dump(self.audit, default_flow_style=False))}
-                response = patch_tender_data(
-                    self.tender_url + '/documents/{}'.format(doc_id), files=files,
-                    user=self.worker_defaults["TENDERS_API_TOKEN"],
-                    method='put', request_id=self.request_id,
-                    retry_count=2, session=self.session
-                )
-                if response:
-                    doc_id = response["data"]['id']
-                    logger.info(
-                        "Audit log approved. Document id: {}".format(doc_id),
-                        extra={"JOURNAL_REQUEST_ID": self.request_id,
-                               "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_RESULT_APPROVED}
-                    )
+                if self.worker_defaults.get('with_document_service', False):
+                    doc_id = self.upload_audit_file_with_document_service(doc_id)
                 else:
-                    logger.warning(
-                        "Audit log not approved.",
-                        extra={"JOURNAL_REQUEST_ID": self.request_id,
-                               "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_RESULT_NOT_APPROVED}
-                    )
+                    doc_id = self.upload_audit_file_without_document_service(doc_id)
 
                 return True
         else:

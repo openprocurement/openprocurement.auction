@@ -25,7 +25,9 @@ from pkg_resources import parse_version
 from restkit.wrappers import BodyWrapper
 from barbecue import chef
 from fractions import Fraction
+from yaml import safe_dump as yaml_dump
 
+logger = logging.getLogger('Auction Worker')
 
 EXTRA_LOGGING_VALUES = {
     'X-Request-ID': 'JOURNAL_REQUEST_ID',
@@ -211,8 +213,8 @@ def get_tender_data(tender_url, user="", password="", retry_count=10,
     return None
 
 
-def patch_tender_data(tender_url, data=None, files=None, user="", password="",
-                      retry_count=10, method='patch', request_id=None, session=None):
+def make_request(url, data=None, files=None, user="", password="",
+                 retry_count=10, method='patch', request_id=None, session=None):
     if not session:
         session = requests.Session()
     if not request_id:
@@ -229,7 +231,7 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
         try:
             if data:
                 response = getattr(session, method)(
-                    tender_url,
+                    url,
                     auth=auth,
                     headers=extra_headers,
                     data=json.dumps(data),
@@ -237,7 +239,7 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
                 )
             else:
                 response = getattr(session, method)(
-                    tender_url,
+                    url,
                     auth=auth,
                     headers=extra_headers,
                     files=files,
@@ -246,33 +248,33 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
 
             if response.ok:
                 logging.info("Response from {}: status: {} text: {}".format(
-                    tender_url, response.status_code, response.text),
+                    url, response.status_code, response.text),
                     extra={"JOURNAL_REQUEST_ID": request_id}
                 )
                 return response.json()
             elif response.status_code == 412 and response.text:
-                get_tender_data(tender_url, user=user, password=password,
+                get_tender_data(url, user=user, password=password,
                                 request_id=request_id, session=session)
             elif response.status_code == 403:
                 logging.info("Response from {}: status: {} text: {}".format(
-                    tender_url, response.status_code, response.text),
+                    url, response.status_code, response.text),
                     extra={"JOURNAL_REQUEST_ID": request_id}
                 )
                 return None
             else:
                 logging.error("Response from {}: status: {} text: {}".format(
-                    tender_url, response.status_code, response.text),
+                    url, response.status_code, response.text),
                     extra={"JOURNAL_REQUEST_ID": request_id}
                 )
         except requests.exceptions.RequestException, e:
             logging.error("Request error {} error: {}".format(
-                tender_url,
+                url,
                 e),
                 extra={"JOURNAL_REQUEST_ID": request_id}
             )
         except Exception, e:
             logging.error("Unhandled error {} error: {}".format(
-                tender_url,
+                url,
                 e),
                 extra={"JOURNAL_REQUEST_ID": request_id}
             )

@@ -7,7 +7,7 @@ from ..utils import calculate_hash
 from ..utils import (
     get_tender_data,
     get_latest_bid_for_bidder,
-    patch_tender_data
+    make_request
 )
 from ..systemd_msgs_ids import(
     AUCTION_WORKER_API_AUCTION_CANCEL,
@@ -168,9 +168,9 @@ def prepare_auction_and_participation_urls(self):
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_SET_AUCTION_URLS})
     logger.info(repr(patch_data))
-    patch_tender_data(self.tender_url + '/auction', patch_data,
-                      user=self.worker_defaults["TENDERS_API_TOKEN"],
-                      request_id=self.request_id, session=self.session)
+    make_request(self.tender_url + '/auction', patch_data,
+                 user=self.worker_defaults["TENDERS_API_TOKEN"],
+                 request_id=self.request_id, session=self.session)
 
 
 def post_results_data(self, with_auctions_results=True):
@@ -188,7 +188,7 @@ def post_results_data(self, with_auctions_results=True):
         extra={"JOURNAL_REQUEST_ID": self.request_id,
                "MESSAGE_ID": AUCTION_WORKER_API_APPROVED_DATA}
     )
-    return patch_tender_data(
+    return make_request(
         self.tender_url + '/auction', data=data,
         user=self.worker_defaults["TENDERS_API_TOKEN"],
         method='post',
