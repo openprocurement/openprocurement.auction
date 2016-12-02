@@ -9,6 +9,13 @@ angular.module('auction')
 
     function prepare_info_timer_data(current_time, auction, bidder_id, Rounds) {
       var i;
+      if (auction.current_stage === -101) {
+        return {
+          'countdown': false,
+          'start_time': true,
+          'msg': 'Auction has not started and will be rescheduled'
+        };
+      }
       if (auction.current_stage === -100) {
         return {
           'countdown': false,
@@ -17,11 +24,21 @@ angular.module('auction')
         };
       }
       if (auction.current_stage === -1) {
-        return {
-          'countdown': ((new Date(auction.stages[0].start) - current_time) / 1000) + Math.random(),
-          'start_time': false,
-          'msg': 'until the auction starts'
-        };
+        var until_seconds = (new Date(auction.stages[0].start) - current_time) / 1000;
+        if (until_seconds > -120){
+          return {
+            'countdown': (until_seconds) + Math.random(),
+            'start_time': false,
+            'msg': 'until the auction starts'
+          };
+        }else{
+          return {
+            'countdown': false,
+            'start_time': true,
+            'msg': 'Auction has not started and will be rescheduled'
+          };
+        }
+
       }
       if ((auction.stages[auction.current_stage].type || '') == "pre_announcement") {
         var client_time = new Date();
@@ -96,17 +113,26 @@ angular.module('auction')
     }
 
     function prepare_progress_timer_data(current_time, auction) {
-      if ((((auction.stages[auction.current_stage] || {}).type || '').indexOf('announcement') != -1) || (auction.current_stage === -100)) {
+
+      if ((((auction.stages[auction.current_stage] || {}).type || '').indexOf('announcement') != -1) || (auction.current_stage === -100) || (auction.current_stage === -101)) {
         return {
           'countdown_seconds': false,
           'rounds_seconds': 0,
         };
       }
       if (auction.current_stage === -1) {
-        return {
-          'countdown_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000) + Math.random(),
-          'rounds_seconds': ((new Date(auction.stages[0].start) - current_time) / 1000),
-        };
+        var until_seconds = (new Date(auction.stages[0].start) - current_time) / 1000;
+        if (until_seconds > -120){
+          return {
+            'countdown_seconds': until_seconds + Math.random(),
+            'rounds_seconds': until_seconds,
+          };
+        }else{
+          return {
+            'countdown_seconds': false,
+            'rounds_seconds': 0,
+          };
+        }
       }
       return {
         'countdown_seconds': ((new Date(auction.stages[auction.current_stage + 1].start) - current_time) / 1000) + Math.random(),

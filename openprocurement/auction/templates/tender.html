@@ -91,8 +91,6 @@
                 </div>
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1" collapse="navbarCollapsed">
-
-
             </div>
             <!--/.nav-collapse -->
         </div>
@@ -252,7 +250,6 @@
                                     <span ng-if="(auction_doc.auction_type == 'meat') && (auction_doc.current_stage == (auction_doc.stages.length - 1))" tooltip="{{ auction_doc.stages[stage + $index + 1]['amount'] }} / {{ auction_doc.stages[stage + $index + 1]['coeficient']| eval_string }} = {{ auction_doc.stages[stage + $index + 1]['amount_features']|eval_string }}" tooltip-trigger="click" tooltip-placement="bottom">
                                         <span class="label-price">
                                             {{ auction_doc.stages[stage + $index + 1]['amount']|fraction }} <span class="amount-currency" ng-if="auction_doc.stages[stage + $index + 1]['amount']">{{ auction_doc.minimalStep.currency|translate }}</span> * {{ auction_doc.stages[stage + $index + 1]['coeficient']|fraction }}
-
                                         </span>
                                     </span>
 
@@ -265,7 +262,6 @@
                                 </span>
 
                                 <span class="label-price" ng-if="!auction_doc.stages[stage + $index + 1]['changed']">
-
                                     <span ng-if="auction_doc.stages[stage + $index + 1].bidder_id == bidder_id && auction_doc.auction_type == 'meat' && auction_doc.current_stage < (auction_doc.stages.length - 1)">
                                         <span class="label-price normalized-price">
                                             <span class="price-type" translate>Normilized Price</span>

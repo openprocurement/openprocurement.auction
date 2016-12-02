@@ -50,6 +50,7 @@
     Set To Dictionary    ${USERS['${CURRENT_USER}']}   last_amount=${amount}
     ${input_amount}=   Convert To String  ${amount}
     Input Text      id=bid-amount-input      ${input_amount}
+    Input Text      id=bid-amount-input      ${USERS['${CURRENT_USER}']['last_amount']}
     sleep  1s
     Capture Page Screenshot
     Highlight Elements With Text On Time    Зробити заявку

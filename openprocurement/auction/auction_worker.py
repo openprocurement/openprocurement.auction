@@ -27,7 +27,7 @@ from .utils import (
     sorting_by_amount,
     get_latest_bid_for_bidder,
     sorting_start_bids_by_amount,
-    patch_tender_data,
+    make_request,
     delete_mapping,
     generate_request_id,
     filter_amount
@@ -80,6 +80,7 @@ from .systemd_msgs_ids import(
     AUCTION_WORKER_SERVICE_END_AUCTION,
     AUCTION_WORKER_SERVICE_AUCTION_CANCELED,
     AUCTION_WORKER_SERVICE_AUCTION_STATUS_CANCELED,
+    AUCTION_WORKER_SERVICE_AUCTION_RESCHEDULE,
     AUCTION_WORKER_SERVICE_AUCTION_NOT_FOUND,
     AUCTION_WORKER_BIDS_LATEST_BID_CANCELLATION,
     AUCTION_WORKER_API_AUDIT_LOG_APPROVED,
@@ -148,10 +149,12 @@ class Auction(object):
             self._auction_data = auction_data
         else:
             self.debug = False
-        self.session = RequestsSession()
         self._end_auction_event = Event()
         self.bids_actions = BoundedSemaphore()
+        self.session = RequestsSession()
         self.worker_defaults = worker_defaults
+        if self.worker_defaults.get('with_document_service', False):
+            self.session_ds = RequestsSession()
         self._bids_data = {}
         self.db = Database(str(self.worker_defaults["COUCH_DATABASE"]),
                            session=Session(retry_delays=range(10)))
@@ -331,6 +334,80 @@ class Auction(object):
         else:
             simple_tender.get_auction_info(self, prepare)
 
+    def prepare_auction_stages_fast_forward(self):
+        self.auction_document['auction_type'] = 'meat' if self.features else 'default'
+        bids = deepcopy(self.bidders_data)
+        self.auction_document["initial_bids"] = []
+        bids_info = sorting_start_bids_by_amount(bids, features=self.features)
+        for index, bid in enumerate(bids_info):
+            amount = bid["value"]["amount"]
+            if self.features:
+                amount_features = cooking(
+                    amount,
+                    self.features, self.bidders_features[bid["id"]]
+                )
+                coeficient = self.bidders_coeficient[bid["id"]]
+
+            else:
+                coeficient = None
+                amount_features = None
+            initial_bid_stage = prepare_initial_bid_stage(
+                time=bid["date"] if "date" in bid else self.startDate,
+                bidder_id=bid["id"],
+                bidder_name=self.mapping[bid["id"]],
+                amount=amount,
+                coeficient=coeficient,
+                amount_features=amount_features
+            )
+            self.auction_document["initial_bids"].append(
+                initial_bid_stage
+            )
+        self.auction_document['stages'] = []
+        next_stage_timedelta = datetime.now(tzlocal())
+        for round_id in xrange(ROUNDS):
+            # Schedule PAUSE Stage
+            pause_stage = prepare_service_stage(
+                start=next_stage_timedelta.isoformat(),
+                stage="pause"
+            )
+            self.auction_document['stages'].append(pause_stage)
+            # Schedule BIDS Stages
+            for index in xrange(self.bidders_count):
+                bid_stage = prepare_bids_stage({
+                    'start': next_stage_timedelta.isoformat(),
+                    'bidder_id': '',
+                    'bidder_name': '',
+                    'amount': '0',
+                    'time': ''
+                })
+                self.auction_document['stages'].append(bid_stage)
+                next_stage_timedelta += timedelta(seconds=BIDS_SECONDS)
+
+        self.auction_document['stages'].append(
+            prepare_service_stage(
+                start=next_stage_timedelta.isoformat(),
+                type="pre_announcement"
+            )
+        )
+        self.auction_document['stages'].append(
+            prepare_service_stage(
+                start="",
+                type="announcement"
+            )
+        )
+        all_bids = deepcopy(self.auction_document["initial_bids"])
+        minimal_bids = []
+        for bid_info in self.bidders_data:
+            minimal_bids.append(get_latest_bid_for_bidder(
+                all_bids, str(bid_info['id'])
+            ))
+
+        minimal_bids = self.filter_bids_keys(sorting_by_amount(minimal_bids))
+        self.update_future_bidding_orders(minimal_bids)
+
+        self.auction_document['endDate'] = next_stage_timedelta.isoformat()
+        self.auction_document["current_stage"] = len(self.auction_document["stages"]) - 2
+
     def prepare_auction_stages(self):
         # Initital Bids
         self.auction_document['auction_type'] = 'meat' if self.features else 'default'
@@ -392,7 +469,6 @@ class Auction(object):
 
     def prepare_auction_document(self):
         self.generate_request_id()
-        self.get_auction_info(prepare=True)
         public_document = self.get_auction_document()
 
         self.auction_document = {}
@@ -400,6 +476,32 @@ class Auction(object):
             self.auction_document = {"_rev": public_document["_rev"]}
         if self.debug:
             self.auction_document['mode'] = 'test'
+
+        if self.worker_defaults.get('sandbox_mode', False):
+            submissionMethodDetails = self._auction_data['data'].get('submissionMethodDetails', '')
+            if submissionMethodDetails == 'quick(mode:no-auction)':
+                if self.lot_id:
+                    results = multiple_lots_tenders.post_results_data(self, with_auctions_results=False)
+                else:
+                    results = simple_tender.post_results_data(self, with_auctions_results=False)
+                return 0
+            elif submissionMethodDetails == 'quick(mode:fast-forward)':
+                if self.lot_id:
+                    self.auction_document = multiple_lots_tenders.prepare_auction_document(self)
+                else:
+                    self.auction_document = simple_tender.prepare_auction_document(self)
+                if not self.debug:
+                    self.set_auction_and_participation_urls()
+                self.get_auction_info()
+                self.prepare_auction_stages_fast_forward()
+                self.save_auction_document()
+                if self.lot_id:
+                    multiple_lots_tenders.post_results_data(self, with_auctions_results=False)
+                else:
+                    simple_tender.post_results_data(self, with_auctions_results=False)
+                    simple_tender.announce_results_data(self, None)
+                self.save_auction_document()
+                return
 
         if self.lot_id:
             self.auction_document = multiple_lots_tenders.prepare_auction_document(self)
@@ -740,7 +842,7 @@ class Auction(object):
         logger.debug(
             "Clear mapping", extra={"JOURNAL_REQUEST_ID": self.request_id}
         )
-        delete_mapping(self.worker_defaults["REDIS_URL"],
+        delete_mapping(self.worker_defaults,
                        self.auction_doc_id)
 
         start_stage, end_stage = self.get_round_stages(ROUNDS)
@@ -821,16 +923,27 @@ class Auction(object):
         for item in bids:
             self.auction_document["results"].append(prepare_results_stage(**item))
 
-    def put_auction_data(self):
-        doc_id = None
+    def upload_audit_file_with_document_service(self, doc_id=None):
         files = {'file': ('audit_{}.yaml'.format(self.auction_doc_id),
                           yaml_dump(self.audit, default_flow_style=False))}
-        response = patch_tender_data(
-            self.tender_url + '/documents', files=files,
-            user=self.worker_defaults["TENDERS_API_TOKEN"],
-            method='post', request_id=self.request_id, session=self.session,
-            retry_count=2
-        )
+        ds_response = make_request(self.worker_defaults["DOCUMENT_SERVICE"]["url"],
+                                   files=files, method='post',
+                                   user=self.worker_defaults["DOCUMENT_SERVICE"]["username"],
+                                   password=self.worker_defaults["DOCUMENT_SERVICE"]["password"],
+                                   session=self.session_ds, retry_count=3)
+
+        if doc_id:
+            method = 'put'
+            path = self.tender_url + '/documents/{}'.format(doc_id)
+        else:
+            method = 'post'
+            path = self.tender_url + '/documents'
+
+        response = make_request(path, data=ds_response,
+                                user=self.worker_defaults["TENDERS_API_TOKEN"],
+                                method=method, request_id=self.request_id, session=self.session,
+                                retry_count=2
+                                )
         if response:
             doc_id = response["data"]['id']
             logger.info(
@@ -838,11 +951,47 @@ class Auction(object):
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_API_AUDIT_LOG_APPROVED}
             )
+            return doc_id
         else:
             logger.warning(
                 "Audit log not approved.",
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_API_AUDIT_LOG_NOT_APPROVED})
+
+    def upload_audit_file_without_document_service(self, doc_id=None):
+        files = {'file': ('audit_{}.yaml'.format(self.auction_doc_id),
+                          yaml_dump(self.audit, default_flow_style=False))}
+        if doc_id:
+            method = 'put'
+            path = self.tender_url + '/documents/{}'.format(doc_id)
+        else:
+            method = 'post'
+            path = self.tender_url + '/documents'
+
+        response = make_request(path, files=files,
+                                user=self.worker_defaults["TENDERS_API_TOKEN"],
+                                method=method, request_id=self.request_id, session=self.session,
+                                retry_count=2
+                                )
+        if response:
+            doc_id = response["data"]['id']
+            logger.info(
+                "Audit log approved. Document id: {}".format(doc_id),
+                extra={"JOURNAL_REQUEST_ID": self.request_id,
+                       "MESSAGE_ID": AUCTION_WORKER_API_AUDIT_LOG_APPROVED}
+            )
+            return doc_id
+        else:
+            logger.warning(
+                "Audit log not approved.",
+                extra={"JOURNAL_REQUEST_ID": self.request_id,
+                       "MESSAGE_ID": AUCTION_WORKER_API_AUDIT_LOG_NOT_APPROVED})
+
+    def put_auction_data(self):
+        if self.worker_defaults.get('with_document_service', False):
+            doc_id = self.upload_audit_file_with_document_service()
+        else:
+            doc_id = self.upload_audit_file_without_document_service()
 
         if self.lot_id:
             results = multiple_lots_tenders.post_results_data(self)
@@ -857,27 +1006,10 @@ class Auction(object):
 
             if doc_id and bids_information:
                 self.approve_audit_info_on_announcement(approved=bids_information)
-                files = {'file': ('audit_{}.yaml'.format(self.auction_doc_id),
-                                  yaml_dump(self.audit, default_flow_style=False))}
-                response = patch_tender_data(
-                    self.tender_url + '/documents/{}'.format(doc_id), files=files,
-                    user=self.worker_defaults["TENDERS_API_TOKEN"],
-                    method='put', request_id=self.request_id,
-                    retry_count=2, session=self.session
-                )
-                if response:
-                    doc_id = response["data"]['id']
-                    logger.info(
-                        "Audit log approved. Document id: {}".format(doc_id),
-                        extra={"JOURNAL_REQUEST_ID": self.request_id,
-                               "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_RESULT_APPROVED}
-                    )
+                if self.worker_defaults.get('with_document_service', False):
+                    doc_id = self.upload_audit_file_with_document_service(doc_id)
                 else:
-                    logger.warning(
-                        "Audit log not approved.",
-                        extra={"JOURNAL_REQUEST_ID": self.request_id,
-                               "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_RESULT_NOT_APPROVED}
-                    )
+                    doc_id = self.upload_audit_file_without_document_service(doc_id)
 
                 return True
         else:
@@ -905,6 +1037,17 @@ class Auction(object):
             self.auction_document["endDate"] = datetime.now(tzlocal()).isoformat()
             logger.info("Change auction {} status to 'canceled'".format(self.auction_doc_id),
                         extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE_AUCTION_STATUS_CANCELED})
+            self.save_auction_document()
+        else:
+            logger.info("Auction {} not found".format(self.auction_doc_id),
+                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE_AUCTION_NOT_FOUND})
+
+    def reschedule_auction(self):
+        self.generate_request_id()
+        if self.get_auction_document():
+            logger.info("Auction {} has not started and will be rescheduled".format(self.auction_doc_id),
+                        extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE_AUCTION_RESCHEDULE})
+            self.auction_document["current_stage"] = -101
             self.save_auction_document()
         else:
             logger.info("Auction {} not found".format(self.auction_doc_id),
@@ -1007,30 +1150,17 @@ def main():
         auction.wait_to_end()
         SCHEDULER.shutdown()
     elif args.cmd == 'planning':
-        if args.planning_procerude:
-            planning_procerude = args.planning_procerude
-        else:
-            planning_procerude = worker_defaults.get('planning_procerude', PLANNING_FULL)
-        if planning_procerude == PLANNING_FULL:
-            auction.prepare_auction_document()
-            if not auction.debug:
-                auction.prepare_tasks(
-                    auction.auction_document['auctionID'],
-                    auction.startDate
-                )
-        elif planning_procerude == PLANNING_PARTIAL_DB:
-            auction.prepare_auction_document()
-        elif planning_procerude == PLANNING_PARTIAL_CRON:
-            auction.prepare_systemd_units()
+        auction.prepare_auction_document()
     elif args.cmd == 'announce':
         auction.post_announce()
     elif args.cmd == 'activate':
         auction.activate_systemd_unit()
     elif args.cmd == 'cancel':
         auction.cancel_auction()
+    elif args.cmd == 'reschedule':
+        auction.reschedule_auction()
     elif args.cmd == 'cleanup':
         cleanup()
-
 
 
 ##############################################################

@@ -86,6 +86,25 @@ angular.module('auction').controller('AuctionController', [
       $scope.lang = $translate.storage().get($translate.storageKey()) || $scope.lang;
     }
 
+    /*      Time stopped events    */
+    $rootScope.$on('timer-stopped', function(event) {
+      if (($scope.auction_doc) && (event.targetScope.timerid == 1) && ($scope.auction_doc.current_stage == -1)) {
+        if (!$scope.auction_not_started){
+          $scope.auction_not_started = $timeout(function() {
+            if($scope.auction_doc.current_stage === -1){
+              growl.warning('Please wait for the auction start.', {ttl: 120000, disableCountDown: true});
+              $log.info({message: "Please wait for the auction start."});
+            }
+          }, 10000);
+        }
+
+        $timeout(function() {
+          if($scope.auction_doc.current_stage === -1){
+            $scope.sync_times_with_server();
+          }
+        }, 120000);
+      }
+    })
     /*      Time tick events    */
     $rootScope.$on('timer-tick', function(event) {
       if (($scope.auction_doc) && (event.targetScope.timerid == 1)) {
@@ -511,7 +530,6 @@ angular.module('auction').controller('AuctionController', [
           });
       }
     };
-
     $scope.edit_bid = function() {
       $scope.allow_bidding = true;
     };

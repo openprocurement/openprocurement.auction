@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2.0.4.dev5+eauctions'
+version = '2.1.0.dev0+eauctions'
 
 
 setup(name='openprocurement.auction',
@@ -50,7 +50,9 @@ setup(name='openprocurement.auction',
           'pyopenssl',
           'ndg-httpsclient',
           'pyasn1',
-          'openprocurement_client'
+          'openprocurement_client',
+          'python-consul',
+          'retrying',
       ],
       extras_require={
           'test': [
@@ -66,6 +68,7 @@ setup(name='openprocurement.auction',
           'console_scripts': [
               'auction_worker = openprocurement.auction.auction_worker:main',
               'auctions_data_bridge = openprocurement.auction.databridge:main',
+              'auctions_chronograph = openprocurement.auction.chronograph:main',
               'auction_test = openprocurement.auction.tests.main:main [test]'
           ],
           'paste.app_factory': [

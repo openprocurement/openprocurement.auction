@@ -10,7 +10,6 @@ from datetime import datetime
 from design import sync_design, endDate_view
 from flask import Flask, render_template, request, abort, url_for, redirect, Response
 from flask.ext.assets import Environment, Bundle
-from flask_redis import Redis
 from http_parser.util import IOrderedDict
 from json import dumps, loads
 from memoize import Memoizer
@@ -22,8 +21,13 @@ from sse import Sse as PySse
 from urlparse import urlparse, urljoin
 from werkzeug.exceptions import NotFound
 
-from .utils import StreamWrapper, unsuported_browser
+from .utils import StreamWrapper, get_mapping
 from systemd.journal import send
+
+LIMIT_REPLICATIONS_LIMIT_FUNCTIONS = {
+    'any': any,
+    'all': all
+}
 
 def start_response_decorated(start_response_decorated):
     def inner(status, headers):
@@ -155,7 +159,6 @@ def auction_url(auction_doc_id):
         'tender.html',
         db_url=auctions_server.config.get('EXT_COUCH_DB'),
         auction_doc_id=auction_doc_id,
-        unsupported_browser=unsuported_browser(request),
         request_base=request_base
     )
 
@@ -202,7 +205,12 @@ def log():
 def health():
     data = auctions_server.couch_server.tasks()
     response = Response(dumps(data))
-    if not(data and data[0]['progress'] > 90):
+    progress = [
+        task['progress'] > auctions_server.config.get('limit_replications_progress', 99)
+        for task in data if 'type' in task and task['type'] == 'replication'
+    ]
+    limit_replications_func = LIMIT_REPLICATIONS_LIMIT_FUNCTIONS.get(auctions_server.config.get('limit_replications_func', 'any'))
+    if not(progress and limit_replications_func(progress)):
         response.status_code = 503
     return response
 
@@ -237,8 +245,8 @@ def auctions_proxy(auction_doc_id, path):
     auctions_server.logger.debug('Auction_doc_id: {}'.format(auction_doc_id))
     proxy_path = auctions_server.proxy_mappings.get(
         str(auction_doc_id),
-        auctions_server.redis.get,
-        (str(auction_doc_id), ), max_age=60
+        get_mapping,
+        (auctions_server.config['REDIS'], str(auction_doc_id), False), max_age=60
     )
     auctions_server.logger.debug('Proxy path: {}'.format(proxy_path))
     if proxy_path:
@@ -298,7 +306,11 @@ def auth_couch_server_proxy(path):
 
 
 def make_auctions_app(global_conf,
-                      redis_url='redis://localhost:7777/0',
+                      redis_url='redis://localhost:9002/1',
+                      redis_password='',
+                      redis_database='',
+                      sentinel_cluster_name='',
+                      sentinels='',
                       external_couch_url='http://localhost:5000/auction',
                       internal_couch_url='http://localhost:9000/',
                       proxy_internal_couch_url='http://localhost:9000/',
@@ -308,7 +320,9 @@ def make_auctions_app(global_conf,
                       preferred_url_scheme='http',
                       debug=False,
                       auto_build=False,
-                      event_source_connection_limit=1000
+                      event_source_connection_limit=1000,
+                      limit_replications_progress=99,
+                      limit_replications_func='any'
                       ):
     """
     [app:main]
@@ -319,13 +333,24 @@ def make_auctions_app(global_conf,
     auctions_db = auction
     timezone = Europe/Kiev
     """
+
     auctions_server.proxy_connection_pool = ConnectionPool(
         factory=Connection, max_size=20, backend="gevent"
     )
     auctions_server.proxy_mappings = Memoizer({})
     auctions_server.event_sources_pool = deque([])
     auctions_server.config['PREFERRED_URL_SCHEME'] = preferred_url_scheme
-    auctions_server.config['REDIS_URL'] = redis_url
+    auctions_server.config['limit_replications_progress'] = float(limit_replications_progress)
+    auctions_server.config['limit_replications_func'] = limit_replications_func
+
+    auctions_server.config['REDIS'] = {
+        'redis': redis_url,
+        'redis_password': redis_password,
+        'redis_database': redis_database,
+        'sentinel_cluster_name': sentinel_cluster_name,
+        'sentinel': loads(sentinels)
+    }
+
     auctions_server.config['event_source_connection_limit'] = int(event_source_connection_limit)
     auctions_server.config['EXT_COUCH_DB'] = urljoin(
         external_couch_url,
@@ -357,7 +382,7 @@ def make_auctions_app(global_conf,
     auctions_server.config['PROXY_COUCH_URL'] = proxy_internal_couch_url
     auctions_server.config['COUCH_DB'] = auctions_db
     auctions_server.config['TIMEZONE'] = tz(timezone)
-    auctions_server.redis = Redis(auctions_server)
+
     auctions_server.couch_server = Server(
         auctions_server.config.get('INT_COUCH_URL'),
         session=Session(retry_delays=range(10))
