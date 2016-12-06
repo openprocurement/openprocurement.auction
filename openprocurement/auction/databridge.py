@@ -1,6 +1,7 @@
 from gevent import monkey
 monkey.patch_all()
 
+from openprocurement_client.sync import get_resource_items
 
 try:
     import urllib3.contrib.pyopenssl
@@ -21,6 +22,7 @@ from urlparse import urljoin
 from apscheduler.schedulers.gevent import GeventScheduler
 from gevent.queue import Queue, Empty
 from gevent.subprocess import call, check_call
+from requests.exceptions import ConnectionError
 
 from couchdb import Database, Session
 from dateutil.tz import tzlocal
@@ -44,7 +46,6 @@ from systemd_msgs_ids import (
     DATA_BRIDGE_RE_PLANNING_LOT_ALREADY_PLANNED,
     DATA_BRIDGE_RE_PLANNING_FINISHED
 )
-from openprocurement.auction.helpers.sync import get_tenders
 from yaml import load
 from .design import endDate_view, startDate_view, PreAnnounce_view
 from .utils import do_until_success
@@ -64,7 +65,7 @@ class AuctionsDataBridge(object):
     def __init__(self, config, activate=False):
         super(AuctionsDataBridge, self).__init__()
         self.config = config
-        self.tenders_ids_list = []
+        self.resource_ids_list = []
         self.activate = activate
         self.tz = tzlocal()
 
@@ -78,10 +79,13 @@ class AuctionsDataBridge(object):
     def config_get(self, name):
         return self.config.get('main').get(name)
 
-    def get_teders_list(self, re_planning=False):
-        for item in get_tenders(host=self.config_get('tenders_api_server'),
-                                version=self.config_get('tenders_api_version'),
-                                key='', extra_params={'opt_fields': 'status,auctionPeriod,lots', 'mode': '_all_'}):
+    def get_resource_items_list(self, re_planning=False):
+
+        for item in get_resource_items(
+                host=self.config_get('resource_api_server'),
+                version=self.config_get('resource_api_version'),
+                resource=self.config_get('resource_name'),
+                key='', extra_params={'opt_fields': 'status,auctionPeriod', 'mode': '_all_'}):
             if item['status'] == "active.auction":
                 if 'lots' not in item and 'auctionPeriod' in item and 'startDate' in item['auctionPeriod'] \
                         and 'endDate' not in item['auctionPeriod']:
@@ -96,7 +100,7 @@ class AuctionsDataBridge(object):
                         logger.info("Tender {} start date in past. Skip it for planning".format(item['id']),
                                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_TENDER_SKIP})
                         continue
-                    if re_planning and item['id'] in self.tenders_ids_list:
+                    if re_planning and item['id'] in self.resource_ids_list:
                         logger.info("Tender {} already planned while replanning".format(item['id']),
                                     extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_TENDER_ALREADY_PLANNED})
                         continue
@@ -123,7 +127,7 @@ class AuctionsDataBridge(object):
                                 )
                                 continue
                             auction_id = MULTILOT_AUCTION_ID.format(item, lot)
-                            if re_planning and auction_id in self.tenders_ids_list:
+                            if re_planning and auction_id in self.resource_ids_list:
                                 logger.info("Tender {} already planned while replanning".format(auction_id),
                                             extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_LOT_ALREADY_PLANNED})
                                 continue
@@ -176,13 +180,17 @@ class AuctionsDataBridge(object):
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_START_BRIDGE})
         logger.info('Start data sync...',
                     extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_DATA_SYNC})
-        for planning_data in self.get_teders_list():
-            if len(planning_data) == 1:
-                logger.info('Tender {0} selected for planning'.format(*planning_data))
-                self.start_auction_worker_cmd('planning', planning_data[0])
-            elif len(planning_data) == 2:
-                logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
-                self.start_auction_worker_cmd('planning', planning_data[0], lot_id=planning_data[1])
+        try:
+            for planning_data in self.get_resource_items_list():
+                if len(planning_data) == 1:
+                    logger.info('Tender {0} selected for planning'.format(*planning_data))
+                    self.start_auction_worker_cmd('planning', planning_data[0])
+                elif len(planning_data) == 2:
+                    logger.info('Lot {1} of tender {0} selected for planning'.format(*planning_data))
+                    self.start_auction_worker_cmd('planning', planning_data[0], lot_id=planning_data[1])
+        except ConnectionError as e:
+            logger.error("Failed connect to api resource: {}".format(self.config_get('resource_api_server')))
+            sleep(10)
 
     def run_re_planning(self):
         pass

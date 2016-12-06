@@ -45,6 +45,7 @@ from .templates import (
 from .tenders_types import simple_tender, multiple_lots_tenders
 
 from yaml import safe_dump as yaml_dump
+from yaml import load as yaml_load
 from barbecue import cooking
 from fractions import Fraction
 
@@ -137,9 +138,11 @@ class Auction(object):
         else:
             self.auction_doc_id = tender_id
         self.tender_url = urljoin(
-            worker_defaults["TENDERS_API_URL"],
-            '/api/{0}/auctions/{1}'.format(
-                worker_defaults["TENDERS_API_VERSION"], tender_id
+            worker_defaults["resource_api_server"],
+            '/api/{0}/{1}/{2}'.format(
+                worker_defaults["resource_api_version"],
+                worker_defaults["resource_name"],
+                tender_id
             )
         )
         self.activate = activate
@@ -477,6 +480,7 @@ class Auction(object):
         if self.debug:
             self.auction_document['mode'] = 'test'
 
+        self.get_auction_info(prepare=True)
         if self.worker_defaults.get('sandbox_mode', False):
             submissionMethodDetails = self._auction_data['data'].get('submissionMethodDetails', '')
             if submissionMethodDetails == 'quick(mode:no-auction)':
@@ -940,7 +944,7 @@ class Auction(object):
             path = self.tender_url + '/documents'
 
         response = make_request(path, data=ds_response,
-                                user=self.worker_defaults["TENDERS_API_TOKEN"],
+                                user=self.worker_defaults["resource_api_token"],
                                 method=method, request_id=self.request_id, session=self.session,
                                 retry_count=2
                                 )
@@ -969,7 +973,7 @@ class Auction(object):
             path = self.tender_url + '/documents'
 
         response = make_request(path, files=files,
-                                user=self.worker_defaults["TENDERS_API_TOKEN"],
+                                user=self.worker_defaults["resource_api_token"],
                                 method=method, request_id=self.request_id, session=self.session,
                                 retry_count=2
                                 )
@@ -1074,24 +1078,24 @@ def cleanup():
                                  'stop', filename])
                     logger.info(
                         "systemctl stop {} - return code: {}".format(filename, code),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_STOP_AUCTION_TIMER}
+                        extra={'JOURNAL_AUCTION_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_STOP_AUCTION_TIMER}
                     )
 
                     code = call(['/usr/bin/systemctl', '--user',
                                  'disable', filename, '--no-reload'])
                     logger.info(
                         "systemctl disable {} --no-reload - return code: {}".format(filename, code),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_DISABLE_AUCTION_TIMER}
+                        extra={'JOURNAL_AUCTION_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_DISABLE_AUCTION_TIMER}
                     )
                     logger.info(
                         'Remove systemd file: {}'.format(full_filename),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_TIMER}
+                        extra={'JOURNAL_AUCTION_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_TIMER}
                     )
                     os.remove(full_filename)
                     full_filename = full_filename[:-5] + 'service'
                     logger.info(
                         'Remove systemd file: {}'.format(full_filename),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_SERVICE}
+                        extra={'JOURNAL_AUCTION_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_SERVICE}
                     )
                     os.remove(full_filename)
     code = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
@@ -1109,8 +1113,8 @@ def main():
     parser.add_argument('auction_worker_config', type=str,
                         help='Auction Worker Configuration File')
     parser.add_argument('--auction_info', type=str, help='Auction File')
-    parser.add_argument('--with_api_version', type=str, help='Tender Api Version')
-    parser.add_argument('--lot', type=str, help='Specify lot in tender', default=None)
+    parser.add_argument('--with_api_version', type=str, help='Resource Api Version')
+    parser.add_argument('--lot', type=str, help='Specify lot in resource', default=None)
     parser.add_argument('--planning_procerude', type=str, help='Override planning procerude',
                         default=None, choices=[None, PLANNING_FULL, PLANNING_PARTIAL_DB, PLANNING_PARTIAL_CRON])
     parser.add_argument('--activate',  action='store_true', default=False,
@@ -1124,15 +1128,16 @@ def main():
         auction_data = None
 
     if os.path.isfile(args.auction_worker_config):
-        worker_defaults = json.load(open(args.auction_worker_config))
+        worker_defaults = yaml_load(open(args.auction_worker_config))
         if args.with_api_version:
             worker_defaults['TENDERS_API_VERSION'] = args.with_api_version
         if args.cmd != 'cleanup':
             worker_defaults['handlers']['journal']['TENDER_ID'] = args.auction_doc_id
             if args.lot:
                 worker_defaults['handlers']['journal']['TENDER_LOT_ID'] = args.lot
-        for key in ('TENDERS_API_VERSION', 'TENDERS_API_URL',):
-            worker_defaults['handlers']['journal'][key] = worker_defaults[key]
+
+        worker_defaults['handlers']['journal']['TENDERS_API_VERSION'] = worker_defaults['resource_api_version']
+        worker_defaults['handlers']['journal']['TENDERS_API_URL'] =  worker_defaults['resource_api_server']
 
         logging.config.dictConfig(worker_defaults)
     else:

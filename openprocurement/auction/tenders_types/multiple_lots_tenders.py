@@ -178,7 +178,7 @@ def prepare_auction_and_participation_urls(self):
                        "MESSAGE_ID": AUCTION_WORKER_SET_AUCTION_URLS})
     logger.info(repr(patch_data))
     make_request(self.tender_url + '/auction/{}'.format(self.lot_id), patch_data,
-                 user=self.worker_defaults["TENDERS_API_TOKEN"],
+                 user=self.worker_defaults["resource_api_token"],
                  request_id=self.request_id, session=self.session)
     return patch_data
 
@@ -208,7 +208,7 @@ def post_results_data(self, with_auctions_results=True):
     )
     results = make_request(
         self.tender_url + '/auction/{}'.format(self.lot_id), data=patch_data,
-        user=self.worker_defaults["TENDERS_API_TOKEN"],
+        user=self.worker_defaults["resource_api_token"],
         method='post',
         request_id=self.request_id, session=self.session
     )
