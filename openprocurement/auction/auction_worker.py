@@ -1130,7 +1130,7 @@ def main():
     if os.path.isfile(args.auction_worker_config):
         worker_defaults = yaml_load(open(args.auction_worker_config))
         if args.with_api_version:
-            worker_defaults['TENDERS_API_VERSION'] = args.with_api_version
+            worker_defaults['resource_api_version'] = args.with_api_version
         if args.cmd != 'cleanup':
             worker_defaults['handlers']['journal']['TENDER_ID'] = args.auction_doc_id
             if args.lot:
