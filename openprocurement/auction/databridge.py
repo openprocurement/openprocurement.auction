@@ -41,7 +41,7 @@ from systemd_msgs_ids import (
     DATA_BRIDGE_RE_PLANNING_LOT_ALREADY_PLANNED,
     DATA_BRIDGE_RE_PLANNING_FINISHED
 )
-from openprocurement.auction.helpers.sync import get_tenders
+from openprocurement_client.sync import get_tenders
 from yaml import load
 from .design import endDate_view, startDate_view, PreAnnounce_view
 from .utils import do_until_success
