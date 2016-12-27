@@ -13,7 +13,7 @@ def free_memory():
             sline = i.split()
             if str(sline[0]) in ('MemTotal:', 'SwapTotal:'):
                 ret['total'] += int(sline[1])
-            elif str(sline[0]) in ('MemFree:', 'MemAvailable:', 'SwapFree:'):
+            elif str(sline[0]) in ('MemAvailable:', 'SwapFree:'):
                 ret['free'] += int(sline[1])
     return float(ret['free']) / ret['total']
 
