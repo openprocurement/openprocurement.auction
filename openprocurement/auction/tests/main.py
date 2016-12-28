@@ -12,9 +12,6 @@ import json
 from dateutil.tz import tzlocal
 import sys, signal
 
-from chromedriver import CHROMEDRV_PATH
-
-sys.path.append(CHROMEDRV_PATH)
 from mock import patch as mock_patch
 
 
