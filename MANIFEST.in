@@ -12,6 +12,7 @@ graft openprocurement/auction/static/vendor/angular
 graft openprocurement/auction/static/vendor/angular-bootstrap
 graft openprocurement/auction/static/vendor/angular-translate-storage-local
 graft openprocurement/auction/static/vendor/angular-translate-storage-cookie
+graft openprocurement/auction/static/vendor/angular-gtm-logger
 graft openprocurement/auction/static/vendor/angular-cookies
 graft openprocurement/auction/static/vendor/bootstrap/dist
 graft openprocurement/auction/static/vendor/bootstrap/dist
