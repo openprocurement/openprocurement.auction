@@ -12,7 +12,7 @@
     {% endassets %}
     {% raw %}
     <title ng-bind-template="{{ time_in_title }} {{ info_timer.msg|translate}} - {{ title_ending }}" ng-if="!info_timer.start_time" >
-        Аукціон
+      Licitaţie
     </title>
     <title ng-bind-template="{{ $root.info_timer.msg|translate}} {{ format_date($root.info_timer.start_time, lang,'Do MMMM YYYY') }} {{'at'|translate}} {{ format_date($root.info_timer.start_time, lang,'HH:mm') }} - {{ title_ending }}" ng-if="(!$root.info_timer.countdown)&&($root.info_timer.start_time != true)" ></title>
     <title ng-bind-template="{{ $root.info_timer.msg|translate}} - {{ title_ending }}" ng-if="(!$root.info_timer.countdown)&&(info_timer.start_time == true)" ></title>
@@ -499,7 +499,7 @@
                 <div class="list-group-item-text">
                 <div class="btn-group">
                   <button type="button" ng-click="changeLanguage('en')" class="btn btn-default navbar-btn" ng-class="{'active': lang == 'en'}">English</button>
-                  <button type="button" ng-click="changeLanguage('ro')" class="btn btn-default navbar-btn" ng-class="{'active': lang == 'ro'}">Українська</button>
+                  <button type="button" ng-click="changeLanguage('ro')" class="btn btn-default navbar-btn" ng-class="{'active': lang == 'ro'}">Românesc</button>
                   <button type="button" ng-click="changeLanguage('ru')" class="btn btn-default navbar-btn" ng-class="{'active': lang == 'ru'}">Русский</button>
                 </div>
                 </div>
