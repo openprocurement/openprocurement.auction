@@ -669,7 +669,7 @@ angular.module('auction').controller('AuctionController', [
         if (AuctionUtils.UnsupportedBrowser()) {
             $timeout(function() {
               $scope.unsupported_browser = true;
-              growl.error($filter('translate')('Your browser is out of date, and this site may not work properly.') + '<a style="color: rgb(234, 4, 4); text-decoration: underline;" href="http://browser-update.org/uk/update.html">' + $filter('translate')('Learn how to update your browser.') + '</a>', {
+              growl.error($filter('translate')('Your browser is out of date, and this site may not work properly.') + '<a style="color: rgb(234, 4, 4); text-decoration: underline;" href="http://browser-update.org/en/update.html">' + $filter('translate')('Learn how to update your browser.') + '</a>', {
                   ttl: -1,
                   disableCountDown: true
                 });

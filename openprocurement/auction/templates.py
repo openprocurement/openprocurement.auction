@@ -10,7 +10,7 @@ def prepare_initial_bid_stage(bidder_name="", bidder_id="", time="",
     stage = dict(bidder_id=bidder_id, time=str(time))
     stage["label"] = dict(
         en="Bidder #{}".format(bidder_name),
-        uk="Учасник №{}".format(bidder_name),
+        ro="Licitant №{}".format(bidder_name),
         ru="Участник №{}".format(bidder_name)
     )
 
@@ -37,13 +37,13 @@ def prepare_bids_stage(exist_stage_params, params={}):
         stage["label"] = {
             "en": "Bidder #{}".format(exist_stage_params['bidder_name']),
             "ru": "Участник №{}".format(exist_stage_params['bidder_name']),
-            "uk": "Учасник №{}".format(exist_stage_params['bidder_name'])
+            "ro": "Licitant №{}".format(exist_stage_params['bidder_name'])
         }
     else:
         stage["label"] = {
             "en": "",
             "ru": "",
-            "uk": ""
+            "ro": ""
         }
     return stage
 
