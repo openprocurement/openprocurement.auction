@@ -16,7 +16,7 @@ angular.module('auction').controller('AuctionController', [
       window.open(location.href, '_blank');
       return false;
     }
-    $scope.lang = 'uk';
+    $scope.lang = 'ro';
     $rootScope.normilized = false;
     $rootScope.format_date = AuctionUtils.format_date;
     $scope.bidder_id = null;
@@ -399,7 +399,7 @@ angular.module('auction').controller('AuctionController', [
         message: "Start post bid",
         bid_data: parseFloat(bid) || parseFloat($rootScope.form.bid) || 0
       });
-      
+
       if (parseFloat($rootScope.form.bid) == -1) {
         msg_id = Math.random();
         $rootScope.alerts.push({
