@@ -8,7 +8,7 @@ app.constant('AuctionConfig', {
   auction_doc_id: auction_doc_id,
   remote_db: db_url,
   restart_retries: 10,
-  default_lang: 'uk',
+  default_lang: 'ro',
   debug: false
 });
 
@@ -39,4 +39,3 @@ function logMSG(MSG)
     xmlHttp.open("POST", '/log', true);
     xmlHttp.send(JSON.stringify(MSG));
 }
-
