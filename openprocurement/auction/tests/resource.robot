@@ -49,21 +49,21 @@ ${BROWSER}       phantomjs
 
 Дочекатистись учасником початку стадії ставок
     [Arguments]    ${timeout}=2 min
-    Wait Until Page Contains        до закінчення вашої черги   ${timeout}
+    Wait Until Page Contains        până se sfârșește rândul Dvs.   ${timeout}
 
 
 Дочекатистись учасником закінчення стадії ставок
     [Arguments]    ${timeout}=2 min
-    Wait Until Page Does Not Contain         до закінчення вашої черги   ${timeout}
+    Wait Until Page Does Not Contain         până se sfârșește rândul Dvs.   ${timeout}
 
 Дочекатистись до завершення аукціону
     [Arguments]    ${timeout}=5 min
-    Wait Until Page Does Not Contain   Очікуємо на розкриття імен учасників.  ${timeout}
-    Wait Until Page Contains      Аукціон завершився   ${timeout}
+    Wait Until Page Does Not Contain   Așteptăm dezvăluirea numelor participanților  ${timeout}
+    Wait Until Page Contains      Licitația a luat sfârșit   ${timeout}
 
 Дочекатистись до завершення аукціону без розкриття імен учасників
     [Arguments]    ${timeout}=10 min
-    Wait Until Page Contains      Очікуємо на розкриття імен учасників.  ${timeout}
+    Wait Until Page Contains      Așteptăm dezvăluirea numelor participanților.  ${timeout}
 
 Перевірити інформацію про тендер
     Page Should Contain   ${TENDER['title']}                    # tender title

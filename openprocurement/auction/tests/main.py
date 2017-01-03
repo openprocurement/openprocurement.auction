@@ -17,14 +17,13 @@ from chromedriver import CHROMEDRV_PATH
 sys.path.append(CHROMEDRV_PATH)
 from mock import patch as mock_patch
 
-
 def update_auctionPeriod(path):
     with open(path) as file:
         data = json.loads(file.read())
     new_start_time = (datetime.datetime.now(tzlocal()) + datetime.timedelta(seconds=60)).isoformat()
     data["data"]['auctionPeriod']["startDate"] = new_start_time
     with open(path, "w") as file:
-        file.write(json.dumps(data, indent=2))
+        file.write(json.dumps(data, indent=2, ensure_ascii=False).encode('utf8'))
 
 def run_auction(tender_file_path):
     update_auctionPeriod(tender_file_path)
