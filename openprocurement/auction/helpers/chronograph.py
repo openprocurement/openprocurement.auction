@@ -1,5 +1,5 @@
 from apscheduler.executors.gevent import GeventExecutor
-from restkit import request
+from requests import get
 from .system import free_memory
 from gevent import sleep
 from logging import getLogger
@@ -24,7 +24,7 @@ MAX_AUCTION_START_TIME_RESERV = timedelta(seconds=15 * 60)
 
 def get_server_name():
     try:
-        r = request(AWS_META_DATA_URL)
+        r = get(AWS_META_DATA_URL, timeout=10)
         suffix = r.body_string()
     except Exception, e:
         suffix = uuid4().hex
@@ -132,6 +132,10 @@ class AuctionScheduler(GeventScheduler):
 
                 if view_value['api_version']:
                     params += ['--with_api_version', view_value['api_version']]
+
+                if view_value['mode'] == 'test':
+                    params += ['--auction_info_from_db', 'true']
+
                 try:
                     rc = check_call(params)
                 except CalledProcessError, error:
