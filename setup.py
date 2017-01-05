@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2.1.0.dev1+mepps'
+version = '2.1.0.dev2+mepps'
 
 
 setup(name='openprocurement.auction',
@@ -60,7 +60,6 @@ setup(name='openprocurement.auction',
               'robotframework-selenium2library',
               'robotframework-debuglibrary',
               'robotframework-selenium2screenshots',
-              'chromedriver',
               'mock'
           ]
       },
