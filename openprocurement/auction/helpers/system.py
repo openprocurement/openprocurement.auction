@@ -7,15 +7,14 @@ def free_memory():
     Get memory usage
     """
     with open('/proc/meminfo', 'r') as mem:
-        ret = {}
-        tmp = 0
+        ret = {'free': 0.0, 'total': 0.0}
+
         for i in mem:
             sline = i.split()
-            if str(sline[0]) == 'MemTotal:':
-                ret['total'] = int(sline[1])
-            elif str(sline[0]) in ('MemFree:'):
-                tmp += int(sline[1])
-        ret['free'] = tmp
+            if str(sline[0]) in ('MemTotal:', 'SwapTotal:'):
+                ret['total'] += int(sline[1])
+            elif str(sline[0]) in ('MemAvailable:', 'SwapFree:'):
+                ret['free'] += int(sline[1])
     return float(ret['free']) / ret['total']
 
 

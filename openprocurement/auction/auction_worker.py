@@ -474,6 +474,7 @@ class Auction(object):
             self.auction_document = {"_rev": public_document["_rev"]}
         if self.debug:
             self.auction_document['mode'] = 'test'
+            self.auction_document['test_auction_data'] = deepcopy(self._auction_data)
 
         self.get_auction_info(prepare=True)
         if self.worker_defaults.get('sandbox_mode', False):
@@ -621,9 +622,13 @@ class Auction(object):
 
     def schedule_auction(self):
         self.generate_request_id()
+        self.get_auction_document()
+        self.get_auction_document()
+        if self.debug:
+            logger.info("Get _auction_data from auction_document")
+            self._auction_data = self.auction_document.get('test_auction_data', {})
         self.get_auction_info()
         self.prepare_audit()
-        self.get_auction_document()
         self.prepare_auction_stages()
         self.save_auction_document()
         round_number = 0
@@ -1108,6 +1113,7 @@ def main():
     parser.add_argument('auction_worker_config', type=str,
                         help='Auction Worker Configuration File')
     parser.add_argument('--auction_info', type=str, help='Auction File')
+    parser.add_argument('--auction_info_from_db', type=str, help='Get auction data from local database')
     parser.add_argument('--with_api_version', type=str, help='Tender Api Version')
     parser.add_argument('--lot', type=str, help='Specify lot in tender', default=None)
     parser.add_argument('--planning_procerude', type=str, help='Override planning procerude',
@@ -1117,10 +1123,6 @@ def main():
 
 
     args = parser.parse_args()
-    if args.auction_info:
-        auction_data = json.load(open(args.auction_info))
-    else:
-        auction_data = None
 
     if os.path.isfile(args.auction_worker_config):
         worker_defaults = json.load(open(args.auction_worker_config))
@@ -1137,6 +1139,13 @@ def main():
     else:
         print "Auction worker defaults config not exists!!!"
         sys.exit(1)
+
+    if args.auction_info_from_db:
+        auction_data = {'mode': 'test'}
+    elif args.auction_info:
+        auction_data = json.load(open(args.auction_info))
+    else:
+        auction_data = None
 
     auction = Auction(args.auction_doc_id,
                       worker_defaults=worker_defaults,
