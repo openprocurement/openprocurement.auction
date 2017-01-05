@@ -10,13 +10,7 @@ from gevent.subprocess import check_output, Popen, PIPE, STDOUT, sleep
 import datetime
 import json
 from dateutil.tz import tzlocal
-import sys, signal
-
-from chromedriver import CHROMEDRV_PATH
-
-sys.path.append(CHROMEDRV_PATH)
-from mock import patch as mock_patch
-
+import sys
 
 def update_auctionPeriod(path):
     with open(path) as file:
@@ -29,12 +23,12 @@ def update_auctionPeriod(path):
 def run_auction(tender_file_path):
     update_auctionPeriod(tender_file_path)
     check_output('{0}/bin/auction_worker planning 11111111111111111111111111111111 {0}/etc/auction_worker_defaults.json --planning_procerude partial_db --auction_info {1}'.format(CWD, tender_file_path).split())
-    auction_process = Popen('{0}/bin/auction_worker run 11111111111111111111111111111111 {0}/etc/auction_worker_defaults.json --auction_info {1}'.format(CWD, tender_file_path).split())
-    return auction_process
+    sleep(30)
+
 
 def main():
     tender_file_path = os.path.join(PWD, "data/tender_data.json")
-    auction_process = run_auction(tender_file_path)
+    run_auction(tender_file_path)
     sleep(4)
     # with mock_patch('sys.exit') as exit_mock:
     exit_code = 0
@@ -45,10 +39,6 @@ def main():
                  '-d', os.path.join(CWD, "logs"), PWD,])
     except SystemExit, e:
         exit_code = e.code
-    try:
-        os.kill(auction_process.pid, signal.SIGKILL)
-    except OSError, e:
-        pass
     sys.exit(exit_code)
 
 
