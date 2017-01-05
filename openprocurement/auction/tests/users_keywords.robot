@@ -14,7 +14,7 @@
 Залогуватись користувачем
     [Arguments]    ${user_id}
     Go to       ${USERS['${user_id}']['login_url']}
-    Wait Until Page Contains       Sunteți de acord cu termenii licitației
+    Wait Until Page Contains       Stimate utilizator, Vă mulțumim pentru utilizarea sistemului nostru de achiziții electronice
     Highlight Elements With Text On Time          Так
     Capture Page Screenshot
     Click Element              confirm
