@@ -207,7 +207,7 @@ def announce_results_data(self, results=None):
         )
     bids_information = dict([(bid["id"], bid)
                              for bid in results["data"]["bids"]
-                             if bid.get("status", "active") == "active"])
+                             if bid.get("status", "active") in ("active", "invalid")])
     for section in ['initial_bids', 'stages', 'results']:
         for index, stage in enumerate(self.auction_document[section]):
             if 'bidder_id' in stage and stage['bidder_id'] in bids_information:
