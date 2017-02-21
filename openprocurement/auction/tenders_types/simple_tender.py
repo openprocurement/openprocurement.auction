@@ -201,7 +201,7 @@ def announce_results_data(self, results=None):
     if not results:
         results = get_tender_data(
             self.tender_url,
-            user=self.worker_defaults["TENDERS_API_TOKEN"],
+            user=self.worker_defaults["resource_api_token"],
             request_id=self.request_id,
             session=self.session
         )
