@@ -15,7 +15,7 @@ import sys
 def update_auctionPeriod(path):
     with open(path) as file:
         data = json.loads(file.read())
-    new_start_time = (datetime.datetime.now(tzlocal()) + datetime.timedelta(seconds=60)).isoformat()
+    new_start_time = (datetime.datetime.now(tzlocal()) + datetime.timedelta(seconds=120)).isoformat()
     data["data"]['auctionPeriod']["startDate"] = new_start_time
     with open(path, "w") as file:
         file.write(json.dumps(data, indent=2))

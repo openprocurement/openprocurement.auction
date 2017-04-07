@@ -48,7 +48,8 @@
 Поставити ставку
     [Arguments]    ${amount}  ${msg}
     Set To Dictionary    ${USERS['${CURRENT_USER}']}   last_amount=${amount}
-    Input Text      id=bid-amount-input      ${USERS['${CURRENT_USER}']['last_amount']}
+    ${x}=  Convert To String  ${USERS['${CURRENT_USER}']['last_amount']}
+    Input Text      id=bid-amount-input      ${x}
     sleep  1s
     Capture Page Screenshot
     Highlight Elements With Text On Time    Зробити заявку
