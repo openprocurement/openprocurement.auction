@@ -72,7 +72,9 @@ class AuctionScheduler(GeventScheduler):
         self.server_name = server_name
         self.config = config
         self.execution_stopped = False
-        self.consul = consul.Consul()
+        self.use_consul = self.config.get('main', {}).get('use_consul', True)
+        if self.use_consul:
+            self.consul = consul.Consul()
         self.logger = logger
         self._limit_pool_lock = self._create_lock()
         self._limit_auctions = self.config['main'].get('limit_auctions', int(limit_auctions))
@@ -101,6 +103,24 @@ class AuctionScheduler(GeventScheduler):
         self.execution_stopped = True
         return response
 
+    def _auction_fucn(self, document_id, tender_id, lot_id, view_value):
+        params = [self.config['main']['auction_worker'],
+                  "run", tender_id,
+                  self.get_auction_worker_configuration_path(view_value)]
+        if lot_id:
+            params += ['--lot', lot_id]
+
+        if view_value['api_version']:
+            params += ['--with_api_version', view_value['api_version']]
+
+        if view_value['mode'] == 'test':
+            params += ['--auction_info_from_db', 'true']
+
+        try:
+            rc = check_call(params)
+        except CalledProcessError, error:
+            self.logger.error("Exit with error {}".format(document_id))
+
     def run_auction_func(self, tender_id, lot_id, view_value, ttl=WORKER_TIME_RUN):
         if self._count_auctions >= self._limit_auctions:
             self.logger.info("Limited by count")
@@ -115,41 +135,31 @@ class AuctionScheduler(GeventScheduler):
             document_id += "_"
             document_id += lot_id
 
-        i = LOCK_RETRIES
         sleep(random())
-        session = self.consul.session.create(behavior='delete', ttl=WORKER_TIME_RUN)
-        while i > 0:
-            if self.consul.kv.put("auction_{}".format(document_id), self.server_name, acquire=session):
-                self.logger.info("Run worker for document {}".format(document_id))
-                with self._limit_pool_lock:
-                    self._count_auctions += 1
+        if self.use_consul:
+            i = LOCK_RETRIES
+            session = self.consul.session.create(behavior='delete', ttl=WORKER_TIME_RUN)
+            while i > 0:
+                if self.consul.kv.put("auction_{}".format(document_id), self.server_name, acquire=session):
+                    self.logger.info("Run worker for document {}".format(document_id))
+                    with self._limit_pool_lock:
+                        self._count_auctions += 1
 
-                params = [self.config['main']['auction_worker'],
-                          "run", tender_id,
-                          self.get_auction_worker_configuration_path(view_value)]
-                if lot_id:
-                    params += ['--lot', lot_id]
+                    self._auction_fucn(document_id, tender_id, lot_id,
+                                       view_value)
 
-                if view_value['api_version']:
-                    params += ['--with_api_version', view_value['api_version']]
+                    self.logger.info("Finished {}".format(document_id))
+                    self.consul.session.destroy(session)
+                    with self._limit_pool_lock:
+                        self._count_auctions -= 1
+                    return
+                sleep(SLEEP_BETWEEN_TRIES_LOCK)
+                i -= 1
 
-                if view_value['mode'] == 'test':
-                    params += ['--auction_info_from_db', 'true']
-
-                try:
-                    rc = check_call(params)
-                except CalledProcessError, error:
-                    self.logger.error("Exit with error {}".format(document_id))
-                self.logger.info("Finished {}".format(document_id))
-                self.consul.session.destroy(session)
-                with self._limit_pool_lock:
-                    self._count_auctions -= 1
-                return
-            sleep(SLEEP_BETWEEN_TRIES_LOCK)
-            i -= 1
-
-        self.logger.debug("Locked on other server")
-        self.consul.session.destroy(session)
+            self.logger.debug("Locked on other server")
+            self.consul.session.destroy(session)
+        else:
+            self._auction_fucn(document_id, tender_id, lot_id, view_value)
 
     def schedule_auction(self, document_id, view_value):
         auction_start_date = self.convert_datetime(view_value['start'])
