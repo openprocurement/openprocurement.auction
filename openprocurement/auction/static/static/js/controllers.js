@@ -63,7 +63,7 @@ angular.module('auction').controller('AuctionController', [
         $scope.db = db;
         $scope.http_error_timeout = $scope.default_http_error_timeout;
         $scope.start_auction_process();
-      }).catch(function(err) {
+      }).catch(function(error) {
         $log.error({
           message: "Error on setup connection to remote_db",
           error_data: error
