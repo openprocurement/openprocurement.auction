@@ -14,7 +14,7 @@ import os
 import argparse
 import iso8601
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep, mktime, time
 from urlparse import urljoin
 
@@ -41,21 +41,40 @@ from systemd_msgs_ids import (
     DATA_BRIDGE_RE_PLANNING_LOT_ALREADY_PLANNED,
     DATA_BRIDGE_RE_PLANNING_FINISHED
 )
-from openprocurement_client.sync import get_tenders
+from openprocurement_client.sync import get_tenders, ResourceFeeder
 from yaml import load
 from .design import endDate_view, startDate_view, PreAnnounce_view
 from .utils import do_until_success
+from openprocurement.auction.interfaces import IAuctionDataBridge, IResourceListingItemFactory
+from zope.interface import implements
+from openprocurement.auction.content import init_auction
+from zope.component import queryUtility
 
 SIMPLE_AUCTION_TYPE = 0
 SINGLE_LOT_AUCTION_TYPE = 1
 
-MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}"  # {TENDER_ID}_{LOT_ID}
+
+DEFAULT_RETRIEVERS_PARAMS = {
+    'down_requests_sleep': 0.01,
+    'up_requests_sleep': 0.01,
+    'up_wait_sleep': 30,
+    'queue_size': 100
+}
+
 
 logger = logging.getLogger(__name__)
 
 
-class AuctionsDataBridge(object):
+class BatchResourceFeeder(ResourceFeeder):
 
+    def handle_response_data(self, data):
+        self.queue.put(data)
+        # self.idle()
+
+class AuctionsDataBridge(object):
+    implements(IAuctionDataBridge)
+    logger = logger
+    startDate_view = startDate_view
     """Auctions Data Bridge"""
 
     def __init__(self, config):
@@ -70,102 +89,65 @@ class AuctionsDataBridge(object):
         )
         self.db = Database(self.couch_url,
                            session=Session(retry_delays=range(10)))
+        init_auction()
 
     def config_get(self, name):
         return self.config.get('main').get(name)
 
-    def get_teders_list(self, re_planning=False):
-        for item in get_tenders(host=self.config_get('tenders_api_server'),
-                                version=self.config_get('tenders_api_version'),
-                                key='', extra_params={'opt_fields': 'status,auctionPeriod,lots', 'mode': '_all_'}):
-            if item['status'] == "active.auction":
-                if 'lots' not in item and 'auctionPeriod' in item and 'startDate' in item['auctionPeriod'] \
-                        and 'endDate' not in item['auctionPeriod']:
+    def make_listing_item(self, item):
+        factory = queryUtility(IResourceListingItemFactory, item.get('procurementMethodType', ''))
+        if factory:
+            return factory(self, item)
 
-                    start_date = iso8601.parse_date(item['auctionPeriod']['startDate'])
-                    start_date = start_date.astimezone(self.tz)
-                    auctions_start_in_date = startDate_view(
-                        self.db,
-                        key=(mktime(start_date.timetuple()) + start_date.microsecond / 1E6) * 1000
-                    )
-                    if datetime.now(self.tz) > start_date:
-                        logger.info("Tender {} start date in past. Skip it for planning".format(item['id']),
-                                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_TENDER_SKIP})
-                        continue
-                    if re_planning and item['id'] in self.tenders_ids_list:
-                        logger.info("Tender {} already planned while replanning".format(item['id']),
-                                    extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_TENDER_ALREADY_PLANNED})
-                        continue
-                    elif not re_planning and [row.id for row in auctions_start_in_date.rows if row.id == item['id']]:
-                        logger.info("Tender {} already planned on same date".format(item['id']),
-                                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_TENDER_ALREADY_PLANNED})
-                        continue
-                    yield (str(item['id']), )
-                elif 'lots' in item:
-                    for lot in item['lots']:
-                        if lot["status"] == "active" and 'auctionPeriod' in lot \
-                                and 'startDate' in lot['auctionPeriod'] and 'endDate' not in lot['auctionPeriod']:
-                            start_date = iso8601.parse_date(lot['auctionPeriod']['startDate'])
-                            start_date = start_date.astimezone(self.tz)
-                            auctions_start_in_date = startDate_view(
-                                self.db,
-                                key=(mktime(start_date.timetuple()) + start_date.microsecond / 1E6) * 1000
-                            )
-                            if datetime.now(self.tz) > start_date:
-                                logger.info(
-                                    "Start date for lot {} in tender {} is in past. Skip it for planning".format(
-                                        lot['id'], item['id']),
-                                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_LOT_SKIP}
-                                )
-                                continue
-                            auction_id = MULTILOT_AUCTION_ID.format(item, lot)
-                            if re_planning and auction_id in self.tenders_ids_list:
-                                logger.info("Tender {} already planned while replanning".format(auction_id),
-                                            extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_LOT_ALREADY_PLANNED})
-                                continue
-                            elif not re_planning and [row.id for row in auctions_start_in_date.rows if row.id == auction_id]:
-                                logger.info("Tender {} already planned on same date".format(auction_id),
-                                            extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_LOT_ALREADY_PLANNED})
-                                continue
-                            yield (str(item["id"]), str(lot["id"]), )
-            if item['status'] == "active.qualification" and 'lots' in item:
-                for lot in item['lots']:
-                    if lot["status"] == "active":
-                        is_pre_announce = PreAnnounce_view(self.db)
-                        auction_id = MULTILOT_AUCTION_ID.format(item, lot)
-                        if [row.id for row in is_pre_announce.rows if row.id == auction_id]:
-                            self.start_auction_worker_cmd('announce', item['id'], lot_id=lot['id'],)
-            if item['status'] == "cancelled":
-                future_auctions = endDate_view(
-                    self.db, startkey=time() * 1000
-                )
-                if 'lots' in item:
-                    for lot in item['lots']:
-                        auction_id = MULTILOT_AUCTION_ID.format(item, lot)
-                        if auction_id in [i.id for i in future_auctions]:
-                            logger.info('Tender {0} selected for cancellation'.format(item['id']))
-                            self.start_auction_worker_cmd('cancel', item['id'], lot_id=lot['id'])
-                else:
-                    if item["id"] in [i.id for i in future_auctions]:
-                        logger.info('Tender {0} selected for cancellation'.format(item['id']))
-                        self.start_auction_worker_cmd('cancel', item["id"])
+    def get_teders_list(self, re_planning=False):
+        last = datetime.now()
+        period = timedelta(seconds=10)
+        count = 0
+        feeder = BatchResourceFeeder(host=self.config_get('tenders_api_server'),
+                                version=self.config_get('tenders_api_version'),
+                                key='', extra_params={'opt_fields': 'status,auctionPeriod,lots,procurementMethodType', 'limit': '1000', 'mode': '_all_'},
+                                retrievers_params=DEFAULT_RETRIEVERS_PARAMS)
+        queue = feeder.run_feeder()
+        while 1:
+            # print queue
+            batch = queue.get()
+        # for item in get_tenders(host=self.config_get('tenders_api_server'),
+        #                         version=self.config_get('tenders_api_version'),
+        #                         key='', extra_params={'opt_fields': 'status,auctionPeriod,lots,procurementMethodType', 'limit': 1000, 'mode': '_all_'},
+        #                         retrievers_params=DEFAULT_RETRIEVERS_PARAMS):
+            #####
+            # Make ListingItemData
+            # Adapt ListingItemData to
+            #####
+            # print len(batch)
+            for item in batch:
+                count += 1
+                if datetime.now() - last > period:
+                    print count
+                    last = datetime.now()
+                resource_item = self.make_listing_item(item)
+                if not resource_item:
+                    continue
+                for auction_worker_params in resource_item.iter_planning():
+                    yield auction_worker_params
 
 
     def start_auction_worker_cmd(self, cmd, tender_id, with_api_version=None, lot_id=None):
-        params = [self.config_get('auction_worker'),
-                  cmd, tender_id,
-                  self.config_get('auction_worker_config')]
-        if lot_id:
-            params += ['--lot', lot_id]
-
-        if with_api_version:
-            params += ['--with_api_version', with_api_version]
-        result = do_until_success(
-            check_call,
-            args=(params,),
-        )
-
-        logger.info("Auction command {} result: {}".format(params[1], result))
+        # params = [self.config_get('auction_worker'),
+        #           cmd, tender_id,
+        #           self.config_get('auction_worker_config')]
+        # if lot_id:
+        #     params += ['--lot', lot_id]
+        #
+        # if with_api_version:
+        #     params += ['--with_api_version', with_api_version]
+        # result = do_until_success(
+        #     check_call,
+        #     args=(params,),
+        # )
+        #
+        # logger.info("Auction command {} result: {}".format(params[1], result))
+        logger.error("Auction command ")
 
     def run(self):
         logger.info('Start Auctions Bridge',
