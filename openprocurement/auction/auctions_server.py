@@ -157,8 +157,8 @@ def auction_url(auction_doc_id):
     request_base = u'//' + url_obj.netloc + url_obj.path + u'/'
     return render_template(
         'tender.html',
-        db_url=auctions_server.config.get('EXT_COUCH_DB'),
-        auction_doc_id=auction_doc_id,
+        database=auctions_server.config.get('COUCH_DB'),
+        doc_id=auction_doc_id,
         request_base=request_base
     )
 
