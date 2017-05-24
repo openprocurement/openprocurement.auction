@@ -12,7 +12,8 @@ from datetime import datetime, timedelta
 from pytz import timezone
 from openprocurement.auction.forms import BidsForm
 from openprocurement.auction.helpers.system import get_lisener
-from openprocurement.auction.utils import create_mapping, prepare_extra_journal_fields, get_bidder_id
+from openprocurement.auction.utils import create_mapping,\
+    prepare_extra_journal_fields, get_bidder_id
 from openprocurement.auction.event_source import (
     sse, send_event, send_event_to_client, remove_client,
     push_timestamps_events, check_clients
@@ -22,7 +23,7 @@ from pytz import timezone as tz
 from gevent import spawn
 
 
-app = Flask(__name__, static_url_path='', template_folder='static')
+app = Flask(__name__)
 app.auction_bidders = {}
 app.register_blueprint(sse)
 app.secret_key = os.urandom(24)
