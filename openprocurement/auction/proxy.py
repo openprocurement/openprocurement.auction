@@ -78,3 +78,24 @@ class StreamProxy(HostProxy):
             )
             app.proxy_mappings.expire(str(self.auction_doc_id), 0)
             return NotFound()(environ, start_response)
+
+
+def couch_server_proxy(path):
+    """USED FOR DEBUG ONLY"""
+    return StreamProxy(
+        app.config['PROXY_COUCH_URL'],
+        app.event_sources_pool,
+        pool=app.proxy_connection_pool,
+        backend="gevent"
+    )
+
+
+def auth_couch_server_proxy(path):
+    """USED FOR DEBUG ONLY"""
+    return StreamProxy(
+        app.config['PROXY_COUCH_URL'],
+        app.event_sources_pool,
+        rewrite_path=(app.config['COUCH_DB'] + "_secured", app.config['COUCH_DB']),
+        pool=app.proxy_connection_pool,
+        backend="gevent"
+    )
