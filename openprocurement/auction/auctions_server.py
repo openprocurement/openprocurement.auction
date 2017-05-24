@@ -3,139 +3,38 @@ from gevent import monkey
 monkey.patch_all()
 
 import time
+import logging
 from collections import deque
-from Cookie import SimpleCookie
 from couchdb import Server, Session
 from datetime import datetime
 from design import sync_design, endDate_view
-from flask import Flask, render_template, request, abort, url_for, redirect, Response
-from flask.ext.assets import Environment, Bundle
-from http_parser.util import IOrderedDict
+from flask import (
+    Flask, render_template,
+    request, abort, url_for,
+    redirect, Response, jsonify
+)
 from json import dumps, loads
 from memoize import Memoizer
 from pytz import timezone as tz
 from restkit.conn import Connection
-from restkit.contrib.wsgi_proxy import HostProxy
 from socketpool import ConnectionPool
 from sse import Sse as PySse
 from urlparse import urlparse, urljoin
-from werkzeug.exceptions import NotFound
 
-from .utils import StreamWrapper, get_mapping
+from .utils import get_mapping
+from .proxy import StreamProxy
 from systemd.journal import send
+
+
+logger = logging.getLogger(__name__)
 
 LIMIT_REPLICATIONS_LIMIT_FUNCTIONS = {
     'any': any,
     'all': all
 }
 
-def start_response_decorated(start_response_decorated):
-    def inner(status, headers):
-        headers_obj = IOrderedDict(headers)
-        if 'Set-Cookie' in headers_obj and ', ' in headers_obj['Set-Cookie']:
-            cookie = SimpleCookie()
-            cookie.load(headers_obj['Set-Cookie'])
-            del headers_obj['Set-Cookie']
-            headers_list = headers_obj.items()
-            for key in ("auctions_loggedin", "auction_session"):
-                if key in cookie:
-                    headers_list += [
-                        ('Set-Cookie', cookie[key].output(header="").lstrip().rstrip(','))
-                    ]
-            headers = headers_list
-        return start_response_decorated(status, headers)
-    return inner
 
-
-class StreamProxy(HostProxy):
-    def __init__(self, uri, event_sources_pool,
-                 auction_doc_id="",
-                 event_source_connection_limit=1000,
-                 rewrite_path = None,
-                 **kwargs):
-        super(StreamProxy, self).__init__(uri, **kwargs)
-        self.rewrite_path = rewrite_path
-        self.auction_doc_id = auction_doc_id
-        self.event_source_connection_limit = event_source_connection_limit
-        self.event_sources = event_sources_pool
-
-    def add_event_source(self, stream_response):
-        self.event_sources.append(stream_response)
-        while len(self.event_sources) > self.event_source_connection_limit:
-            ev_connection = self.event_sources.popleft()
-            if not ev_connection._closed:
-                ev_connection.close()
-
-    def __call__(self, environ, start_response):
-        header_map = {
-            'HTTP_HOST': 'X_FORWARDED_SERVER',
-            'SCRIPT_NAME': 'X_FORWARDED_SCRIPT_NAME',
-            'wsgi.url_scheme': 'X_FORWARDED_SCHEME'
-        }
-        for key, dest in header_map.items():
-            value = environ.get(key)
-            if value:
-                environ['HTTP_%s' % dest] = value
-        environ['HTTP_X-Forwarded-Path'] = request.url
-        if 'HTTP_X_FORWARDED_FOR' in environ:
-            environ['HTTP_X_FORWARDED_FOR'] = ", ".join(
-                [ip
-                 for ip in environ['HTTP_X_FORWARDED_FOR'].split(", ")
-                 if not ip.startswith("172.")]
-            )
-        else:
-            environ['HTTP_X_FORWARDED_FOR'] = environ['REMOTE_ADDR']
-        try:
-            if self.rewrite_path:
-                environ['PATH_INFO'] = environ['PATH_INFO'].replace(self.rewrite_path[0], self.rewrite_path[1])
-            response = super(StreamProxy, self).__call__(
-                environ, start_response_decorated(start_response)
-            )
-            stream_response = StreamWrapper(response.resp, response.connection)
-            if 'event_source' in stream_response.resp.request.url:
-                self.add_event_source(stream_response)
-            return stream_response
-        except Exception, e:
-            auctions_server.logger.warning(
-                "Error on request to {} with msg {}".format(request.url, e)
-            )
-            auctions_server.proxy_mappings.expire(str(self.auction_doc_id), 0)
-            return NotFound()(environ, start_response)
-
-auctions_server = Flask(
-    __name__,
-    static_url_path='',
-    template_folder='templates'
-)
-
-################################################################################
-assets = Environment(auctions_server)
-assets.manifest = "json:manifest.json"
-
-
-css = Bundle("vendor/angular-growl-2/build/angular-growl.min.css",
-             "static/css/starter-template.css",
-             filters='cssmin,datauri', output='min/styles_%(version)s.css')
-assets.register('all_css', css)
-js = Bundle("vendor/pouchdb/dist/pouchdb.js",
-            "vendor/event-source-polyfill/eventsource.min.js",
-            "vendor/angular-cookies/angular-cookies.min.js",
-            "vendor/angular-ellipses/src/truncate.js",
-            "vendor/angular-timer/dist/angular-timer.min.js",
-            "vendor/angular-translate/angular-translate.min.js",
-            "vendor/angular-translate-storage-cookie/angular-translate-storage-cookie.min.js",
-            "vendor/angular-translate-storage-local/angular-translate-storage-local.min.js",
-            "vendor/angular-growl-2/build/angular-growl.js",
-            "vendor/angular-gtm-logger/angular-gtm-logger.min.js",
-            "static/js/app.js",
-            "static/js/utils.js",
-            "static/js/translations.js",
-            "static/js/controllers.js",
-            "vendor/moment/locale/uk.js",
-            "vendor/moment/locale/ru.js",
-            filters='jsmin', output='min/all_js_%(version)s.js')
-assets.register('all_js', js)
-################################################################################
+auctions_server = Flask(__name__)
 
 
 @auctions_server.before_request
@@ -151,29 +50,26 @@ def after_request(response):
     return response
 
 
-@auctions_server.route('/tenders/<auction_doc_id>')
-def auction_url(auction_doc_id):
-    url_obj = urlparse(request.url)
-    request_base = u'//' + url_obj.netloc + url_obj.path + u'/'
-    return render_template(
-        'tender.html',
-        db_url=auctions_server.config.get('EXT_COUCH_DB'),
-        auction_doc_id=auction_doc_id,
-        request_base=request_base
-    )
+#@auctions_server.route('/tenders/<auction_doc_id>')
+#def auction_url(auction_doc_id):
+#    url_obj = urlparse(request.url)
+#    request_base = u'//' + url_obj.netloc + url_obj.path + u'/'
+#    return render_template(
+#        'tender.html',
+#        db_url=auctions_server.config.get('EXT_COUCH_DB'),
+#        auction_doc_id=auction_doc_id,
+#        request_base=request_base
+#    )
 
 
 @auctions_server.route('/')
 def auction_list_index():
-    return render_template(
-        'list.html',
-        documents=reversed(
-            [auction.doc
+    return jsonify(reversed(
+        [auction.doc
              for auction in endDate_view(auctions_server.db,
                                          startkey=time.time() * 1000,
                                          include_docs=True)
-             ])
-    )
+        ]))
 
 
 @auctions_server.route('/log', methods=['POST'])
@@ -215,18 +111,18 @@ def health():
     return response
 
 
-@auctions_server.route('/archive')
-def archive_auction_list_index():
-    offset = int(request.args.get('offset', default=time.time() * 1000))
-    startkey_docid = request.args.get('startid', default=None)
-    documents = [auction
-                 for auction in endDate_view(auctions_server.db, startkey=offset, startkey_docid=startkey_docid,
-                                             limit=101, descending=True, include_docs=True)]
-    if len(documents) > 100:
-        offset, startid = documents[100].key, documents[100].id
-    else:
-        offset, startid = False, False
-    return render_template('archive.html', documents=documents[:-1], offset=offset, startid=startid)
+#@auctions_server.route('/archive')
+#def archive_auction_list_index():
+#    offset = int(request.args.get('offset', default=time.time() * 1000))
+#    startkey_docid = request.args.get('startid', default=None)
+#    documents = [auction
+#                 for auction in endDate_view(auctions_server.db, startkey=offset, startkey_docid=startkey_docid,
+#                                             limit=101, descending=True, include_docs=True)]
+#    if len(documents) > 100:
+#        offset, startid = documents[100].key, documents[100].id
+#    else:
+#        offset, startid = False, False
+#    return render_template('archive.html', documents=documents[:-1], offset=offset, startid=startid)
 
 
 @auctions_server.route('/tenders/<auction_doc_id>/<path:path>',
@@ -241,6 +137,8 @@ def auctions_proxy(auction_doc_id, path):
     auctions_server.logger.debug('Proxy path: {}'.format(proxy_path))
     if proxy_path:
         request.environ['PATH_INFO'] = '/' + path
+        auctions_server.logger.info("proxy path {}".format(proxy_path))
+        auctions_server.logger.info("path {}".format(path))
         auctions_server.logger.debug('Start proxy to path: {}'.format(path))
         return StreamProxy(
             proxy_path,
@@ -251,10 +149,11 @@ def auctions_proxy(auction_doc_id, path):
             backend="gevent"
         )
     elif path == 'login' and auction_doc_id in auctions_server.db:
-        return redirect((
-            url_for('auction_url', auction_doc_id=auction_doc_id,
-                    wait=1, **request.args)
-        ))
+        return redirect(request.url.replace('/login', ''))
+        #return redirect((
+        #    url_for('auction_url', auction_doc_id=auction_doc_id,
+        #            wait=1, **request.args)
+        #))
     elif path == 'event_source':
         events_close = PySse()
         events_close.add_message("Close", "Disable")
@@ -384,5 +283,4 @@ def make_auctions_app(global_conf,
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
     auctions_server.config['ASSETS_DEBUG'] = True if debug else False
-    assets.auto_build = True if auto_build else False
     return auctions_server
