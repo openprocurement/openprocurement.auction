@@ -11,18 +11,19 @@ from design import sync_design, endDate_view
 from flask import (
     Flask, render_template,
     request, abort, url_for,
-    redirect, Response, jsonify
+    redirect, Response, jsonify, session
 )
+from flask_cors import CORS, cross_origin
 from json import dumps, loads
 from memoize import Memoizer
 from pytz import timezone as tz
 from restkit.conn import Connection
 from socketpool import ConnectionPool
 from sse import Sse as PySse
-from urlparse import urlparse, urljoin
+from urlparse import urlparse, urljoin, urlunparse
 
 from .utils import get_mapping
-from .proxy import StreamProxy
+from .proxy import StreamProxy, couch_server_proxy, auth_couch_server_proxy
 from systemd.journal import send
 
 
@@ -35,7 +36,8 @@ LIMIT_REPLICATIONS_LIMIT_FUNCTIONS = {
 
 
 auctions_server = Flask(__name__)
-
+CORS(auctions_server, supports_credentials=True, origins="localhost")
+logging.getLogger('flask_cors').level = logging.DEBUG
 
 @auctions_server.before_request
 def before_request():
@@ -50,26 +52,13 @@ def after_request(response):
     return response
 
 
-#@auctions_server.route('/tenders/<auction_doc_id>')
-#def auction_url(auction_doc_id):
-#    url_obj = urlparse(request.url)
-#    request_base = u'//' + url_obj.netloc + url_obj.path + u'/'
-#    return render_template(
-#        'tender.html',
-#        db_url=auctions_server.config.get('EXT_COUCH_DB'),
-#        auction_doc_id=auction_doc_id,
-#        request_base=request_base
-#    )
-
-
 @auctions_server.route('/')
 def auction_list_index():
-    return jsonify(reversed(
-        [auction.doc
-             for auction in endDate_view(auctions_server.db,
-                                         startkey=time.time() * 1000,
-                                         include_docs=True)
-        ]))
+    data = [auction.doc for auction
+            in endDate_view(auctions_server.db,
+                            startkey=time.time() * 1000,
+                            include_docs=True)]
+    return jsonify({"data": list(reversed(data))})
 
 
 @auctions_server.route('/log', methods=['POST'])
@@ -137,8 +126,6 @@ def auctions_proxy(auction_doc_id, path):
     auctions_server.logger.debug('Proxy path: {}'.format(proxy_path))
     if proxy_path:
         request.environ['PATH_INFO'] = '/' + path
-        auctions_server.logger.info("proxy path {}".format(proxy_path))
-        auctions_server.logger.info("path {}".format(path))
         auctions_server.logger.debug('Start proxy to path: {}'.format(path))
         return StreamProxy(
             proxy_path,
@@ -149,11 +136,12 @@ def auctions_proxy(auction_doc_id, path):
             backend="gevent"
         )
     elif path == 'login' and auction_doc_id in auctions_server.db:
-        return redirect(request.url.replace('/login', ''))
-        #return redirect((
-        #    url_for('auction_url', auction_doc_id=auction_doc_id,
-        #            wait=1, **request.args)
-        #))
+        if 'X-Forwarded-For' in request.headers:
+            url = urlunparse(
+                urlparse(request.url)._replace(netloc=request.headers['Host'])
+            ).replace('/login', '')
+            auctions_server.logger.info('Redirecting loging path to {}'.format(url))
+            return redirect(url)
     elif path == 'event_source':
         events_close = PySse()
         events_close.add_message("Close", "Disable")
@@ -162,7 +150,6 @@ def auctions_proxy(auction_doc_id, path):
             mimetype='text/event-stream',
             content_type='text/event-stream'
         )
-
     return abort(404)
 
 
@@ -171,27 +158,6 @@ def auctions_server_current_server_time():
     response = Response(datetime.now(auctions_server.config['TIMEZONE']).isoformat())
     response.headers['Cache-Control'] = 'public, max-age=0'
     return response
-
-
-def couch_server_proxy(path):
-    """USED FOR DEBUG ONLY"""
-    return StreamProxy(
-        auctions_server.config['PROXY_COUCH_URL'],
-        auctions_server.event_sources_pool,
-        pool=auctions_server.proxy_connection_pool,
-        backend="gevent"
-    )
-
-
-def auth_couch_server_proxy(path):
-    """USED FOR DEBUG ONLY"""
-    return StreamProxy(
-        auctions_server.config['PROXY_COUCH_URL'],
-        auctions_server.event_sources_pool,
-        rewrite_path=(auctions_server.config['COUCH_DB'] + "_secured", auctions_server.config['COUCH_DB']),
-        pool=auctions_server.proxy_connection_pool,
-        backend="gevent"
-    )
 
 
 def make_auctions_app(global_conf,
