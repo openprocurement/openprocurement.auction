@@ -55,21 +55,6 @@ from .systemd_msgs_ids import(
     AUCTION_WORKER_DB_SAVE_DOC_ERROR,
     AUCTION_WORKER_DB_GET_DOC_UNHANDLED_ERROR,
     AUCTION_WORKER_DB_SAVE_DOC_UNHANDLED_ERROR,
-    AUCTION_WORKER_SYSTEMD_UNITS_WRITE_SERVICE_CONFIG,
-    AUCTION_WORKER_SYSTEMD_UNITS_START_DATE_IN_PAST,
-    AUCTION_WORKER_SYSTEMD_UNITS_NO_TIME,
-    AUCTION_WORKER_SYSTEMD_UNITS_WRITE_TIMER_CONFIG,
-    AUCTION_WORKER_SYSTEMD_UNITS_RELOAD,
-    AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_RESPONSE,
-    AUCTION_WORKER_SYSTEMD_UNITS_START_TIMER,
-    AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_RELOAD_OR_RESTART,
-    AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_ENABLE,
-    AUCTION_WORKER_SYSTEMD_UNITS_NOT_VALID_DOCUMENT,
-    AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_STOP_AUCTION_TIMER,
-    AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_DISABLE_AUCTION_TIMER,
-    AUCTION_WORKER_SYSTEMD_UNITS_DAEMON_RELOAD,
-    AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_TIMER,
-    AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_SERVICE,
     AUCTION_WORKER_SERVICE_PREPARE_SERVER,
     AUCTION_WORKER_SERVICE_STOP_AUCTION_WORKER,
     AUCTION_WORKER_SERVICE_START_AUCTION,
@@ -106,8 +91,6 @@ BIDS_KEYS_FOR_COPY = (
     "amount",
     "time"
 )
-SYSTEMD_DIRECORY = '.config/systemd/user/'
-SYSTEMD_RELATIVE_PATH = SYSTEMD_DIRECORY + 'auction_{0}.{1}'
 TIMER_STAMP = re.compile(
     r"OnCalendar=(?P<year>[0-9][0-9][0-9][0-9])"
     r"-(?P<mon>[0-9][0-9])-(?P<day>[0123][0-9]) "
@@ -518,103 +501,6 @@ class Auction(object):
         else:
             simple_tender.prepare_auction_and_participation_urls(self)
 
-
-    def prepare_tasks(self, tender_id, start_date):
-        cmd = deepcopy(sys.argv)
-        cmd[0] = os.path.abspath(cmd[0])
-        cmd[1] = 'run'
-        home_dir = os.path.expanduser('~')
-        with open(os.path.join(home_dir,
-                  SYSTEMD_RELATIVE_PATH.format(self.auction_doc_id, 'service')),
-                  'w') as service_file:
-            template = get_template('systemd.service')
-            logger.info(
-                "Write configuration to {}".format(service_file.name),
-                extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_WRITE_SERVICE_CONFIG})
-            service_file.write(
-                template.render(cmd=' '.join(cmd),
-                                description='Auction ' + tender_id,
-                                id='auction_' + self.auction_doc_id + '.service'),
-            )
-
-        start_time = (start_date - timedelta(minutes=15)).astimezone(tzlocal())
-        extra_start_time = datetime.now(tzlocal()) + timedelta(seconds=15)
-        if extra_start_time > start_time:
-            logger.warning(
-                'Planned auction\'s starts date in the past',
-                extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_START_DATE_IN_PAST}
-            )
-            start_time = extra_start_time
-            if start_time > start_date:
-                logger.error(
-                    'We not have a time to start auction',
-                    extra={"JOURNAL_REQUEST_ID": self.request_id,
-                           "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_NO_TIME}
-                )
-                sys.exit()
-
-        with open(os.path.join(home_dir, SYSTEMD_RELATIVE_PATH.format(self.auction_doc_id, 'timer')), 'w') as timer_file:
-            template = get_template('systemd.timer')
-            logger.info(
-                "Write configuration to {}".format(timer_file.name),
-                extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_WRITE_TIMER_CONFIG}
-            )
-            timer_file.write(template.render(
-                timestamp=start_time.strftime("%Y-%m-%d %H:%M:%S"),
-                description='Auction ' + tender_id)
-            )
-        if self.activate:
-            logger.info(
-                "Reload Systemd",
-                extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_RELOAD}
-            )
-            response = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
-            logger.info(
-                "Systemctl return code: {}".format(response),
-                extra={"JOURNAL_REQUEST_ID": self.request_id,
-                       "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_RESPONSE}
-            )
-            self.activate_systemd_unit()
-
-    def activate_systemd_unit(self):
-        logger.info(
-            "Start timer",
-            extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_START_TIMER}
-        )
-        timer_file = 'auction_' + '.'.join([self.auction_doc_id, 'timer'])
-        response = call(['/usr/bin/systemctl', '--user',
-                         'reload-or-restart', timer_file])
-        logger.info(
-            "Systemctl 'reload-or-restart' return code: {}".format(response),
-            extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_RELOAD_OR_RESTART}
-        )
-        response = call(['/usr/bin/systemctl', '--user',
-                         'enable', timer_file])
-        logger.info(
-            "Systemctl 'enable' return code: {}".format(response),
-            extra={"JOURNAL_REQUEST_ID": self.request_id,
-                   "MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_ENABLE}
-        )
-
-
-
-    def prepare_systemd_units(self):
-        self.generate_request_id()
-        self.get_auction_document()
-        if len(self.auction_document['stages']) >= 1:
-            self.prepare_tasks(
-                self.auction_document['tenderID'],
-                self.convert_datetime(self.auction_document['stages'][0]['start'])
-            )
-        else:
-            logger.error("Not valid auction_document",
-                         extra={'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS_NOT_VALID_DOCUMENT})
 
     ###########################################################################
     #                       Runtime methods
@@ -1058,54 +944,6 @@ class Auction(object):
                         extra={'MESSAGE_ID': AUCTION_WORKER_SERVICE_AUCTION_NOT_FOUND})
 
 
-def cleanup():
-    today_datestamp = datetime.now()
-    today_datestamp = today_datestamp.replace(
-        today_datestamp.year, today_datestamp.month, today_datestamp.day,
-        0, 0, 0
-    )
-    systemd_files_dir = os.path.join(os.path.expanduser('~'), SYSTEMD_DIRECORY)
-    for filename in os.listdir(systemd_files_dir):
-        if filename.startswith('auction_') and filename.endswith('.timer'):
-            tender_id = filename[8:-6]
-            full_filename = os.path.join(systemd_files_dir, filename)
-            with open(full_filename) as timer_file:
-                r = TIMER_STAMP.search(timer_file.read())
-            if r:
-                datetime_args = [int(term) for term in r.groups()]
-                if datetime(*datetime_args) < today_datestamp:
-                    code = call(['/usr/bin/systemctl', '--user',
-                                 'stop', filename])
-                    logger.info(
-                        "systemctl stop {} - return code: {}".format(filename, code),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_STOP_AUCTION_TIMER}
-                    )
-
-                    code = call(['/usr/bin/systemctl', '--user',
-                                 'disable', filename, '--no-reload'])
-                    logger.info(
-                        "systemctl disable {} --no-reload - return code: {}".format(filename, code),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_SYSTEMD_UNITS_SYSTEMCTL_DISABLE_AUCTION_TIMER}
-                    )
-                    logger.info(
-                        'Remove systemd file: {}'.format(full_filename),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_TIMER}
-                    )
-                    os.remove(full_filename)
-                    full_filename = full_filename[:-5] + 'service'
-                    logger.info(
-                        'Remove systemd file: {}'.format(full_filename),
-                        extra={'JOURNAL_TENDER_ID': tender_id, 'MESSAGE_ID': AUCTION_WORKER_CLEANUP_REMOVE_SYSTEMD_AUCTION_SERVICE}
-                    )
-                    os.remove(full_filename)
-    code = call(['/usr/bin/systemctl', '--user', 'daemon-reload'])
-    logger.info(
-        "systemctl --user daemon-reload - return code: {}".format(code),
-        extra={"MESSAGE_ID": AUCTION_WORKER_SYSTEMD_UNITS_DAEMON_RELOAD}
-
-    )
-
-
 def main():
     parser = argparse.ArgumentParser(description='---- Auction ----')
     parser.add_argument('cmd', type=str, help='')
@@ -1118,8 +956,6 @@ def main():
     parser.add_argument('--lot', type=str, help='Specify lot in tender', default=None)
     parser.add_argument('--planning_procerude', type=str, help='Override planning procerude',
                         default=None, choices=[None, PLANNING_FULL, PLANNING_PARTIAL_DB, PLANNING_PARTIAL_CRON])
-    parser.add_argument('--activate',  action='store_true', default=False,
-                        help='Activate systemd unit in auction worker')
 
 
     args = parser.parse_args()
@@ -1150,8 +986,7 @@ def main():
     auction = Auction(args.auction_doc_id,
                       worker_defaults=worker_defaults,
                       auction_data=auction_data,
-                      lot_id=args.lot,
-                      activate=args.activate)
+                      lot_id=args.lot)
     if args.cmd == 'run':
         SCHEDULER.start()
         auction.schedule_auction()
@@ -1161,14 +996,10 @@ def main():
         auction.prepare_auction_document()
     elif args.cmd == 'announce':
         auction.post_announce()
-    elif args.cmd == 'activate':
-        auction.activate_systemd_unit()
     elif args.cmd == 'cancel':
         auction.cancel_auction()
     elif args.cmd == 'reschedule':
         auction.reschedule_auction()
-    elif args.cmd == 'cleanup':
-        cleanup()
 
 
 
