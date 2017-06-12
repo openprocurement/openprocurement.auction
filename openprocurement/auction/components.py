@@ -29,7 +29,7 @@ class AuctionComponents(Components):
 
         return wrapped
         
-    def component(self, name=""):
+    def component(self, provides="", name=""):
         """ TODO: use wraps decorator??
         """
         
@@ -43,10 +43,10 @@ class AuctionComponents(Components):
                 __doc__ = wrapped.__doc__
                 __name__ = wrapped.__name__
                 def __new__(cls, *args, **kw):
-                    ob = sef.queryUtility(iface, name=name)
+                    ob = sef.queryUtility(provides, name=name)
                     if not ob:
                         ob = super(Wrapped, cls).__new__(*ags, **kw)
-                        self.regiterUtility(ob, iface, name=name)
+                        self.regiterUtility(ob, provides, name=name)
                     return ob
             return Wrapped
         return wrapped
