@@ -53,7 +53,7 @@ setup(name='openprocurement.auction',
           'openprocurement_client',
           'python-consul',
           'retrying',
-          'pyramidtiming',
+          'pyramidtiming[flask]',
       ],
       extras_require={
           'test': [

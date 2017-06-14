@@ -154,7 +154,7 @@ class AuctionScheduler(GeventScheduler):
                     self._auction_fucn(document_id, tender_id, lot_id,
                                        view_value)
 
-                    # self.logger.info("Finished {}".format(document_id))
+                    self.logger.info("Finished {}".format(document_id))
                     self.consul.session.destroy(session)
                     with self._limit_pool_lock:
                         self._count_auctions -= 1

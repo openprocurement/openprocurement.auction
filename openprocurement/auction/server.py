@@ -20,7 +20,7 @@ from openprocurement.auction.event_source import (
 
 from pytz import timezone as tz
 from gevent import spawn
-from pyramidtiming.tween import setup_middleware
+from pyramidtiming.flask_middleware import setup_middleware
 
 
 app = Flask(__name__, static_url_path='', template_folder='static')
