@@ -53,6 +53,7 @@ setup(name='openprocurement.auction',
           'openprocurement_client',
           'python-consul',
           'retrying',
+          'zope.interface'
       ],
       extras_require={
           'test': [
