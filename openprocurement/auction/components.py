@@ -1,15 +1,30 @@
 from zope import interface
 from zope.interface import registry, implementedBy
-from openprocurement.auction.interfaces import IComponents
+from walkabout import PredicateDomain, PredicateMismatch
+
+from openprocurement.auction.interfaces import IComponents, IAuctionType, IFeedItem
 
 
 @interface.implementer(IComponents)
 class AuctionComponents(registry.Components):
 
-    def getImplementer(self, obj, iface, default):
-        if not iface.providedBy(obj):
-            return self.queryAdapter(obj, iface, default=default)
-        return obj
+    def __init__(self, *args, **kw):
+        super(AuctionComponents, self).__init__(*args, **kw)
+        self._dispatch = PredicateDomain(IAuctionType, self)
+
+    def add_predicate(self, *args, **kw):
+        self._dispatch.add_predicate(*args)
+
+    def add_auction(self, auction_iface, **preds):
+        self._dispatch.add_candidate(
+            auction_iface, IFeedItem, **preds
+        )
+
+    def match(self, inst):
+        try:
+            return self._dispatch.lookup(inst)
+        except PredicateMismatch:
+            pass
 
     def adapter(self, provides, adapts, name=""):
         """ TODO: create decorator for such thinks """
@@ -28,6 +43,7 @@ class AuctionComponents(registry.Components):
             return wrapper
 
         return wrapped
+
     def component(self):
         """ Zope utility regitration decorator """
         def wrapped(Wrapped):
