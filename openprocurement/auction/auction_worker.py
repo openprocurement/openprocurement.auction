@@ -1,80 +1,20 @@
 # -*- coding: utf-8 -*-
-from gevent import monkey, sleep
+from gevent import monkey
 monkey.patch_all()
-##################################
+
 import argparse
 import logging
 import logging.config
-import iso8601
 import json
 import sys
 import os
 import re
 from urlparse import urljoin
-from dateutil.tz import tzlocal
-from copy import deepcopy
-from datetime import timedelta, datetime
-from pytz import timezone
 from couchdb import Database, Session
-from couchdb.http import HTTPError, RETRYABLE_ERRORS
 from gevent.event import Event
 from gevent.lock import BoundedSemaphore
-from gevent.subprocess import call
-from apscheduler.schedulers.gevent import GeventScheduler
 from requests import Session as RequestsSession
-from .server import run_server
-from .utils import (
-    sorting_by_amount,
-    get_latest_bid_for_bidder,
-    sorting_start_bids_by_amount,
-    make_request,
-    delete_mapping,
-    generate_request_id,
-    filter_amount
-)
-from .executor import AuctionsExecutor
 
-from .templates import (
-    prepare_initial_bid_stage,
-    prepare_bids_stage,
-    prepare_service_stage,
-    prepare_results_stage,
-    get_template
-)
-
-from .tenders_types import simple_tender, multiple_lots_tenders
-
-from yaml import safe_dump as yaml_dump
-from barbecue import cooking
-from fractions import Fraction
-
-from .systemd_msgs_ids import(
-    AUCTION_WORKER_DB_GET_DOC,
-    AUCTION_WORKER_DB_GET_DOC_ERROR,
-    AUCTION_WORKER_DB_SAVE_DOC,
-    AUCTION_WORKER_DB_SAVE_DOC_ERROR,
-    AUCTION_WORKER_DB_GET_DOC_UNHANDLED_ERROR,
-    AUCTION_WORKER_DB_SAVE_DOC_UNHANDLED_ERROR,
-    AUCTION_WORKER_SERVICE_PREPARE_SERVER,
-    AUCTION_WORKER_SERVICE_STOP_AUCTION_WORKER,
-    AUCTION_WORKER_SERVICE_START_AUCTION,
-    AUCTION_WORKER_SERVICE_END_FIRST_PAUSE,
-    AUCTION_WORKER_SERVICE_END_BID_STAGE,
-    AUCTION_WORKER_SERVICE_START_STAGE,
-    AUCTION_WORKER_SERVICE_START_NEXT_STAGE,
-    AUCTION_WORKER_SERVICE_END_AUCTION,
-    AUCTION_WORKER_SERVICE_AUCTION_CANCELED,
-    AUCTION_WORKER_SERVICE_AUCTION_STATUS_CANCELED,
-    AUCTION_WORKER_SERVICE_AUCTION_RESCHEDULE,
-    AUCTION_WORKER_SERVICE_AUCTION_NOT_FOUND,
-    AUCTION_WORKER_BIDS_LATEST_BID_CANCELLATION,
-    AUCTION_WORKER_API_AUDIT_LOG_APPROVED,
-    AUCTION_WORKER_API_AUDIT_LOG_NOT_APPROVED,
-    AUCTION_WORKER_API_AUCTION_RESULT_APPROVED,
-    AUCTION_WORKER_API_AUCTION_RESULT_NOT_APPROVED
-)
-from openprocurement.auction.services import\
-    ROUNDS, TIMEZONE
 
 MULTILINGUAL_FIELDS = ["title", "description"]
 ADDITIONAL_LANGUAGES = ["ru", "en"]
