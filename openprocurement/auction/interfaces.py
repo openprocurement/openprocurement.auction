@@ -19,3 +19,10 @@ class IAuctionsRunner(Interface):
 
 class IFeedItem(Interface):
     """"""
+
+
+class IAuctionManager(Interface):
+    """"""
+
+class IAuctionType(Interface):
+    """"""

@@ -60,7 +60,7 @@ class AuctionsDataBridge(object):
     def get_teders_list(self):
         for item in get_tenders(host=self.config_get('tenders_api_server'),
                                 version=self.config_get('tenders_api_version'),
-                                key='', extra_params={'opt_fields': 'status,auctionPeriod,lots', 'mode': '_all_'}):
+                                key='', extra_params={'opt_fields': 'status,auctionPeriod,lots,procurementMethodType', 'mode': '_all_'}):
             # magic goes here
             # TODO: registrations
             feed = FeedItem(item)
@@ -68,6 +68,9 @@ class AuctionsDataBridge(object):
                 (self, feed),
                 IAuctionsRunner
             )
+            if not worker_runner:
+                print "Skipped {}".format(feed['procurementMethodType'])
+                continue
             for cmd in worker_runner:
                 cmd.run_worker()
 
