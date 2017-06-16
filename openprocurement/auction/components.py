@@ -4,7 +4,7 @@ from openprocurement.auction.interfaces import IComponents
 
 
 @interface.implementer(IComponents)
-class AuctionComponents(Components):
+class AuctionComponents(registry.Components):
 
     def getImplementer(self, obj, iface, default):
         if not iface.providedBy(obj):
@@ -28,27 +28,22 @@ class AuctionComponents(Components):
             return wrapper
 
         return wrapped
-        
-    def component(self, provides="", name=""):
-        """ TODO: use wraps decorator??
-        """
-        
-        def wrapped(wrapped):
-            try:
-                iface = list(implementedBy(wrapped))[0]
-            except IndexError:
-                raise ValueError("{} should be marked as interface".format(wrapped.__name__))
-            
-            class Wrapped(wrapped):
-                __doc__ = wrapped.__doc__
-                __name__ = wrapped.__name__
-                def __new__(cls, *args, **kw):
-                    ob = sef.queryUtility(provides, name=name)
-                    if not ob:
-                        ob = super(Wrapped, cls).__new__(*ags, **kw)
-                        self.regiterUtility(ob, provides, name=name)
-                    return ob
+    def component(self):
+        """ Zope utility regitration decorator """
+        def wrapped(Wrapped):
+            iface = list(implementedBy(Wrapped))
+            if not iface:
+                raise ValueError("{} should be marked as interface".format(Wrapped.__name__))
+            name = Wrapped.__name__.lower()
+            def new(cls, *args, **kw):
+                ob = self.queryUtility(iface[0], name=name)
+                if not ob:
+                    ob = super(Wrapped, cls).__new__(*args, **kw)
+                    self.registerUtility(ob, iface[0], name=name)
+                return ob
+            Wrapped.__new__ = classmethod(new)
             return Wrapped
+
         return wrapped
 
     def qA(self, obj, iface, name=''):
