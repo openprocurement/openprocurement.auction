@@ -15,3 +15,7 @@ class IWorker(Interface):
 
 class IAuctionsRunner(Interface):
     """"""
+
+
+class IFeedItem(Interface):
+    """"""
