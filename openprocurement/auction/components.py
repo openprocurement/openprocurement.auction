@@ -21,8 +21,8 @@ class AuctionComponents(registry.Components):
             
             self.registerAdapter(
                 wrapper,
-                provides,
                 adapts,
+                provides,
                 name=name
             )
             return wrapper
