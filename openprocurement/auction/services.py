@@ -43,7 +43,7 @@ from openprocurement.auction.utils import\
     get_latest_bid_for_bidder, sorting_by_amount,\
     sorting_start_bids_by_amount, delete_mapping
 from openprocurement.auction.tenders_types import\
-    simple_tender, multiple_lots_tenders
+    simple_tender
 from openprocurement.auction.templates import prepare_bids_stage,\
     prepare_service_stage, prepare_initial_bid_stage, prepare_results_stage
 
@@ -54,7 +54,7 @@ TIMEZONE = timezone('Europe/Kiev')
 BIDS_SECONDS = 120
 FIRST_PAUSE_SECONDS = 300
 PAUSE_SECONDS = 120
-BIDS_KEYS_FOR_COPY = ( "bidder_id", "amount", "time")
+BIDS_KEYS_FOR_COPY = ("bidder_id", "amount", "time")
 
 
 SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100},
@@ -67,10 +67,7 @@ class DBServiceMixin(object):
     """ Mixin class to work with couchdb"""
 
     def get_auction_info(self, prepare=False):
-        if self.lot_id:
-            multiple_lots_tenders.get_auction_info(self, prepare)
-        else:
-            simple_tender.get_auction_info(self, prepare)
+        simple_tender.get_auction_info(self, prepare)
 
     def prepare_public_document(self):
         public_document = deepcopy(dict(self.auction_document))
@@ -160,33 +157,21 @@ class DBServiceMixin(object):
         if self.worker_defaults.get('sandbox_mode', False):
             submissionMethodDetails = self._auction_data['data'].get('submissionMethodDetails', '')
             if submissionMethodDetails == 'quick(mode:no-auction)':
-                if self.lot_id:
-                    results = multiple_lots_tenders.post_results_data(self, with_auctions_results=False)
-                else:
-                    results = simple_tender.post_results_data(self, with_auctions_results=False)
+                results = simple_tender.post_results_data(self, with_auctions_results=False)
                 return 0
             elif submissionMethodDetails == 'quick(mode:fast-forward)':
-                if self.lot_id:
-                    self.auction_document = multiple_lots_tenders.prepare_auction_document(self)
-                else:
-                    self.auction_document = simple_tender.prepare_auction_document(self)
+                self.auction_document = simple_tender.prepare_auction_document(self)
                 if not self.debug:
                     self.set_auction_and_participation_urls()
                 self.get_auction_info()
                 self.prepare_auction_stages_fast_forward()
                 self.save_auction_document()
-                if self.lot_id:
-                    multiple_lots_tenders.post_results_data(self, with_auctions_results=False)
-                else:
-                    simple_tender.post_results_data(self, with_auctions_results=False)
-                    simple_tender.announce_results_data(self, None)
+                simple_tender.post_results_data(self, with_auctions_results=False)
+                simple_tender.announce_results_data(self, None)
                 self.save_auction_document()
                 return
 
-        if self.lot_id:
-            self.auction_document = multiple_lots_tenders.prepare_auction_document(self)
-        else:
-            self.auction_document = simple_tender.prepare_auction_document(self)
+        self.auction_document = simple_tender.prepare_auction_document(self)
 
         self.save_auction_document()
         if not self.debug:
@@ -212,8 +197,6 @@ class AuditServiceMixin(object):
                 }
             }
         }
-        if self.lot_id:
-            self.audit["lot_id"] = self.lot_id
         for round_number in range(1, ROUNDS + 1):
             self.audit['timeline']['round_{}'.format(round_number)] = {}
 
@@ -344,10 +327,7 @@ class BiddersServiceMixin(object):
         return filtered_bids_data
 
     def set_auction_and_participation_urls(self):
-        if self.lot_id:
-            multiple_lots_tenders.prepare_auction_and_participation_urls(self)
-        else:
-            simple_tender.prepare_auction_and_participation_urls(self)
+        simple_tender.prepare_auction_and_participation_urls(self)
 
     def approve_bids_information(self):
         if self.current_stage in self._bids_data:
@@ -389,18 +369,9 @@ class PostAuctionServiceMixin(object):
             doc_id = self.upload_audit_file_with_document_service()
         else:
             doc_id = self.upload_audit_file_without_document_service()
-
-        if self.lot_id:
-            results = multiple_lots_tenders.post_results_data(self)
-        else:
-            results = simple_tender.post_results_data(self)
-
+        results = simple_tender.post_results_data(self)
         if results:
-            if self.lot_id:
-                bids_information = None
-            else:
-                bids_information = simple_tender.announce_results_data(self, results)
-
+            bids_information = simple_tender.announce_results_data(self, results)
             if doc_id and bids_information:
                 self.approve_audit_info_on_announcement(approved=bids_information)
                 if self.worker_defaults.get('with_document_service', False):
@@ -419,10 +390,7 @@ class PostAuctionServiceMixin(object):
     def post_announce(self):
         self.generate_request_id()
         self.get_auction_document()
-        if self.lot_id:
-            multiple_lots_tenders.announce_results_data(self, None)
-        else:
-            simple_tender.announce_results_data(self, None)
+        simple_tender.announce_results_data(self, None)
         self.save_auction_document()
 
 

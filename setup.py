@@ -82,7 +82,7 @@ setup(name='openprocurement.auction',
           ],
           'openprocurement.auction.workers': [
               'auction = openprocurement.auction.auction:Auction',
-              'multilot  = openprocurement.auction.auction:Auction'
+              'multilot  = openprocurement.auction.multilot:Auction'
           ],
 
       },
