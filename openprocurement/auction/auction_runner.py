@@ -196,7 +196,7 @@ class AuctionsRunner(object):
                 raise StopIteration
         raise StopIteration
 
-   def __repr__(self):
+    def __repr__(self):
         return "<Simple: {}>".format(self.item.get('procurementMethodType'))
 
     __str__ = __repr__
