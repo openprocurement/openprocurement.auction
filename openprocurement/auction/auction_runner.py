@@ -29,6 +29,8 @@ LOGGER = logging.getLogger(__name__)
 @implementer(IAuctionsRunner)
 class MultilotAuctionRunner(object):
 
+    worker = 'multilot'
+
     def __init__(self, bridge, item):
         self.item = item
         self.bridge = bridge
@@ -37,8 +39,9 @@ class MultilotAuctionRunner(object):
 
     def __repr__(self):
         return "<Multilot: {}>".format(self.item.get('procurementMethodType'))
-    
+
     __str__ = __repr__
+
     def next(self):
         return self
 
@@ -100,6 +103,9 @@ class MultilotAuctionRunner(object):
 
 @implementer(IAuctionsRunner)
 class AuctionsRunner(object):
+
+    worker = 'auction'
+
     def __init__(self, bridge, item):
         self.item = item
         self.bridge = bridge
