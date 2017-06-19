@@ -18,16 +18,10 @@ from requests import Session as RequestsSession
 
 MULTILINGUAL_FIELDS = ["title", "description"]
 ADDITIONAL_LANGUAGES = ["ru", "en"]
-
 PLANNING_FULL = "full"
 PLANNING_PARTIAL_DB = "partial_db"
 PLANNING_PARTIAL_CRON = "partial_cron"
-
-BIDS_KEYS_FOR_COPY = (
-    "bidder_id",
-    "amount",
-    "time"
-)
+BIDS_KEYS_FOR_COPY = ("bidder_id", "amount", "time")
 TIMER_STAMP = re.compile(
     r"OnCalendar=(?P<year>[0-9][0-9][0-9][0-9])"
     r"-(?P<mon>[0-9][0-9])-(?P<day>[0123][0-9]) "

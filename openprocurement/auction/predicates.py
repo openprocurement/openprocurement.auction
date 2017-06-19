@@ -1,10 +1,9 @@
-class HasKeys(object):
-    def __init__(self, value):
-        assert isinstance(value, (list, tuple))
+class KeyIn(object):
+    def __init__(self, value, api):
         self.value = value
 
     def __call__(self, for_):
-        return all((k in for_) for k in self.value)
+        return self.value in for_
 
     def phash(self):
         return 'HasKeys: {}'.format(self.value)

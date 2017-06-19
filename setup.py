@@ -53,7 +53,8 @@ setup(name='openprocurement.auction',
           'openprocurement_client',
           'python-consul',
           'retrying',
-          'zope.interface'
+          'zope.interface',
+          'walkabout'
       ],
       extras_require={
           'test': [
@@ -74,6 +75,10 @@ setup(name='openprocurement.auction',
           ],
           'paste.app_factory': [
               'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',
+          ],
+          'openprocurement.auction.plugins': [
+              'auction = openprocurement.auction.includeme:includeme',
+              'multilot  = openprocurement.auction.includeme:includeme2'
           ]
       },
       )

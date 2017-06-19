@@ -21,7 +21,7 @@ class IFeedItem(Interface):
     """"""
 
 
-class IAuctionManager(Interface):
+class IAuctionsMapper(Interface):
     """"""
 
 class IAuctionType(Interface):

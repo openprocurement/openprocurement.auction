@@ -18,7 +18,7 @@ from couchdb import Database, Session
 from dateutil.tz import tzlocal
 
 from openprocurement.auction.interfaces import\
-    IAuctionDatabridge, IAuctionsRunner
+    IAuctionDatabridge, IAuctionsRunner, IAuctionsMapper
 from openprocurement.auction.components import components
 from openprocurement.auction.feed import FeedItem
 
@@ -31,6 +31,7 @@ SIMPLE_AUCTION_TYPE = 0
 SINGLE_LOT_AUCTION_TYPE = 1
 MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}"  # {TENDER_ID}_{LOT_ID}
 LOGGER = logging.getLogger(__name__)
+API_EXTRA = {'opt_fields': 'status,auctionPeriod,lots,procurementMethodType', 'mode': '_all_'}
 
 
 @components.component()
@@ -44,6 +45,7 @@ class AuctionsDataBridge(object):
         self.config = config
         self.tenders_ids_list = []
         self.tz = tzlocal()
+        self.mapper = components.qA(self, IAuctionsMapper)
         self.re_planning = re_planning
 
         self.couch_url = urljoin(
@@ -60,19 +62,16 @@ class AuctionsDataBridge(object):
     def get_teders_list(self):
         for item in get_tenders(host=self.config_get('tenders_api_server'),
                                 version=self.config_get('tenders_api_version'),
-                                key='', extra_params={'opt_fields': 'status,auctionPeriod,lots,procurementMethodType', 'mode': '_all_'}):
+                                key='', extra_params=API_EXTRA):
             # magic goes here
-            # TODO: registrations
             feed = FeedItem(item)
-            worker_runner = components.queryMultiAdapter(
-                (self, feed),
-                IAuctionsRunner
-            )
-            if not worker_runner:
-                print "Skipped {}".format(feed['procurementMethodType'])
+            auction = self.mapper(feed)
+            print auction 
+            if not auction:
                 continue
-            for cmd in worker_runner:
-                cmd.run_worker()
+            for cmd in auction:
+                 #cmd.run_worker()
+                 print cmd
 
     def run(self):
         if self.re_planning:
