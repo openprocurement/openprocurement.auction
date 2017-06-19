@@ -52,6 +52,14 @@ def after_request(response):
     return response
 
 
+@auctions_server.route('/tenders/<auction_doc_id>')
+def auction_url(auction_doc_id):
+    doc = auctions_server.db.get(auction_doc_id, {})
+    if not doc:
+        return jsonify({'data': {}}) 
+    return jsonify({'data': doc})
+
+
 @auctions_server.route('/')
 def auction_list_index():
     data = [auction.doc for auction
