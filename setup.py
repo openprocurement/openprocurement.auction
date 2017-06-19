@@ -79,6 +79,11 @@ setup(name='openprocurement.auction',
           'openprocurement.auction.plugins': [
               'auction = openprocurement.auction.includeme:includeme',
               'multilot  = openprocurement.auction.includeme:includeme2'
-          ]
+          ],
+          'openprocurement.auction.workers': [
+              'auction = openprocurement.auction.auction:Auction',
+              'multilot  = openprocurement.auction.auction:Auction'
+          ],
+
       },
       )

@@ -9,7 +9,7 @@ class IAuctionDatabridge(Interface):
     """"""
 
 
-class IWorker(Interface):
+class IAuctionWorker(Interface):
     """"""
 
 

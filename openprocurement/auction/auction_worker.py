@@ -3,94 +3,21 @@ from gevent import monkey
 monkey.patch_all()
 
 import argparse
-import logging
 import logging.config
 import json
 import sys
 import os
 import re
-from urlparse import urljoin
-from couchdb import Database, Session
-from gevent.event import Event
-from gevent.lock import BoundedSemaphore
-from requests import Session as RequestsSession
+
+from openprocurement.auction.interfaces import IAuctionWorker
+from openprocurement.auction.components import components
+from openprocurement.auction.services import SCHEDULER
 
 
-MULTILINGUAL_FIELDS = ["title", "description"]
-ADDITIONAL_LANGUAGES = ["ru", "en"]
 PLANNING_FULL = "full"
 PLANNING_PARTIAL_DB = "partial_db"
 PLANNING_PARTIAL_CRON = "partial_cron"
-BIDS_KEYS_FOR_COPY = ("bidder_id", "amount", "time")
-TIMER_STAMP = re.compile(
-    r"OnCalendar=(?P<year>[0-9][0-9][0-9][0-9])"
-    r"-(?P<mon>[0-9][0-9])-(?P<day>[0123][0-9]) "
-    r"(?P<hour>[0-2][0-9]):(?P<min>[0-5][0-9]):(?P<sec>[0-5][0-9])"
-)
-logger = logging.getLogger('Auction Worker')
-
-
-from openprocurement.auction.services import\
-    DBServiceMixin, RequestIDServiceMixin, AuditServiceMixin,\
-    DateTimeServiceMixin, BiddersServiceMixin, PostAuctionServiceMixin,\
-    StagesServiceMixin, AuctionRulerMixin, SCHEDULER
-
-
-
-class Auction(DBServiceMixin,
-              RequestIDServiceMixin,
-              AuditServiceMixin,
-              BiddersServiceMixin,
-              DateTimeServiceMixin,
-              StagesServiceMixin,
-              PostAuctionServiceMixin,
-              AuctionRulerMixin):
-    """Auction Worker Class"""
-
-    def __init__(self, tender_id,
-                 worker_defaults={},
-                 auction_data={},
-                 lot_id=None,
-                 activate=False):
-        super(Auction, self).__init__()
-        self.generate_request_id()
-        self.tender_id = tender_id
-        self.lot_id = lot_id
-        if lot_id:
-            self.auction_doc_id = tender_id + "_" + lot_id
-        else:
-            self.auction_doc_id = tender_id
-        self.tender_url = urljoin(
-            worker_defaults["TENDERS_API_URL"],
-            '/api/{0}/tenders/{1}'.format(
-                worker_defaults["TENDERS_API_VERSION"], tender_id
-            )
-        )
-        self.activate = activate
-        if auction_data:
-            self.debug = True
-            logger.setLevel(logging.DEBUG)
-            self._auction_data = auction_data
-        else:
-            self.debug = False
-        self._end_auction_event = Event()
-        self.bids_actions = BoundedSemaphore()
-        self.session = RequestsSession()
-        self.worker_defaults = worker_defaults
-        if self.worker_defaults.get('with_document_service', False):
-            self.session_ds = RequestsSession()
-        self._bids_data = {}
-        self.db = Database(str(self.worker_defaults["COUCH_DATABASE"]),
-                           session=Session(retry_delays=range(10)))
-        self.audit = {}
-        self.retries = 10
-        self.bidders_count = 0
-        self.bidders_data = []
-        self.bidders_features = {}
-        self.bidders_coeficient = {}
-        self.features = None
-        self.mapping = {}
-        self.rounds_stages = []
+LOGGER = logging.getLogger('Auction Worker')
 
 
 def main():
@@ -100,12 +27,12 @@ def main():
     parser.add_argument('auction_worker_config', type=str,
                         help='Auction Worker Configuration File')
     parser.add_argument('--auction_info', type=str, help='Auction File')
+    parser.add_argument('--type', type=str, default='auction', help='Auction File')
     parser.add_argument('--auction_info_from_db', type=str, help='Get auction data from local database')
     parser.add_argument('--with_api_version', type=str, help='Tender Api Version')
     parser.add_argument('--lot', type=str, help='Specify lot in tender', default=None)
     parser.add_argument('--planning_procerude', type=str, help='Override planning procerude',
                         default=None, choices=[None, PLANNING_FULL, PLANNING_PARTIAL_DB, PLANNING_PARTIAL_CRON])
-
 
     args = parser.parse_args()
 
@@ -132,10 +59,14 @@ def main():
     else:
         auction_data = None
 
-    auction = Auction(args.auction_doc_id,
-                      worker_defaults=worker_defaults,
-                      auction_data=auction_data,
-                      lot_id=args.lot)
+    auction_class = components.q(IAuctionWorker, name=args.type)
+    if not auction_class:
+        LOGGER.warn("No registered workers with name {}".format(args.type))
+        return
+    auction = auction_class(args.auction_doc_id,
+                            worker_defaults=worker_defaults,
+                            auction_data=auction_data,
+                            lot_id=args.lot)
     if args.cmd == 'run':
         SCHEDULER.start()
         auction.schedule_auction()

@@ -198,7 +198,7 @@ class AuctionsRunner(object):
 
    def __repr__(self):
         return "<Simple: {}>".format(self.item.get('procurementMethodType'))
-    
+
     __str__ = __repr__
 
     def run_worker(self, cmd, tender_id, with_api_version=None, lot_id=None):

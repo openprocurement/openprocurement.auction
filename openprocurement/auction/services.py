@@ -51,21 +51,17 @@ from openprocurement.auction.templates import prepare_bids_stage,\
 ROUNDS = 3
 LOGGER = logging.getLogger("Auction Worker")
 TIMEZONE = timezone('Europe/Kiev')
-
 BIDS_SECONDS = 120
 FIRST_PAUSE_SECONDS = 300
 PAUSE_SECONDS = 120
+BIDS_KEYS_FOR_COPY = ( "bidder_id", "amount", "time")
 
-BIDS_KEYS_FOR_COPY = (
-    "bidder_id",
-    "amount",
-    "time"
-)
 
 SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100},
                             executors={'default': AuctionsExecutor()},
                             logger=LOGGER)
 SCHEDULER.timezone = TIMEZONE 
+
 
 class DBServiceMixin(object):
     """ Mixin class to work with couchdb"""

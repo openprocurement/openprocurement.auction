@@ -5,7 +5,7 @@ from walkabout import PredicateDomain, PredicateMismatch
 from pkg_resources import iter_entry_points
 
 from openprocurement.auction.interfaces import IComponents, IAuctionType,\
-    IFeedItem, IAuctionDatabridge, IAuctionsMapper, IAuctionsRunner
+    IFeedItem, IAuctionDatabridge, IAuctionsMapper, IAuctionsRunner, IAuctionWorker
 
 
 PKG_NAMESPACE = "openprocurement.auction.plugins"
@@ -54,24 +54,6 @@ class AuctionComponents(registry.Components):
 
         return wrapped
 
-    def component(self):
-        """ Zope utility regitration decorator """
-        def wrapped(Wrapped):
-            iface = list(implementedBy(Wrapped))
-            if not iface:
-                raise ValueError("{} should be marked as interface".format(Wrapped.__name__))
-            name = Wrapped.__name__.lower()
-            def new(cls, *args, **kw):
-                ob = self.queryUtility(iface[0], name=name)
-                if not ob:
-                    ob = super(Wrapped, cls).__new__(*args, **kw)
-                    self.registerUtility(ob, iface[0], name=name)
-                return ob
-            Wrapped.__new__ = classmethod(new)
-            return Wrapped
-
-        return wrapped
-
     def qA(self, obj, iface, name=''):
         return self.queryAdapter(obj, iface, name=name)
 
@@ -108,3 +90,9 @@ class AuctionMapper(object):
             (self.databridge, feed),
             auction_iface
         )
+
+WS = PKG_NAMESPACE.replace('plugins', 'workers')
+for worker in iter_entry_points(WS):
+    plugin = worker.load()
+    print "loading {} {}".format(worker.name, plugin)
+    components.registerUtility(plugin, IAuctionWorker, name=worker.name)

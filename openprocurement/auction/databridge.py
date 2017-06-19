@@ -27,9 +27,7 @@ from openprocurement.auction.systemd_msgs_ids import\
 from openprocurement_client.sync import get_tenders
 from openprocurement.auction.design import sync_design
 
-SIMPLE_AUCTION_TYPE = 0
-SINGLE_LOT_AUCTION_TYPE = 1
-MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}"  # {TENDER_ID}_{LOT_ID}
+
 LOGGER = logging.getLogger(__name__)
 API_EXTRA = {'opt_fields': 'status,auctionPeriod,lots,procurementMethodType', 'mode': '_all_'}
 
