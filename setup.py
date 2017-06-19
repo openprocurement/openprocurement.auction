@@ -2,7 +2,67 @@ from setuptools import setup, find_packages
 import os
 
 version = '2.1.0.dev19+auction.worker.sharding'
-
+install_requires = [
+    'setuptools',
+    'requests',
+    'APScheduler',
+    'iso8601',
+    'python-dateutil',
+    'Flask',
+    'WTForms',
+    'WTForms-JSON',
+    'Flask-Redis',
+    'WSGIProxy2',
+    'gevent',
+    'sse',
+    'flask_oauthlib',
+    'Flask-Assets',
+    'cssmin',
+    'jsmin',
+    'PyYAML',
+    'request_id_middleware',
+    'restkit',
+    'PyMemoize',
+    'barbecue',
+    # ssl warning
+    'pyopenssl',
+    'ndg-httpsclient',
+    'pyasn1',
+    'openprocurement_client',
+    'python-consul',
+    'retrying',
+    'zope.interface',
+    'walkabout'
+]
+extras_require = {
+    'test': [
+        'robotframework',
+        'robotframework-selenium2library',
+        'robotframework-debuglibrary',
+        'robotframework-selenium2screenshots',
+        'chromedriver',
+        'mock'
+    ]
+}
+entry_points = {
+    'console_scripts': [
+        'auction_worker = openprocurement.auction.auction_worker:main',
+        'auctions_chronograph = openprocurement.auction.chronograph:main',
+        'auctions_data_bridge = openprocurement.auction.databridge:main',
+        'auction_test = openprocurement.auction.tests.main:main [test]'
+    ],
+    'paste.app_factory': [
+        'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',
+    ],
+    'openprocurement.auction.plugins': [
+        'auction = openprocurement.auction.includeme:includeme',
+        'multilot  = openprocurement.auction.includeme:includeme2'
+    ],
+    'openprocurement.auction.workers': [
+        'auction = openprocurement.auction.auction:Auction',
+        'multilot  = openprocurement.auction.multilot:Auction'
+    ]
+}
 
 setup(name='openprocurement.auction',
       version=version,
@@ -24,66 +84,7 @@ setup(name='openprocurement.auction',
       namespace_packages=['openprocurement'],
       include_package_data=True,
       zip_safe=False,
-      install_requires=[
-          'setuptools',
-          'requests',
-          'APScheduler',
-          'iso8601',
-          'python-dateutil',
-          'Flask',
-          'WTForms',
-          'WTForms-JSON',
-          'Flask-Redis',
-          'WSGIProxy2',
-          'gevent',
-          'sse',
-          'flask_oauthlib',
-          'Flask-Assets',
-          'cssmin',
-          'jsmin',
-          'PyYAML',
-          'request_id_middleware',
-          'restkit',
-          'PyMemoize',
-          'barbecue',
-          # ssl warning
-          'pyopenssl',
-          'ndg-httpsclient',
-          'pyasn1',
-          'openprocurement_client',
-          'python-consul',
-          'retrying',
-          'zope.interface',
-          'walkabout'
-      ],
-      extras_require={
-          'test': [
-              'robotframework',
-              'robotframework-selenium2library',
-              'robotframework-debuglibrary',
-              'robotframework-selenium2screenshots',
-              'chromedriver',
-              'mock'
-          ]
-      },
-      entry_points={
-          'console_scripts': [
-              'auction_worker = openprocurement.auction.auction_worker:main',
-              'auctions_chronograph = openprocurement.auction.chronograph:main',
-              'auctions_data_bridge = openprocurement.auction.databridge:main',
-              'auction_test = openprocurement.auction.tests.main:main [test]'
-          ],
-          'paste.app_factory': [
-              'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',
-          ],
-          'openprocurement.auction.plugins': [
-              'auction = openprocurement.auction.includeme:includeme',
-              'multilot  = openprocurement.auction.includeme:includeme2'
-          ],
-          'openprocurement.auction.workers': [
-              'auction = openprocurement.auction.auction:Auction',
-              'multilot  = openprocurement.auction.multilot:Auction'
-          ],
-
-      },
+      install_requires=install_requires,
+      extras_require=extras_require,
+      entry_points=entry_points,
       )
