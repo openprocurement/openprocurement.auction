@@ -34,7 +34,6 @@ LOGGER = logging.getLogger(__name__)
 API_EXTRA = {'opt_fields': 'status,auctionPeriod,lots,procurementMethodType', 'mode': '_all_'}
 
 
-@components.component()
 @implementer(IAuctionDatabridge)
 class AuctionsDataBridge(object):
 
