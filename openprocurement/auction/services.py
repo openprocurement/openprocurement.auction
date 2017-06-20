@@ -1,6 +1,7 @@
 import logging
 import json
 import iso8601
+import sys
 from gevent import sleep
 from datetime import datetime, timedelta
 from copy import deepcopy
@@ -8,8 +9,6 @@ from pytz import timezone
 from dateutil.tz import tzlocal
 from yaml import safe_dump as yaml_dump
 from couchdb.http import HTTPError, RETRYABLE_ERRORS
-from fractions import Fraction
-from barbecue import cooking
 from apscheduler.schedulers.gevent import GeventScheduler
 
 from openprocurement.auction.executor import AuctionsExecutor
@@ -36,12 +35,15 @@ from openprocurement.auction.systemd_msgs_ids import (
     AUCTION_WORKER_SERVICE_START_AUCTION,
     AUCTION_WORKER_SERVICE_STOP_AUCTION_WORKER,
     AUCTION_WORKER_SERVICE_PREPARE_SERVER,
-    AUCTION_WORKER_SERVICE_END_FIRST_PAUSE
+    AUCTION_WORKER_SERVICE_END_FIRST_PAUSE,
+    AUCTION_WORKER_API_AUCTION_CANCEL,
+    AUCTION_WORKER_API_AUCTION_NOT_EXIST,
+    AUCTION_WORKER_SERVICE_NUMBER_OF_BIDS
 )
 from openprocurement.auction.utils import\
-    filter_amount, generate_request_id, make_request,\
+    generate_request_id, make_request,\
     get_latest_bid_for_bidder, sorting_by_amount,\
-    sorting_start_bids_by_amount, delete_mapping
+    sorting_start_bids_by_amount, delete_mapping, get_tender_data
 from openprocurement.auction.tenders_types import\
     simple_tender
 from openprocurement.auction.templates import prepare_bids_stage,\
@@ -60,25 +62,80 @@ BIDS_KEYS_FOR_COPY = ("bidder_id", "amount", "time")
 SCHEDULER = GeventScheduler(job_defaults={"misfire_grace_time": 100},
                             executors={'default': AuctionsExecutor()},
                             logger=LOGGER)
-SCHEDULER.timezone = TIMEZONE 
+SCHEDULER.timezone = TIMEZONE
 
 
 class DBServiceMixin(object):
     """ Mixin class to work with couchdb"""
 
     def get_auction_info(self, prepare=False):
-        simple_tender.get_auction_info(self, prepare)
+        if not self.debug:
+            if prepare:
+                self._auction_data = get_tender_data(
+                    self.tender_url,
+                    request_id=self.request_id,
+                    session=self.session
+                )
+            else:
+                self._auction_data = {'data': {}}
+            auction_data = get_tender_data(
+                self.tender_url + '/auction',
+                user=self.worker_defaults["TENDERS_API_TOKEN"],
+                request_id=self.request_id,
+                session=self.session
+            )
+            if auction_data:
+                self._auction_data['data'].update(auction_data['data'])
+                self.startDate = self.convert_datetime(self._auction_data['data']['auctionPeriod']['startDate'])
+                del auction_data
+            else:
+                self.get_auction_document()
+                if self.auction_document:
+                    self.auction_document["current_stage"] = -100
+                    self.save_auction_document()
+                    LOGGER.warning("Cancel auction: {}".format(
+                        self.auction_doc_id
+                    ), extra={"JOURNAL_REQUEST_ID": self.request_id,
+                              "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_CANCEL})
+                else:
+                    LOGGER.error("Auction {} not exists".format(
+                        self.auction_doc_id
+                    ), extra={"JOURNAL_REQUEST_ID": self.request_id,
+                              "MESSAGE_ID": AUCTION_WORKER_API_AUCTION_NOT_EXIST})
+                self._end_auction_event.set()
+                sys.exit(1)
+        self.bidders = [bid["id"]
+                        for bid in self._auction_data["data"]["bids"]
+                        if bid.get('status', 'active') == 'active']
+        self.bidders_count = len(self.bidders)
+        LOGGER.info("Bidders count: {}".format(self.bidders_count),
+                    extra={"JOURNAL_REQUEST_ID": self.request_id,
+                           "MESSAGE_ID": AUCTION_WORKER_SERVICE_NUMBER_OF_BIDS})
+        self.rounds_stages = []
+        for stage in range((self.bidders_count + 1) * ROUNDS + 1):
+            if (stage + self.bidders_count) % (self.bidders_count + 1) == 0:
+                self.rounds_stages.append(stage)
+        self.mapping = {}
+        self.startDate = self.convert_datetime(
+            self._auction_data['data']['auctionPeriod']['startDate']
+        )
+
+        if not prepare:
+            self.bidders_data = []
+            for bid in self._auction_data['data']['bids']:
+                if bid.get('status', 'active') == 'active':
+                    self.bidders_data.append({
+                        'id': bid['id'],
+                        'date': bid['date'],
+                        'value': bid['value']
+                    })
+            self.bidders_count = len(self.bidders_data)
+
+            for index, uid in enumerate(self.bidders_data):
+                self.mapping[self.bidders_data[index]['id']] = str(index + 1)
 
     def prepare_public_document(self):
         public_document = deepcopy(dict(self.auction_document))
-        not_last_stage = self.auction_document["current_stage"] not in (len(self.auction_document["stages"]) - 1,
-                                                                        len(self.auction_document["stages"]) - 2,)
-        if self.features and not_last_stage:
-            for stage_name in ['initial_bids', 'stages', 'results']:
-                public_document[stage_name] = map(
-                    filter_amount,
-                    public_document[stage_name]
-                )
         return public_document
 
     def get_auction_document(self, force=False):
@@ -213,13 +270,6 @@ class AuditServiceMixin(object):
         if self.auction_document["stages"][self.current_stage].get('changed', False):
             self.audit['timeline'][round_label][turn_label]["bid_time"] = self.auction_document["stages"][self.current_stage]['time']
             self.audit['timeline'][round_label][turn_label]["amount"] = self.auction_document["stages"][self.current_stage]['amount']
-            if self.features:
-                self.audit['timeline'][round_label][turn_label]["amount_features"] = str(
-                    self.auction_document["stages"][self.current_stage].get("amount_features")
-                )
-                self.audit['timeline'][round_label][turn_label]["coeficient"] = str(
-                    self.auction_document["stages"][self.current_stage].get("coeficient")
-                )
 
     def approve_audit_info_on_announcement(self, approved={}):
         self.audit['timeline']['results'] = {
@@ -319,9 +369,6 @@ class BiddersServiceMixin(object):
         filtered_bids_data = []
         for bid_info in bids:
             bid_info_result = {key: bid_info[key] for key in BIDS_KEYS_FOR_COPY}
-            if self.features:
-                bid_info_result['amount_features'] = bid_info['amount_features']
-                bid_info_result['coeficient'] = bid_info['coeficient']
             bid_info_result["bidder_name"] = self.mapping[bid_info_result['bidder_id']]
             filtered_bids_data.append(bid_info_result)
         return filtered_bids_data
@@ -349,8 +396,6 @@ class BiddersServiceMixin(object):
                 return False
             bid_info = {key: bid_info[key] for key in BIDS_KEYS_FOR_COPY}
             bid_info["bidder_name"] = self.mapping[bid_info['bidder_id']]
-            if self.features:
-                bid_info['amount_features'] = str(Fraction(bid_info['amount']) / self.bidders_coeficient[bid_info['bidder_id']])
             self.auction_document["stages"][self.current_stage] = prepare_bids_stage(
                 self.auction_document["stages"][self.current_stage],
                 bid_info
@@ -405,31 +450,19 @@ class StagesServiceMixin(object):
     def get_round_stages(self, round_num):
         return (round_num * (self.bidders_count + 1) - self.bidders_count,
                 round_num * (self.bidders_count + 1), )
- 
+
     def prepare_auction_stages_fast_forward(self):
-        self.auction_document['auction_type'] = 'meat' if self.features else 'default'
+        self.auction_document['auction_type'] = 'default'
         bids = deepcopy(self.bidders_data)
         self.auction_document["initial_bids"] = []
-        bids_info = sorting_start_bids_by_amount(bids, features=self.features)
+        bids_info = sorting_start_bids_by_amount(bids, features={})
         for index, bid in enumerate(bids_info):
             amount = bid["value"]["amount"]
-            if self.features:
-                amount_features = cooking(
-                    amount,
-                    self.features, self.bidders_features[bid["id"]]
-                )
-                coeficient = self.bidders_coeficient[bid["id"]]
-
-            else:
-                coeficient = None
-                amount_features = None
             initial_bid_stage = prepare_initial_bid_stage(
                 time=bid["date"] if "date" in bid else self.startDate,
                 bidder_id=bid["id"],
                 bidder_name=self.mapping[bid["id"]],
                 amount=amount,
-                coeficient=coeficient,
-                amount_features=amount_features
             )
             self.auction_document["initial_bids"].append(
                 initial_bid_stage
@@ -549,7 +582,7 @@ class StagesServiceMixin(object):
 
     def prepare_auction_stages(self):
         # Initital Bids
-        self.auction_document['auction_type'] = 'meat' if self.features else 'default'
+        self.auction_document['auction_type'] = 'default'
 
         for bid_info in self.bidders_data:
             self.auction_document["initial_bids"].append(
@@ -702,7 +735,8 @@ class AuctionRulerMixin(object):
         # Initital Bids
         bids = deepcopy(self.bidders_data)
         self.auction_document["initial_bids"] = []
-        bids_info = sorting_start_bids_by_amount(bids, features=self.features)
+        # TODO:
+        bids_info = sorting_start_bids_by_amount(bids, features={})
         for index, bid in enumerate(bids_info):
             amount = bid["value"]["amount"]
             audit_info = {
@@ -710,18 +744,8 @@ class AuctionRulerMixin(object):
                 "date": bid["date"],
                 "amount": amount
             }
-            if self.features:
-                amount_features = cooking(
-                    amount,
-                    self.features, self.bidders_features[bid["id"]]
-                )
-                coeficient = self.bidders_coeficient[bid["id"]]
-                audit_info["amount_features"] = str(amount_features)
-                audit_info["coeficient"] = str(coeficient)
-            else:
-                coeficient = None
-                amount_features = None
-
+            coeficient = None
+            amount_features = None
             self.audit['timeline']['auction_start']['initial_bids'].append(
                 audit_info
             )

@@ -30,16 +30,12 @@ class Auction(DBServiceMixin,
     def __init__(self, tender_id,
                  worker_defaults={},
                  auction_data={},
-                 lot_id=None,
+                 lot_id="",# TODO:
                  activate=False):
         super(Auction, self).__init__()
         self.generate_request_id()
         self.tender_id = tender_id
-        self.lot_id = lot_id
-        if lot_id:
-            self.auction_doc_id = tender_id + "_" + lot_id
-        else:
-            self.auction_doc_id = tender_id
+        self.auction_doc_id = tender_id
         self.tender_url = urljoin(
             worker_defaults["TENDERS_API_URL"],
             '/api/{0}/tenders/{1}'.format(
