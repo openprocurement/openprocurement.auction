@@ -4,6 +4,7 @@ import os
 version = '2.1.0.dev19+auction.worker.sharding'
 install_requires = [
     'setuptools',
+    'openprocurement.auction.worker',
     'requests',
     'APScheduler',
     'iso8601',
@@ -47,7 +48,6 @@ extras_require = {
 }
 entry_points = {
     'console_scripts': [
-        'auction_worker = openprocurement.auction.auction_worker:main',
         'auctions_chronograph = openprocurement.auction.chronograph:main',
         'auctions_data_bridge = openprocurement.auction.databridge:main',
         'auction_test = openprocurement.auction.tests.main:main [test]'
@@ -55,14 +55,6 @@ entry_points = {
     'paste.app_factory': [
         'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',
     ],
-    'openprocurement.auction.plugins': [
-        'default = openprocurement.auction.includeme:includeme',
-        'multilot_auction  = openprocurement.auction.includeme:includeme2'
-    ],
-    'openprocurement.auction.workers': [
-        'default = openprocurement.auction.auction:Auction',
-        'multilot  = openprocurement.auction.multilot:Auction'
-    ]
 }
 
 setup(name='openprocurement.auction',

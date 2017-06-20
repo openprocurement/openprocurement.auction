@@ -90,9 +90,3 @@ class AuctionMapper(object):
             (self.databridge, feed),
             auction_iface
         )
-
-WS = PKG_NAMESPACE.replace('plugins', 'workers')
-for worker in iter_entry_points(WS):
-    plugin = worker.load()
-    print "loading {} {}".format(worker.name.lower(), plugin)
-    components.registerUtility(plugin, IAuctionWorker, name=worker.name.lower())
