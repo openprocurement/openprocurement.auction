@@ -27,11 +27,12 @@ class Auction(DBServiceMixin,
               AuctionRulerMixin):
     """Auction Worker Class"""
 
+    klass = 'default'
+
     def __init__(self, tender_id,
                  worker_defaults={},
                  auction_data={},
-                 lot_id="",# TODO:
-                 activate=False):
+                 lot_id=""):# TODO:
         super(Auction, self).__init__()
         self.generate_request_id()
         self.tender_id = tender_id
@@ -42,7 +43,6 @@ class Auction(DBServiceMixin,
                 worker_defaults["TENDERS_API_VERSION"], tender_id
             )
         )
-        self.activate = activate
         if auction_data:
             self.debug = True
             LOGGER.setLevel(logging.DEBUG)

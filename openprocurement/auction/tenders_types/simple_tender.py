@@ -36,7 +36,9 @@ def prepare_auction_document(self):
          "minimalStep": self._auction_data["data"].get("minimalStep", {}),
          "procuringEntity": self._auction_data["data"].get("procuringEntity", {}),
          "items": self._auction_data["data"].get("items", []),
-         "value": self._auction_data["data"].get("value", {})}
+         "value": self._auction_data["data"].get("value", {}),
+         "worker_class": self.klass
+        }
     )
     if self.features:
         self.auction_document["auction_type"] = "meat"

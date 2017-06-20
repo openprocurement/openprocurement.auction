@@ -27,7 +27,7 @@ def main():
     parser.add_argument('auction_worker_config', type=str,
                         help='Auction Worker Configuration File')
     parser.add_argument('--auction_info', type=str, help='Auction File')
-    parser.add_argument('--type', type=str, default='auction', help='Auction File')
+    parser.add_argument('--type', type=str, default='default', help='Auction File')
     parser.add_argument('--auction_info_from_db', type=str, help='Get auction data from local database')
     parser.add_argument('--with_api_version', type=str, help='Tender Api Version')
     parser.add_argument('--lot', type=str, help='Specify lot in tender', default=None)

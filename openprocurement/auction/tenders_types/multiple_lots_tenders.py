@@ -23,95 +23,6 @@ ROUNDS = 3
 logger = logging.getLogger('Auction Worker')
 
 
-def get_auction_info(self, prepare=False):
-    if not self.debug:
-        if prepare:
-            self._auction_data = get_tender_data(
-                self.tender_url,
-                request_id=self.request_id,
-                session=self.session
-            )
-        else:
-            self._auction_data = {'data': {}}
-        auction_data = get_tender_data(
-            self.tender_url + '/auction',
-            user=self.worker_defaults['TENDERS_API_TOKEN'],
-            request_id=self.request_id,
-            session=self.session
-        )
-        if auction_data:
-            self._auction_data['data'].update(auction_data['data'])
-            del auction_data
-        else:
-            self.get_auction_document()
-            if self.auction_document:
-                self.auction_document['current_stage'] = -100
-                self.save_auction_document()
-                logger.warning('Cancel auction: {}'.format(
-                    self.auction_doc_id
-                ), extra={'JOURNAL_REQUEST_ID': self.request_id,
-                          'MESSAGE_ID': AUCTION_WORKER_API_AUCTION_CANCEL})
-            else:
-                logger.error('Auction {} not exists'.format(
-                    self.auction_doc_id
-                ), extra={'JOURNAL_REQUEST_ID': self.request_id,
-                          'MESSAGE_ID': AUCTION_WORKER_API_AUCTION_NOT_EXIST})
-            self._end_auction_event.set()
-            sys.exit(1)
-    self._lot_data = dict({item['id']: item for item in self._auction_data['data']['lots']}[self.lot_id])
-    self._lot_data['items'] = [item for item in self._auction_data['data'].get('items', [])
-                               if item.get('relatedLot') == self.lot_id]
-    self._lot_data['features'] = [
-        item for item in self._auction_data['data'].get('features', [])
-        if item['featureOf'] == 'tenderer' \
-        or item['featureOf'] == 'lot' and item['relatedItem'] == self.lot_id \
-        or item['featureOf'] == 'item' and item['relatedItem'] in [i['id'] for i in self._lot_data['items']]
-    ]
-    self.startDate = self.convert_datetime(
-        self._lot_data['auctionPeriod']['startDate']
-    )
-    self.bidders_features = None
-    self.features = self._lot_data.get('features', None)
-    if not prepare:
-        codes = [i['code'] for i in self._lot_data['features']]
-        self.bidders_data = []
-        for bid_index, bid in enumerate(self._auction_data['data']['bids']):
-            if bid.get('status', 'active') == 'active':
-                for lot_index, lot_bid in enumerate(bid['lotValues']):
-                    if lot_bid['relatedLot'] == self.lot_id and lot_bid.get('status', 'active') == 'active':
-                        bid_data = {
-                            'id': bid['id'],
-                            'date': lot_bid['date'],
-                            'value': lot_bid['value']
-                        }
-                        if 'parameters' in bid:
-                            bid_data['parameters'] = [i for i in bid['parameters']
-                                                      if i['code'] in codes]
-                        self.bidders_data.append(bid_data)
-        self.bidders_count = len(self.bidders_data)
-        logger.info('Bidders count: {}'.format(self.bidders_count),
-                    extra={'JOURNAL_REQUEST_ID': self.request_id,
-                           'MESSAGE_ID': AUCTION_WORKER_SERVICE_NUMBER_OF_BIDS})
-        self.rounds_stages = []
-        for stage in range((self.bidders_count + 1) * ROUNDS + 1):
-            if (stage + self.bidders_count) % (self.bidders_count + 1) == 0:
-                self.rounds_stages.append(stage)
-        self.mapping = {}
-        if self._lot_data.get('features', None):
-            self.bidders_features = {}
-            self.bidders_coeficient = {}
-            self.features = self._lot_data['features']
-            for bid in self.bidders_data:
-                self.bidders_features[bid['id']] = bid['parameters']
-                self.bidders_coeficient[bid['id']] = calculate_coeficient(self.features, bid['parameters'])
-        else:
-            self.bidders_features = None
-            self.features = None
-
-        for index, uid in enumerate(self.bidders_data):
-            self.mapping[self.bidders_data[index]['id']] = str(index + 1)
-
-
 def prepare_auction_document(self):
     self.auction_document.update(
         {'_id': self.auction_doc_id,
@@ -125,7 +36,9 @@ def prepare_auction_document(self):
          'procuringEntity': self._auction_data['data'].get('procuringEntity', {}),
          'items': self._lot_data.get('items', []),
          'value': self._lot_data.get('value', {}),
-         'lot': {}}
+         'lot': {},
+         "worker_class": self.klass
+        }
     )
     self.auction_document['auction_type'] = 'meat' if self.features else 'default'
 

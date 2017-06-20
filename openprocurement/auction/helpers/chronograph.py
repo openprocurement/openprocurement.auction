@@ -88,40 +88,19 @@ class AuctionScheduler(GeventScheduler):
     def convert_datetime(self, datetime_stamp):
         return iso8601.parse_date(datetime_stamp).astimezone(self.timezone)
 
-    def get_auction_worker_configuration_path(self, view_value, key='api_version'):
-        value = view_value.get(key, '')
-        if value:
-            return self.config['main'].get(
-                'auction_worker_config_for_{}_{}'.format(key, value), self.config['main']['auction_worker_config']
-            )
-
-        return self.config['main']['auction_worker_config']
-
     def shutdown(self, *args, **kwargs):
         self.exit = True
         response = super(AuctionScheduler, self).shutdown(*args, **kwargs)
         self.execution_stopped = True
         return response
 
-    def _auction_fucn(self, document_id, tender_id, lot_id, view_value):
-        params = [self.config['main']['auction_worker'],
-                  "run", tender_id,
-                  self.get_auction_worker_configuration_path(view_value)]
-        if lot_id:
-            params += ['--lot', lot_id]
-
-        if view_value['api_version']:
-            params += ['--with_api_version', view_value['api_version']]
-
-        if view_value['mode'] == 'test':
-            params += ['--auction_info_from_db', 'true']
-
+    def _auction_fucn(self, document_id, params):
         try:
             rc = check_call(params)
         except CalledProcessError, error:
             self.logger.error("Exit with error {}".format(document_id))
 
-    def run_auction_func(self, tender_id, lot_id, view_value, ttl=WORKER_TIME_RUN):
+    def run_auction_func(self, document_id, run_params, ttl=WORKER_TIME_RUN):
         if self._count_auctions >= self._limit_auctions:
             self.logger.info("Limited by count")
             return
@@ -129,11 +108,6 @@ class AuctionScheduler(GeventScheduler):
         if free_memory() <= self._limit_free_memory:
             self.logger.info("Limited by memory")
             return
-
-        document_id = str(tender_id)
-        if lot_id:
-            document_id += "_"
-            document_id += lot_id
 
         sleep(random())
         if self.use_consul:
@@ -145,8 +119,7 @@ class AuctionScheduler(GeventScheduler):
                     with self._limit_pool_lock:
                         self._count_auctions += 1
 
-                    self._auction_fucn(document_id, tender_id, lot_id,
-                                       view_value)
+                    self._auction_fucn(document_id, run_params)
 
                     self.logger.info("Finished {}".format(document_id))
                     self.consul.session.destroy(session)
@@ -159,9 +132,9 @@ class AuctionScheduler(GeventScheduler):
             self.logger.debug("Locked on other server")
             self.consul.session.destroy(session)
         else:
-            self._auction_fucn(document_id, tender_id, lot_id, view_value)
+            self._auction_fucn(document_id, run_params)
 
-    def schedule_auction(self, document_id, view_value):
+    def schedule_auction(self, document_id, view_value, run_params):
         auction_start_date = self.convert_datetime(view_value['start'])
         if self._executors['default']._instances.get(document_id):
             return
@@ -181,14 +154,9 @@ class AuctionScheduler(GeventScheduler):
         else:
             return
 
-        if "_" in document_id:
-            tender_id, lot_id = document_id.split("_")
-        else:
-            tender_id = document_id
-            lot_id = None
         self.logger.info('Scedule start of {} at {} ({})'.format(document_id, AW_date, view_value['start']))
 
-        self.add_job(self.run_auction_func, args=(tender_id, lot_id, view_value),
+        self.add_job(self.run_auction_func, args=(document_id, run_params),
                           misfire_grace_time=60,
                           next_run_time=AW_date,
                           id=document_id,
