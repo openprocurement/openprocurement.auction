@@ -94,5 +94,5 @@ class AuctionMapper(object):
 WS = PKG_NAMESPACE.replace('plugins', 'workers')
 for worker in iter_entry_points(WS):
     plugin = worker.load()
-    print "loading {} {}".format(worker.name, plugin)
-    components.registerUtility(plugin, IAuctionWorker, name=worker.name)
+    print "loading {} {}".format(worker.name.lower(), plugin)
+    components.registerUtility(plugin, IAuctionWorker, name=worker.name.lower())

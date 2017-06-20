@@ -56,11 +56,11 @@ entry_points = {
         'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',
     ],
     'openprocurement.auction.plugins': [
-        'auction = openprocurement.auction.includeme:includeme',
-        'multilot  = openprocurement.auction.includeme:includeme2'
+        'default = openprocurement.auction.includeme:includeme',
+        'multilot_auction  = openprocurement.auction.includeme:includeme2'
     ],
     'openprocurement.auction.workers': [
-        'auction = openprocurement.auction.auction:Auction',
+        'default = openprocurement.auction.auction:Auction',
         'multilot  = openprocurement.auction.multilot:Auction'
     ]
 }
