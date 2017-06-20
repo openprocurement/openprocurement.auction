@@ -13,7 +13,6 @@ from flask import (
     request, abort, url_for,
     redirect, Response, jsonify, session
 )
-from flask_cors import CORS, cross_origin
 from json import dumps, loads
 from memoize import Memoizer
 from pytz import timezone as tz
@@ -36,8 +35,8 @@ LIMIT_REPLICATIONS_LIMIT_FUNCTIONS = {
 
 
 auctions_server = Flask(__name__)
-CORS(auctions_server, supports_credentials=True, origins="localhost")
 logging.getLogger('flask_cors').level = logging.DEBUG
+
 
 @auctions_server.before_request
 def before_request():
@@ -50,23 +49,6 @@ def after_request(response):
         'End {1.status_code} : {0.method} : {0.url} '.format(request, response)
     )
     return response
-
-
-@auctions_server.route('/tenders/<auction_doc_id>')
-def auction_url(auction_doc_id):
-    doc = auctions_server.db.get(auction_doc_id, {})
-    if not doc:
-        return jsonify({'data': {}}) 
-    return jsonify({'data': doc})
-
-
-@auctions_server.route('/')
-def auction_list_index():
-    data = [auction.doc for auction
-            in endDate_view(auctions_server.db,
-                            startkey=time.time() * 1000,
-                            include_docs=True)]
-    return jsonify({"data": list(reversed(data))})
 
 
 @auctions_server.route('/log', methods=['POST'])
@@ -106,20 +88,6 @@ def health():
     if not(progress and limit_replications_func(progress)):
         response.status_code = 503
     return response
-
-
-#@auctions_server.route('/archive')
-#def archive_auction_list_index():
-#    offset = int(request.args.get('offset', default=time.time() * 1000))
-#    startkey_docid = request.args.get('startid', default=None)
-#    documents = [auction
-#                 for auction in endDate_view(auctions_server.db, startkey=offset, startkey_docid=startkey_docid,
-#                                             limit=101, descending=True, include_docs=True)]
-#    if len(documents) > 100:
-#        offset, startid = documents[100].key, documents[100].id
-#    else:
-#        offset, startid = False, False
-#    return render_template('archive.html', documents=documents[:-1], offset=offset, startid=startid)
 
 
 @auctions_server.route('/tenders/<auction_doc_id>/<path:path>',

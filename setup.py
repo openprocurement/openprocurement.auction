@@ -10,7 +10,6 @@ install_requires = [
     'iso8601',
     'python-dateutil',
     'Flask',
-    'flask-cors',
     'WTForms',
     'WTForms-JSON',
     'Flask-Redis',
