@@ -1,16 +1,6 @@
 {
   "data": {
     "description": "Tender Description", 
-    "title": "Tender Title", 
-    "minimalStep": {
-      "currency": "UAH", 
-      "amount": 35000.0, 
-      "valueAddedTaxIncluded": true
-    }, 
-    "auctionPeriod": {
-      "startDate": "2016-03-02T16:05:55.241945+02:00", 
-      "endDate": null
-    }, 
     "bids": [
       {
         "date": "2014-11-19T08:22:21.726234+00:00", 
@@ -31,6 +21,17 @@
         }
       }
     ], 
+    "minimalStep": {
+      "currency": "UAH", 
+      "amount": 35000.0, 
+      "valueAddedTaxIncluded": true
+    }, 
+    "auctionPeriod": {
+      "startDate": "2017-06-21T16:35:50.468041+03:00", 
+      "endDate": null
+    }, 
+    "title": "Tender Title", 
+    "procurementMethodType": "belowThreshold", 
     "value": {
       "currency": "UAH", 
       "amount": 500000.0, 

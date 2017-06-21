@@ -25,7 +25,6 @@ class AuctionComponents(registry.Components):
 
     def add_auction(self, iface, **preds):
         self._dispatch.add_candidate(iface, IFeedItem, **preds)
-        self._dispatch.add_candidate(iface, IDBData, **preds)
 
     def match(self, inst):
         try:

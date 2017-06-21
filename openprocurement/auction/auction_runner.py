@@ -7,6 +7,7 @@ from time import mktime, time
 from gevent.subprocess import check_call
 from zope.interface import implementer
 
+from openprocurement.auction.utils import get_auction_worker_configuration_path
 from openprocurement.auction.systemd_msgs_ids import (
     DATA_BRIDGE_PLANNING_TENDER_SKIP,
     DATA_BRIDGE_PLANNING_TENDER_ALREADY_PLANNED,
@@ -25,14 +26,45 @@ SINGLE_LOT_AUCTION_TYPE = 1
 MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}"  # {TENDER_ID}_{LOT_ID}
 LOGGER = logging.getLogger(__name__)
 
+
 class AuctionsRunner(object):
     """"""
+    def __init__(self, chronograph, item):
+        self.chronograph = chronograph
+        self.item = item
+
+    def __repr__(self):
+        return "<Auction runner: {}>".format(self.item.get('procurementMethodType'))
+
+    __str__ = __repr__
+    
+    def __call__(self, document_id):
+        view_value = self.item
+        if "_" in document_id:
+            tender_id, lot_id = document_id.split("_")
+        else:
+            tender_id = document_id
+            lot_id = None
+        params = [self.chronograph.config['main']['auction_worker'],
+                  "run", tender_id,
+                  get_auction_worker_configuration_path(self.chronograph, self.item)]
+
+        if lot_id:
+            params += ['--lot', lot_id]
+
+        if self.item['api_version']:
+            params += ['--with_api_version', self.item['api_version']]
+
+        if self.item['mode'] == 'test':
+            params += ['--auction_info_from_db', 'true']
+        return params
+
 
 class AuctionsPlanner(object):
 
     def __init__(self, bridge, item):
-        self.item = item
         self.bridge = bridge
+        self.item = item
 
     def next(self):
         return self
@@ -117,7 +149,7 @@ class AuctionsPlanner(object):
         raise StopIteration
 
     def __repr__(self):
-        return "<Simple: {}>".format(self.item.get('procurementMethodType'))
+        return "<Auction planning: {}>".format(self.item.get('procurementMethodType'))
 
     __str__ = __repr__
 

@@ -398,3 +398,13 @@ def filter_amount(stage):
         del stage['coeficient']
     return stage
 
+
+def get_auction_worker_configuration_path(chrono, view_value, key='api_version'):
+    value = view_value.get(key, '')
+    if value:
+        return chrono.config['main'].get(
+            'auction_worker_config_for_{}_{}'.format(key, value),
+            chrono.config['main']['auction_worker_config']
+        )
+
+    return chrono.config['main']['auction_worker_config']
