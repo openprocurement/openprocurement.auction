@@ -27,3 +27,11 @@ class IAuctionsMapper(Interface):
 
 class IAuctionType(Interface):
     """"""
+
+
+class IAuctionsChronograph(Interface):
+    """"""
+
+
+class IDBData(Interface):
+    """"""

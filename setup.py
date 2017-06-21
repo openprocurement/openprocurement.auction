@@ -54,6 +54,14 @@ entry_points = {
     'paste.app_factory': [
         'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',
     ],
+    'openprocurement.auction.auctions': [
+        'belowThreshold = openprocurement.auction.includeme:includeme',
+        'aboveThresholdUA = openprocurement.auction.includeme:includeme',
+        'aboveThresholdEU = openprocurement.auction.includeme:includeme',
+        'competitiveDialogueEU.stage2 = openprocurement.auction.includeme:includeme',
+        'competitiveDialogueUA.stage2 = openprocurement.auction.includeme:includeme',
+        'aboveThresholdUA.defense = openprocurement.auction.includeme:includeme',
+    ]
 }
 
 setup(name='openprocurement.auction',

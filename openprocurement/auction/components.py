@@ -4,11 +4,12 @@ from zope.interface import registry, implementedBy
 from walkabout import PredicateDomain, PredicateMismatch
 from pkg_resources import iter_entry_points
 
+from openprocurement.auction.predicates import ProcurementMethodType
 from openprocurement.auction.interfaces import IComponents, IAuctionType,\
-    IFeedItem, IAuctionDatabridge, IAuctionsMapper, IAuctionsRunner, IAuctionWorker
+    IFeedItem, IAuctionDatabridge, IAuctionsMapper, IAuctionsRunner, IAuctionWorker, IAuctionsChronograph, IDBData
 
 
-PKG_NAMESPACE = "openprocurement.auction.plugins"
+PKG_NAMESPACE = "openprocurement.auction.auctions"
 LOGGER = logging.getLogger(__name__)
 
 
@@ -22,13 +23,9 @@ class AuctionComponents(registry.Components):
     def add_predicate(self, *args, **kw):
         self._dispatch.add_predicate(*args, **kw)
 
-    def contains_pred(self, name):
-        return name in self._dispatch.predicates.sorter.names
-
-    def add_auction(self, auction_iface, **preds):
-        self._dispatch.add_candidate(
-            auction_iface, IFeedItem, **preds
-        )
+    def add_auction(self, iface, **preds):
+        self._dispatch.add_candidate(iface, IFeedItem, **preds)
+        self._dispatch.add_candidate(iface, IDBData, **preds)
 
     def match(self, inst):
         try:
@@ -63,30 +60,39 @@ class AuctionComponents(registry.Components):
 
 
 components = AuctionComponents()
+components.add_predicate('procurementMethodType', ProcurementMethodType)
 
 
-@components.adapter(provides=IAuctionsMapper, adapts=IAuctionDatabridge)
 class AuctionMapper(object):
-
-    def __init__(self, databridge):
-        self.databridge = databridge
-        self.plugins = self.databridge.config_get('plugins') or []
-
-        # TODO: check me
+    def __init__(self, for_):
+        self.for_ = for_
+        self.plugins = self.for_.config.get('main', {}).get('plugins') or []
         for entry_point in iter_entry_points(PKG_NAMESPACE):
-            plugin = entry_point.load()
-            plugin(components)
+            type_ = entry_point.name
+            if type_ in self.plugins:
+                plugin = entry_point.load()
+                plugin(type_)
 
     def __repr__(self):
-        return "<Auctions mapper {}>".format(self.plugins)
+        return "<Auctions mapper for: {}>".format(self.for_)
 
     __str__ = __repr__
 
-    def __call__(self, feed):
-        auction_iface = components.match(feed)
+    def __call__(self, raw_data):
+        auction_iface = components.match(raw_data)
         if not auction_iface:
             return 
         return components.queryMultiAdapter(
-            (self.databridge, feed),
+            (self.for_, raw_data),
             auction_iface
         )
+
+
+@components.adapter(provides=IAuctionsMapper, adapts=IAuctionDatabridge)
+class DatabridgeManager(AuctionMapper):
+    """"""
+
+
+@components.adapter(provides=IAuctionsMapper, adapts=IAuctionsChronograph)
+class ChronographManager(AuctionMapper):
+    """"""
