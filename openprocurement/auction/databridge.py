@@ -76,9 +76,9 @@ class AuctionsDataBridge(object):
                 continue
             for cmd, item_id, lot_id in auction:
                 if lot_id:
-                    LOGGER.info('Lot {1} of tender {0} selected for {}'.format(lot_id, item_id, cmd))
+                    LOGGER.info('Lot {} of tender {} selected for {}'.format(lot_id, item_id, cmd))
                 else:
-                    LOGGER.info('Tender {0} selected for cmd'.format(item_id, cmd))
+                    LOGGER.info('Tender {} selected for {}'.format(item_id, cmd))
                 auction.run_worker(cmd, item_id, lot_id=lot_id)
 
     def run_re_planning(self):

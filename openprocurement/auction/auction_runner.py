@@ -124,7 +124,7 @@ class AuctionsPlanner(object):
     def run_worker(self, cmd, tender_id, with_api_version=None, lot_id=None):
         params = [self.bridge.config_get('auction_worker'),
                   cmd, tender_id,
-                  self.config_get('auction_worker_config')]
+                  self.bridge.config_get('auction_worker_config')]
         if lot_id:
             params += ['--lot', lot_id]
 
