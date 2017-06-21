@@ -1,5 +1,6 @@
-import json
 import sys
+import json
+import yaml
 from openprocurement.auction.utils import calculate_hash
 
 from robot.libraries.BuiltIn import BuiltIn
@@ -17,7 +18,7 @@ def prepare_tender_data():
 def prepare_users_data(tender_data):
     auction_worker_defaults = BuiltIn().get_variable_value("${auction_worker_defaults}")
     with open(auction_worker_defaults) as auction_worker_defaults_file:
-        auction_worker_defaults_info = json.load(auction_worker_defaults_file)
+        auction_worker_defaults_info = yaml.load(auction_worker_defaults_file)
     users_data = {}
     for index, bid in enumerate(tender_data["bids"]):
         users_data[bid["id"]] = {

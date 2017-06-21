@@ -22,7 +22,7 @@ def update_auctionPeriod(path):
 
 def run_auction(tender_file_path):
     update_auctionPeriod(tender_file_path)
-    check_output('{0}/bin/auction_worker planning 11111111111111111111111111111111 {0}/etc/auction_worker_defaults.json --planning_procerude partial_db --auction_info {1}'.format(CWD, tender_file_path).split())
+    check_output('{0}/bin/auction_worker planning 11111111111111111111111111111111 {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {1}'.format(CWD, tender_file_path).split())
     sleep(30)
 
 
@@ -35,7 +35,7 @@ def main():
     try:
         run_cli(['-L', 'DEBUG', '--exitonfailure',
                  '-v', 'tender_file_path:{}'.format(tender_file_path),
-                 '-v', 'auction_worker_defaults:{0}/etc/auction_worker_defaults.json'.format(CWD),
+                 '-v', 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD),
                  '-d', os.path.join(CWD, "logs"), PWD,])
     except SystemExit, e:
         exit_code = e.code
