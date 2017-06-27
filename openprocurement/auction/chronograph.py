@@ -9,10 +9,11 @@ except ImportError:
 
 import logging
 import logging.config
-from yaml import load
 import os
 import argparse
 import iso8601
+
+from yaml import load
 from zope.interface import implementer
 from pytz import timezone
 from gevent import sleep
@@ -76,9 +77,8 @@ class AuctionsChronograph(object):
             # ADD FILTER BY VALUE {start: '2016-09-10T14:36:40.378777+03:00', test: false}
             if datestamp < auction_item['value']['start']:
                 worker_cmd_provider = self.mapper(FeedItem(auction_item['value']))
-                if worker_cmd_provider:
-                    # TODO: default 
-                    pass
+                if not worker_cmd_provider:
+                    continue
                 self.scheduler.schedule_auction(auction_item['id'],
                                                 auction_item['value'],
                                                 args=worker_cmd_provider(auction_item['id']))

@@ -1,7 +1,7 @@
 from zope.interface import implementer, Interface
 from zope.interface.interface import InterfaceClass
 
-from openprocurement.auction.auction_runner import AuctionsRunner, AuctionsPlanner
+from openprocurement.auction.core import AuctionsRunner, AuctionsPlanner
 from openprocurement.auction.constants import DEFAULT_PROCUREMENT_METHOD_TYPES
 from openprocurement.auction.predicates import ProcurementMethodType
 from openprocurement.auction.interfaces import IFeedItem, IAuctionDatabridge, IAuctionsChronograph,IDBData
