@@ -1,25 +1,35 @@
 {
   "data": {
     "description": "Tender Description", 
+    "title": "Tender Title", 
+    "minimalStep": {
+      "currency": "UAH", 
+      "amount": 35000.0, 
+      "valueAddedTaxIncluded": true
+    }, 
+    "auctionPeriod": {
+      "startDate": "2017-06-28T10:32:19.233669+03:00", 
+      "endDate": null
+    }, 
     "bids": [
-      {
-        "date": "2014-11-19T08:22:21.726234+00:00", 
-        "id": "d3ba84c66c9e4f34bfb33cc3c686f137", 
-        "value": {
-          "currency": null, 
-          "amount": 475000.0, 
-          "valueAddedTaxIncluded": true
-        }
-      }, 
-      {
-        "date": "2014-11-19T08:22:24.038426+00:00", 
-        "id": "5675acc9232942e8940a034994ad883e", 
-        "value": {
-          "currency": null, 
-          "amount": 480000.0, 
-          "valueAddedTaxIncluded": true
-        }
-      }
+	    {
+		    "date": "2014-11-19T08:22:21.726234+00:00", 
+		    "id": "d3ba84c66c9e4f34bfb33cc3c686f137", 
+		    "value": {
+			    "currency": null, 
+			    "amount": 475000.0, 
+			    "valueAddedTaxIncluded": true
+		    }
+	    }, 
+	    {
+		    "date": "2014-11-19T08:22:24.038426+00:00", 
+		    "id": "5675acc9232942e8940a034994ad883e", 
+		    "value": {
+			    "currency": null, 
+			    "amount": 480000.0, 
+			    "valueAddedTaxIncluded": true
+		    }
+	    }
     ], 
     "minimalStep": {
       "currency": "UAH", 
