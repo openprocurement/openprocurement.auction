@@ -4,7 +4,8 @@ class ProcurementMethodType(object):
         self.value = value
 
     def __call__(self, for_):
-        return for_.get('procurementMethodType', '') == self.value
+        p_type = for_.get('procurementMethodType', 'default') or 'default'
+        return p_type == self.value
 
     def phash(self):
         return 'ProcurementMethodType: {}'.format(self.value)

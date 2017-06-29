@@ -34,7 +34,8 @@ class AuctionsRunner(object):
         self.item = item
 
     def __repr__(self):
-        return "<Auction runner: {}>".format(self.item.get('procurementMethodType'))
+        type = self.item.get('procurementMethodType', 'default') or 'default'
+        return "<Auction runner: {}>".format()
 
     __str__ = __repr__
     
@@ -57,6 +58,7 @@ class AuctionsRunner(object):
 
         if self.item['mode'] == 'test':
             params += ['--auction_info_from_db', 'true']
+        LOGGER.error(params)
         return params
 
 

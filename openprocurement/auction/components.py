@@ -68,7 +68,7 @@ class AuctionMapper(object):
         self.plugins = self.for_.config.get('main', {}).get('plugins') or []
         for entry_point in iter_entry_points(PKG_NAMESPACE):
             type_ = entry_point.name
-            if type_ in self.plugins:
+            if type_ in self.plugins or type_ == 'default':
                 plugin = entry_point.load()
                 plugin(type_)
 
