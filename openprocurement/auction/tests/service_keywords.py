@@ -23,10 +23,9 @@ def prepare_users_data(tender_data):
     for index, bid in enumerate(tender_data["bids"]):
         if "lots" in tender_data:
             lot_id_appendix = "_" + tender_data["lots"][0]["id"]
-            auction_id = "22222222222222222222222222222222"
         else:
             lot_id_appendix = ""
-            auction_id = "11111111111111111111111111111111"
+        auction_id = "11111111111111111111111111111111"
 
         users_data[bid["id"]] = {
             'login_url': auction_worker_defaults_info['AUCTIONS_URL'].format(auction_id=auction_id) + lot_id_appendix + '/login?bidder_id={}&hash={}'.format(
