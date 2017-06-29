@@ -45,6 +45,7 @@ from openprocurement_client.sync import get_tenders
 from yaml import load
 from .design import endDate_view, startDate_view, PreAnnounce_view
 from .utils import do_until_success
+from design import sync_design
 
 SIMPLE_AUCTION_TYPE = 0
 SINGLE_LOT_AUCTION_TYPE = 1
@@ -70,6 +71,7 @@ class AuctionsDataBridge(object):
         )
         self.db = Database(self.couch_url,
                            session=Session(retry_delays=range(10)))
+        sync_design(self.db)
 
     def config_get(self, name):
         return self.config.get('main').get(name)
