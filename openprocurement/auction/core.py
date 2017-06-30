@@ -5,7 +5,6 @@ import iso8601
 from datetime import datetime
 from time import mktime, time
 from gevent.subprocess import check_call
-from zope.interface import implementer
 
 from openprocurement.auction.utils import get_auction_worker_configuration_path
 from openprocurement.auction.systemd_msgs_ids import (
@@ -17,7 +16,7 @@ from openprocurement.auction.systemd_msgs_ids import (
     DATA_BRIDGE_RE_PLANNING_LOT_ALREADY_PLANNED,
 )
 from openprocurement.auction.design import endDate_view, startDate_view,\
-        PreAnnounce_view
+    PreAnnounce_view
 from openprocurement.auction.utils import do_until_success
 
 
@@ -34,13 +33,13 @@ class AuctionsRunner(object):
         self.item = item
 
     def __repr__(self):
-        type = self.item.get('procurementMethodType', 'default') or 'default'
-        return "<Auction runner: {}>".format()
+        return "<Auction runner: {}>".format(
+            self.item.get('procurementMethodType', 'default') or 'default'
+        )
 
     __str__ = __repr__
-    
+
     def __call__(self, document_id):
-        view_value = self.item
         if "_" in document_id:
             tender_id, lot_id = document_id.split("_")
         else:
@@ -58,7 +57,6 @@ class AuctionsRunner(object):
 
         if self.item['mode'] == 'test':
             params += ['--auction_info_from_db', 'true']
-        LOGGER.error(params)
         return params
 
 
@@ -128,7 +126,6 @@ class AuctionsPlanner(object):
                     is_pre_announce = PreAnnounce_view(self.bridge.db)
                     auction_id = MULTILOT_AUCTION_ID.format(self.item, lot)
                     if [row.id for row in is_pre_announce.rows if row.id == auction_id]:
-                        # TODO:
                         yield ('announce', self.item['id'], lot['id'])
             raise StopIteration
         if self.item['status'] == "cancelled":
@@ -145,7 +142,6 @@ class AuctionsPlanner(object):
             else:
                 if self.item["id"] in [i.id for i in future_auctions]:
                     LOGGER.info('Tender {0} selected for cancellation'.format(self.item['id']))
-                    # TODO:
                     yield ('cancel', self.item['id'], "")
                 raise StopIteration
         raise StopIteration
@@ -165,7 +161,6 @@ class AuctionsPlanner(object):
         if with_api_version:
             params += ['--with_api_version', with_api_version]
 
-        LOGGER.warn("Auction command {}".format(params))
         result = do_until_success(
             check_call,
             args=(params,),

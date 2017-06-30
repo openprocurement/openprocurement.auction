@@ -5,8 +5,10 @@ from time import sleep
 from random import randint
 import os
 
+
 def add_index_options(doc):
     doc['options'] = {'local_seq': True}
+
 
 start_date_chronograph = ViewDefinition(
     'chronograph',
@@ -87,7 +89,7 @@ def sync_design(db):
             design['filters']['by_startDate'] = start_date_filter
             try:
                 return db.save(design)
-            except HTTPError, e:
+            except HTTPError:
                 sleep(randint(0, 2000) / 1000.0)
         else:
             return

@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-from jinja2 import Template, Environment, PackageLoader
-from json import loads
 
-JINJA_ENV = Environment(loader=PackageLoader('openprocurement.auction',
-                                             'templates'))
 
 def prepare_initial_bid_stage(bidder_name="", bidder_id="", time="",
                               amount_features="", coeficient="", amount=""):
@@ -21,7 +17,9 @@ def prepare_initial_bid_stage(bidder_name="", bidder_id="", time="",
         stage['coeficient'] = str(coeficient)
     return stage
 
+
 prepare_results_stage = prepare_initial_bid_stage  # Looks identical
+
 
 def prepare_bids_stage(exist_stage_params, params={}):
     exist_stage_params.update(params)
@@ -55,7 +53,3 @@ def prepare_service_stage(**kwargs):
     }
     pause.update(kwargs)
     return pause
-
-
-def get_template(name):
-    return JINJA_ENV.get_template(name)

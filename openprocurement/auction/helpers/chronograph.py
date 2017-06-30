@@ -22,14 +22,14 @@ SERVER_NAME_PREFIX = 'AUCTION_WORKER_{}'
 MIN_AUCTION_START_TIME_RESERV = timedelta(seconds=60)
 MAX_AUCTION_START_TIME_RESERV = timedelta(seconds=15 * 60)
 
+
 def get_server_name():
     try:
         r = get(AWS_META_DATA_URL, timeout=10)
         suffix = r.body_string()
-    except Exception, e:
+    except Exception:
         suffix = uuid4().hex
     return SERVER_NAME_PREFIX.format(suffix)
-
 
 
 class AuctionExecutor(GeventExecutor):
@@ -61,6 +61,7 @@ class AuctionExecutor(GeventExecutor):
         with self._lock:
             if self._instances[job_id] == 0:
                 del self._instances[job_id]
+
 
 class AuctionScheduler(GeventScheduler):
     def __init__(self, server_name, config,
@@ -104,10 +105,9 @@ class AuctionScheduler(GeventScheduler):
         return response
 
     def _auction_fucn(self, args):
-        print args
         try:
-            rc = check_call(args)
-        except CalledProcessError, error:
+            check_call(args)
+        except CalledProcessError:
             self.logger.error("Exit with error {}".format(args[0]))
 
     def run_auction_func(self, args, ttl=WORKER_TIME_RUN):
@@ -119,7 +119,7 @@ class AuctionScheduler(GeventScheduler):
             self.logger.info("Limited by memory")
             return
 
-        document_id = args[0] 
+        document_id = args[0]
         sleep(random())
         if self.use_consul:
             i = LOCK_RETRIES
@@ -151,7 +151,7 @@ class AuctionScheduler(GeventScheduler):
             return
         job = self.get_job(document_id)
         if job:
-            job_auction_start_date = job.args[2]['start'] # job.args[2] view_value
+            job_auction_start_date = job.args[2]['start']  # job.args[2] view_value
             if job_auction_start_date == auction_start_date:
                 return
             self.logger.warning("Changed start date: {}".format(document_id))
@@ -169,7 +169,7 @@ class AuctionScheduler(GeventScheduler):
                                                                  view_value['start']))
 
         self.add_job(self.run_auction_func, kwargs=dict(args=args),
-                          misfire_grace_time=60,
-                          next_run_time=AW_date,
-                          id=document_id,
-                          replace_existing=True)
+                     misfire_grace_time=60,
+                     next_run_time=AW_date,
+                     id=document_id,
+                     replace_existing=True)

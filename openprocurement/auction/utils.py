@@ -4,28 +4,29 @@ try:
 except ImportError:
     pass
 
-from retrying import retry
 
 import iso8601
-from datetime import MINYEAR, datetime
-from pytz import timezone
-from gevent import sleep
+import uuid
 import logging
 import json
 import requests
-from hashlib import sha1
 
-from gevent.pywsgi import WSGIServer
-from gevent.baseserver import parse_address
+from retrying import retry
+from datetime import MINYEAR, datetime
+from pytz import timezone
+from gevent import sleep
+from hashlib import sha1
 from redis import Redis
 from redis.sentinel import Sentinel
-import uuid
-
 from pkg_resources import parse_version
 from restkit.wrappers import BodyWrapper
 from barbecue import chef
 from fractions import Fraction
-from yaml import safe_dump as yaml_dump
+from munch import Munch
+from zope.interface import implementer
+
+from openprocurement.auction.interfaces import IFeedItem
+
 
 logger = logging.getLogger('Auction Worker')
 
@@ -317,13 +318,16 @@ def get_database(config, master=True):
     else:
         return Redis.from_url(config['redis'])
 
+
 @retry(stop_max_attempt_number=3)
 def create_mapping(config, auction_id, auction_url):
     return get_database(config).set(auction_id, auction_url)
 
+
 @retry(stop_max_attempt_number=3)
 def get_mapping(config, auction_id, master=False):
     return get_database(config).get(auction_id)
+
 
 @retry(stop_max_attempt_number=3)
 def delete_mapping(config, auction_id):
@@ -361,7 +365,7 @@ class StreamWrapper(BodyWrapper):
         if not self.stop_stream:
             try:
                 return super(StreamWrapper, self).next()
-            except Exception, e:
+            except Exception:
                 raise StopIteration
 
 
@@ -408,3 +412,8 @@ def get_auction_worker_configuration_path(chrono, view_value, key='api_version')
         )
 
     return chrono.config['main']['auction_worker_config']
+
+
+@implementer(IFeedItem)
+class FeedItem(Munch):
+    """"""

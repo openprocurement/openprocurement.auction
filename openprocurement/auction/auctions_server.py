@@ -2,17 +2,13 @@ from gevent import monkey
 
 monkey.patch_all()
 
-import time
 import logging
+
 from collections import deque
 from couchdb import Server, Session
 from datetime import datetime
-from design import sync_design, endDate_view
-from flask import (
-    Flask, render_template,
-    request, abort, url_for,
-    redirect, Response, jsonify, session
-)
+from design import sync_design
+from flask import Flask, request, abort, redirect, Response
 from json import dumps, loads
 from memoize import Memoizer
 from pytz import timezone as tz
@@ -73,7 +69,6 @@ def log():
         return Response('ok')
     except:
         return Response('error')
-
 
 
 @auctions_server.route('/health')

@@ -11,7 +11,6 @@ import logging
 import logging.config
 import os
 import argparse
-import iso8601
 
 from yaml import load
 from zope.interface import implementer
@@ -20,10 +19,9 @@ from gevent import sleep
 from gevent.pywsgi import WSGIServer
 from datetime import datetime, timedelta
 
-from openprocurement.auction.feed import FeedItem
+from openprocurement.auction.utils import FeedItem
 from openprocurement.auction.components import components
-from openprocurement.auction.interfaces import\
-    IAuctionsChronograph, IDBData, IAuctionsMapper
+from openprocurement.auction.interfaces import IAuctionsChronograph, IAuctionsMapper
 from openprocurement.auction.design import sync_design_chronograph
 from openprocurement.auction.helpers.chronograph import get_server_name, AuctionScheduler
 from openprocurement.auction.helpers.chronograph_http import chronograph_webapp

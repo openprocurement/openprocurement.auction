@@ -4,6 +4,7 @@ from urlparse import urlparse
 from couchdb import Server, Session
 from time import sleep
 
+
 def couchdb_dns_query_settings(server_url, database_name):
     parsed_url = urlparse(server_url)
     all_ips = set([str(i[4][0]) for i in socket.getaddrinfo(urlparse(server_url).hostname, 80)])
@@ -15,10 +16,9 @@ def couchdb_dns_query_settings(server_url, database_name):
         try:
             server = Server(couch_url, session=Session(retry_delays=range(10)))
             return server[database_name]
-        except socket.error as error:
+        except socket.error:
             continue
     raise Exception("No route to any couchdb server")
-
 
 
 def iterview(server_url, database_name, view_name, sleep_seconds=10, wrapper=None, **options):
@@ -46,7 +46,7 @@ def iterview(server_url, database_name, view_name, sleep_seconds=10, wrapper=Non
     while True:
         try:
             rows = list(database.view(view_name, wrapper, **options))
-        except socket.error as error:
+        except socket.error:
             options['start_key'] = 0
             database = couchdb_dns_query_settings(server_url, database_name)
             continue
@@ -57,4 +57,3 @@ def iterview(server_url, database_name, view_name, sleep_seconds=10, wrapper=Non
         else:
             sleep(sleep_seconds)
         options['start_key'] = (start_key + 1)
-

@@ -1,13 +1,15 @@
-import sys
 import json
 import yaml
-from openprocurement.auction.utils import calculate_hash
 
 from robot.libraries.BuiltIn import BuiltIn
 from Selenium2Library import utils
 
+from openprocurement.auction.utils import calculate_hash
+
+
 positions = [(0, 0), (960, 0), (0, 540), (960, 540)]
 size = (960, 1000)
+
 
 def prepare_tender_data():
     tender_file_path = BuiltIn().get_variable_value("${tender_file_path}")
@@ -49,11 +51,11 @@ def Highlight_Element(locator):
     seleniumlib._current_browser().execute_script("arguments[0].style['outline'] = '3px dotted red';", element)
 
 
-
 def Clear_Highlight_Element(locator):
     seleniumlib = BuiltIn().get_library_instance('Selenium2Library')
     element = seleniumlib._element_find(locator, True, True)
     seleniumlib._current_browser().execute_script("arguments[0].style['outline'] = '';", element)
+
 
 def Highlight_Elements_With_Text_On_Time(text, time=2):
     from time import sleep

@@ -1,12 +1,12 @@
 import logging
 from zope import interface
-from zope.interface import registry, implementedBy
+from zope.interface import registry
 from walkabout import PredicateDomain, PredicateMismatch
 from pkg_resources import iter_entry_points
 
 from openprocurement.auction.predicates import ProcurementMethodType
 from openprocurement.auction.interfaces import IComponents, IAuctionType,\
-    IFeedItem, IAuctionDatabridge, IAuctionsMapper, IAuctionsRunner, IAuctionWorker, IAuctionsChronograph, IDBData
+    IFeedItem, IAuctionDatabridge, IAuctionsMapper, IAuctionsChronograph
 
 
 PKG_NAMESPACE = "openprocurement.auction.auctions"
@@ -80,7 +80,7 @@ class AuctionMapper(object):
     def __call__(self, raw_data):
         auction_iface = components.match(raw_data)
         if not auction_iface:
-            return 
+            return
         return components.queryMultiAdapter(
             (self.for_, raw_data),
             auction_iface

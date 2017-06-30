@@ -2,6 +2,7 @@ from socket import gethostname, gethostbyname
 from gevent.pywsgi import WSGIServer
 from gevent.baseserver import parse_address
 
+
 def free_memory():
     """
     Get memory usage
@@ -30,7 +31,7 @@ def get_lisener(port, host=''):
         family, address = parse_address((host, port))
         try:
             lisener = WSGIServer.get_listener(address, family=family)
-        except Exception, e:
+        except Exception:
             pass
         port += 1
     return lisener
