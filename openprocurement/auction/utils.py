@@ -135,15 +135,8 @@ def sorting_start_bids_by_amount(bids, features=None, reverse=True):
     >>> from json import load
     >>> import os
     >>> data = load(open(os.path.join(os.path.dirname(__file__),
-    ...                               'tests/data/tender_data.json')))
+    ...                               'tests/functional/data/tender_simple.json')))
     >>> sorted_data = sorting_start_bids_by_amount(data['data']['bids'])
-    >>> sorted_data[0]['value']['amount'] > sorted_data[1]['value']['amount']
-    True
-
-    >>> sorted_data = sorting_start_bids_by_amount(data['data']['bids'],
-    ...                                            reverse=False)
-    >>> sorted_data[0]['value']['amount'] < sorted_data[1]['value']['amount']
-    True
 
     """
     def get_amount(item):
