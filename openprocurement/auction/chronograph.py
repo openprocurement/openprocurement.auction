@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 
 from openprocurement.auction.utils import FeedItem
 from openprocurement.auction.core import components
-from openprocurement.auction.interfaces import IAuctionsChronograph, IAuctionsMapper
+from openprocurement.auction.interfaces import IAuctionsChronograph, IAuctionsManager
 from openprocurement.auction.design import sync_design_chronograph
 from openprocurement.auction.helpers.chronograph import get_server_name, AuctionScheduler
 from openprocurement.auction.helpers.chronograph_http import chronograph_webapp
@@ -39,7 +39,7 @@ class AuctionsChronograph(object):
         super(AuctionsChronograph, self).__init__(*args, **kwargs)
         self.config = config
         self.timezone = timezone(config['main']['timezone'])
-        self.mapper = components.qA(self, IAuctionsMapper)
+        self.mapper = components.qA(self, IAuctionsManager)
         self.server_name = get_server_name()
         LOGGER.info('Init node: {}'.format(self.server_name))
         self.init_database()

@@ -18,7 +18,7 @@ from couchdb import Database, Session
 from dateutil.tz import tzlocal
 
 from openprocurement.auction.interfaces import\
-    IAuctionDatabridge, IAuctionsMapper
+    IAuctionDatabridge, IAuctionsManager
 from openprocurement.auction.core import components
 from openprocurement.auction.utils import FeedItem
 
@@ -43,7 +43,7 @@ class AuctionsDataBridge(object):
         self.tenders_ids_list = []
         self.tz = tzlocal()
         self.debug = debug
-        self.mapper = components.qA(self, IAuctionsMapper)
+        self.mapper = components.qA(self, IAuctionsManager)
         self.re_planning = re_planning
 
         self.couch_url = urljoin(
@@ -71,10 +71,10 @@ class AuctionsDataBridge(object):
                                 key='', extra_params=API_EXTRA):
             # magic goes here
             feed = FeedItem(item)
-            auction = self.mapper(feed)
-            if not auction:
+            planning = self.mapper(feed)
+            if not planning:
                 continue
-            for cmd, item_id, lot_id in auction:
+            for cmd, item_id, lot_id in planning:
                 if lot_id:
                     LOGGER.info('Lot {} of tender {} selected for {}'.format(lot_id, item_id, cmd))
                 else:

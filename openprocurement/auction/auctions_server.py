@@ -31,7 +31,6 @@ LIMIT_REPLICATIONS_LIMIT_FUNCTIONS = {
 
 
 auctions_server = Flask(__name__)
-logging.getLogger('flask_cors').level = logging.DEBUG
 
 
 @auctions_server.before_request
@@ -219,5 +218,4 @@ def make_auctions_app(global_conf,
     auctions_server.db = auctions_server.couch_server[auctions_server.config['COUCH_DB']]
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
-    auctions_server.config['ASSETS_DEBUG'] = True if debug else False
     return auctions_server
