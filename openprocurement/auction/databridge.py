@@ -19,7 +19,7 @@ from dateutil.tz import tzlocal
 
 from openprocurement.auction.interfaces import\
     IAuctionDatabridge, IAuctionsMapper
-from openprocurement.auction.components import components
+from openprocurement.auction.core import components
 from openprocurement.auction.utils import FeedItem
 
 from openprocurement.auction.systemd_msgs_ids import\

@@ -20,7 +20,7 @@ from gevent.pywsgi import WSGIServer
 from datetime import datetime, timedelta
 
 from openprocurement.auction.utils import FeedItem
-from openprocurement.auction.components import components
+from openprocurement.auction.core import components
 from openprocurement.auction.interfaces import IAuctionsChronograph, IAuctionsMapper
 from openprocurement.auction.design import sync_design_chronograph
 from openprocurement.auction.helpers.chronograph import get_server_name, AuctionScheduler

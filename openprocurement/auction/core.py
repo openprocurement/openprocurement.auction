@@ -5,6 +5,7 @@ import iso8601
 from datetime import datetime
 from time import mktime, time
 from gevent.subprocess import check_call
+from pkg_resources import iter_entry_points
 
 from openprocurement.auction.utils import get_auction_worker_configuration_path
 from openprocurement.auction.systemd_msgs_ids import (
@@ -18,12 +19,20 @@ from openprocurement.auction.systemd_msgs_ids import (
 from openprocurement.auction.design import endDate_view, startDate_view,\
     PreAnnounce_view
 from openprocurement.auction.utils import do_until_success
-
+from openprocurement.auction.components import AuctionComponents
+from openprocurement.auction.predicates import ProcurementMethodType
+from openprocurement.auction.interfaces import IAuctionsMapper,\
+    IAuctionsChronograph, IAuctionDatabridge
 
 SIMPLE_AUCTION_TYPE = 0
 SINGLE_LOT_AUCTION_TYPE = 1
 MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}"  # {TENDER_ID}_{LOT_ID}
 LOGGER = logging.getLogger(__name__)
+PKG_NAMESPACE = "openprocurement.auction.auctions"
+
+
+components = AuctionComponents()
+components.add_predicate('procurementMethodType', ProcurementMethodType)
 
 
 class AuctionsRunner(object):
@@ -167,3 +176,38 @@ class AuctionsPlanner(object):
         )
 
         LOGGER.info("Auction command {} result: {}".format(params[1], result))
+
+
+class AuctionMapper(object):
+    def __init__(self, for_):
+        self.for_ = for_
+        self.plugins = self.for_.config.get('main', {}).get('plugins') or []
+        for entry_point in iter_entry_points(PKG_NAMESPACE):
+            type_ = entry_point.name
+            if type_ in self.plugins or type_ == 'default':
+                plugin = entry_point.load()
+                plugin(components)
+
+    def __repr__(self):
+        return "<Auctions mapper for: {}>".format(self.for_)
+
+    __str__ = __repr__
+
+    def __call__(self, raw_data):
+        auction_iface = components.match(raw_data)
+        if not auction_iface:
+            return
+        return components.queryMultiAdapter(
+            (self.for_, raw_data),
+            auction_iface
+        )
+
+
+@components.adapter(provides=IAuctionsMapper, adapts=IAuctionDatabridge)
+class DatabridgeManager(AuctionMapper):
+    """"""
+
+
+@components.adapter(provides=IAuctionsMapper, adapts=IAuctionsChronograph)
+class ChronographManager(AuctionMapper):
+    """"""

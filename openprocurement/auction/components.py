@@ -2,14 +2,10 @@ import logging
 from zope import interface
 from zope.interface import registry
 from walkabout import PredicateDomain, PredicateMismatch
-from pkg_resources import iter_entry_points
 
-from openprocurement.auction.predicates import ProcurementMethodType
-from openprocurement.auction.interfaces import IComponents, IAuctionType,\
-    IFeedItem, IAuctionDatabridge, IAuctionsMapper, IAuctionsChronograph
+from openprocurement.auction.interfaces import IComponents, IAuctionType, IFeedItem
 
 
-PKG_NAMESPACE = "openprocurement.auction.auctions"
 LOGGER = logging.getLogger(__name__)
 
 
@@ -56,42 +52,3 @@ class AuctionComponents(registry.Components):
     def q(self, iface, name='', default=''):
         """ TODO: query the component by 'iface' """
         return self.queryUtility(iface, name=name, default=default)
-
-
-components = AuctionComponents()
-components.add_predicate('procurementMethodType', ProcurementMethodType)
-
-
-class AuctionMapper(object):
-    def __init__(self, for_):
-        self.for_ = for_
-        self.plugins = self.for_.config.get('main', {}).get('plugins') or []
-        for entry_point in iter_entry_points(PKG_NAMESPACE):
-            type_ = entry_point.name
-            if type_ in self.plugins or type_ == 'default':
-                plugin = entry_point.load()
-                plugin(type_)
-
-    def __repr__(self):
-        return "<Auctions mapper for: {}>".format(self.for_)
-
-    __str__ = __repr__
-
-    def __call__(self, raw_data):
-        auction_iface = components.match(raw_data)
-        if not auction_iface:
-            return
-        return components.queryMultiAdapter(
-            (self.for_, raw_data),
-            auction_iface
-        )
-
-
-@components.adapter(provides=IAuctionsMapper, adapts=IAuctionDatabridge)
-class DatabridgeManager(AuctionMapper):
-    """"""
-
-
-@components.adapter(provides=IAuctionsMapper, adapts=IAuctionsChronograph)
-class ChronographManager(AuctionMapper):
-    """"""
