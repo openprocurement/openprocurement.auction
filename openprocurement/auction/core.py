@@ -197,7 +197,8 @@ class Planning(object):
 
     __str__ = __repr__
 
-    def run_worker(self, cmd, tender_id, with_api_version=None, lot_id=None):
+    def __call__(self, cmd, tender_id, with_api_version=None, lot_id=None):
+
         params = [self.bridge.config_get('auction_worker'),
                   cmd, tender_id,
                   self.bridge.config_get('auction_worker_config')]

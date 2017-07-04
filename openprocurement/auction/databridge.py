@@ -79,7 +79,8 @@ class AuctionsDataBridge(object):
                     LOGGER.info('Lot {} of tender {} selected for {}'.format(lot_id, item_id, cmd))
                 else:
                     LOGGER.info('Tender {} selected for {}'.format(item_id, cmd))
-                auction.run_worker(cmd, item_id, lot_id=lot_id)
+                planning(cmd, item_id, lot_id=lot_id)
+
 
     def run_re_planning(self):
         pass
