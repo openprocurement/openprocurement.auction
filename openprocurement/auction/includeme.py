@@ -29,6 +29,7 @@ def aboveThresholdUA(components):
 def aboveThresholdEU(components):
     _register(components, 'aboveThresholdEU')
 
+
 def competitiveDialogueEU(components):
     _register(components, 'competitiveDialogueEU.stage2')
 

@@ -1,11 +1,16 @@
+import logging
+
 from sse import Sse as PySse
-from flask import json, current_app, Blueprint, request, session, Response
+from flask import (
+    json, current_app, Blueprint,
+    request, session, Response)
 from flask import jsonify, abort
 from gevent.queue import Queue
 from gevent import spawn, sleep
-import logging
 from datetime import datetime
+
 from openprocurement.auction.utils import prepare_extra_journal_fields, get_bidder_id
+
 
 LOGGER = logging.getLogger(__name__)
 CHUNK = ' ' * 2048 + '\n'

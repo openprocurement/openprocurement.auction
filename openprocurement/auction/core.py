@@ -90,8 +90,11 @@ class RunDispatcher(object):
         else:
             tender_id = document_id
             lot_id = None
-        # TODO: dispatch worker
-        params = [self.chronograph.config['main']['auction_worker'],
+        config = self.chronograph.config['main'].get(
+            self.item.get('procurementMethodType'),
+            self.chronograph.config['main']
+        )
+        params = [config['auction_worker'],
                   "run", tender_id,
                   get_auction_worker_configuration_path(self.chronograph, self.item)]
 
@@ -198,10 +201,17 @@ class Planning(object):
     __str__ = __repr__
 
     def __call__(self, cmd, tender_id, with_api_version=None, lot_id=None):
-
-        params = [self.bridge.config_get('auction_worker'),
-                  cmd, tender_id,
-                  self.bridge.config_get('auction_worker_config')]
+        config = self.bridge.config['main'].get(
+            self.item.get('procurementMethodType'),
+            self.bridge.config['main']
+        )
+        params = [
+            config.get('auction_worker'),
+            cmd, tender_id,
+            config.get(
+                'auction_worker_config',
+                self.bridge.config['main'].get('auction_worker_config')
+            )]
         if lot_id:
             params += ['--lot', lot_id]
 
