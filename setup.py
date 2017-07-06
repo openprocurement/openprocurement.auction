@@ -50,13 +50,7 @@ entry_points = {
         'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',
     ],
     'openprocurement.auction.auctions': [
-        'default = openprocurement.auction.includeme:default',
-        'belowThreshold = openprocurement.auction.includeme:belowThreshold',
-        'aboveThresholdUA = openprocurement.auction.includeme:aboveThresholdUA',
-        'aboveThresholdEU = openprocurement.auction.includeme:aboveThresholdEU',
-        'competitiveDialogueEU.stage2 = openprocurement.auction.includeme:competitiveDialogueEU',
-        'competitiveDialogueUA.stage2 = openprocurement.auction.includeme:competitiveDialogueUA',
-        'aboveThresholdUA.defense = openprocurement.auction.includeme:aboveThresholdUAdefense',
+        'default = openprocurement.auction.includeme:default'
     ]
 }
 
