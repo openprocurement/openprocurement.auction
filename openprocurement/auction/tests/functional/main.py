@@ -21,14 +21,16 @@ CWD = os.getcwd()
 
 
 @contextlib.contextmanager
-def update_auctionPeriod(path):
+def update_auctionPeriod(path, auction_type):
     with open(path) as file:
         data = json.loads(file.read())
     new_start_time = (datetime.datetime.now(tzlocal()) + datetime.timedelta(seconds=120)).isoformat()
-    if 'lots' in data['data']:
+    if auction_type == 'simple':
+        data['data']['auctionPeriod']['startDate'] = new_start_time
+    elif auction_type == 'multilot':
         for lot in data['data']['lots']:
             lot['auctionPeriod']['startDate'] = new_start_time
-    data['data']['auctionPeriod']['startDate'] = new_start_time
+
     with tempfile.NamedTemporaryFile(delete=False) as auction_file:
         json.dump(data, auction_file)
         auction_file.seek(0)
@@ -37,7 +39,7 @@ def update_auctionPeriod(path):
 
 
 def run_simple(tender_file_path, auction_id):
-    with update_auctionPeriod(tender_file_path) as auction_file:
+    with update_auctionPeriod(tender_file_path, auction_type='simple') as auction_file:
         check_output('{0}/bin/auction_worker planning {1}'
                      ' {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2}'.format(CWD, auction_id, auction_file).split())
     sleep(30)
@@ -46,7 +48,7 @@ def run_simple(tender_file_path, auction_id):
 def run_multilot(tender_file_path, auction_id, lot_id=''):
     if not lot_id:
         lot_id = "aee0feec3eda4c85bad28eddd78dc3e6"
-    with update_auctionPeriod(tender_file_path) as auction_file:
+    with update_auctionPeriod(tender_file_path, auction_type='multilot') as auction_file:
         command_line = '{0}/bin/auction_worker planning {1} {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2} --lot {3}'.format(
             CWD, auction_id, auction_file, lot_id
         )
