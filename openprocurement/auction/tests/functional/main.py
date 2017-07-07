@@ -8,7 +8,10 @@ import datetime
 import json
 import sys
 import argparse
+import contextlib
+import tempfile
 from dateutil.tz import tzlocal
+from pkg_resources import iter_entry_points
 from gevent.subprocess import check_output, sleep
 from robot import run_cli
 
@@ -17,6 +20,7 @@ PWD = os.path.dirname(os.path.realpath(__file__))
 CWD = os.getcwd()
 
 
+@contextlib.contextmanager
 def update_auctionPeriod(path):
     with open(path) as file:
         data = json.loads(file.read())
@@ -25,40 +29,44 @@ def update_auctionPeriod(path):
         for lot in data['data']['lots']:
             lot['auctionPeriod']['startDate'] = new_start_time
     data['data']['auctionPeriod']['startDate'] = new_start_time
-    with open(path, "w") as file:
-        file.write(json.dumps(data, indent=2))
+    with tempfile.NamedTemporaryFile(delete=False) as auction_file:
+        json.dump(data, auction_file)
+        auction_file.seek(0)
+    yield auction_file.name
+    auction_file.close() 
 
 
 def run_simple(tender_file_path, auction_id):
-    update_auctionPeriod(tender_file_path)
-    check_output('{0}/bin/auction_worker planning {1}'
-                 ' {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2}'.format(CWD, auction_id, tender_file_path).split())
+    with update_auctionPeriod(tender_file_path) as auction_file:
+        check_output('{0}/bin/auction_worker planning {1}'
+                     ' {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2}'.format(CWD, auction_id, auction_file).split())
     sleep(30)
 
 
 def run_multilot(tender_file_path, auction_id, lot_id=''):
     if not lot_id:
         lot_id = "aee0feec3eda4c85bad28eddd78dc3e6"
-    update_auctionPeriod(tender_file_path)
-    command_line = '{0}/bin/auction_worker planning {1} {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2} --lot {3}'.format(
-        CWD, auction_id, tender_file_path, lot_id
-    )
-    check_output(command_line.format(CWD, auction_id, tender_file_path).split())
+    with update_auctionPeriod(tender_file_path) as auction_file:
+        command_line = '{0}/bin/auction_worker planning {1} {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2} --lot {3}'.format(
+            CWD, auction_id, auction_file, lot_id
+        )
+        check_output(command_line.split())
     sleep(30)
 
 
-def main():
-    actions = {
-        'simple': (run_simple,),
-        'multilot': (run_multilot,),
-        'all': (run_simple, run_multilot)
-    }
+ACTIONS = {
+    'simple': (run_simple,),
+    'multilot': (run_multilot,),
+    'all': (run_simple, run_multilot)
+}
 
+
+def main():
     parser = argparse.ArgumentParser("Auction test runner")
-    parser.add_argument('suite', choices=actions.keys(), default='simple', help='test_suite')
+    parser.add_argument('suite', choices=ACTIONS.keys(), default='simple', help='test_suite')
     args = parser.parse_args()
     tender_file_path = os.path.join(PWD, "data/tender_{}.json".format(args.suite))
-    for action in actions.get(args.suite):
+    for action in ACTIONS.get(args.suite):
         action(tender_file_path, auction_id="11111111111111111111111111111111")
         sleep(4)
         try:
