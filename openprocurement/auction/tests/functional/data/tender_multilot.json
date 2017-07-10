@@ -63,7 +63,6 @@
     ], 
     "bids": [
       {
-        "status": "active", 
         "value": {
           "currency": null, 
           "amount": 475000.0, 
@@ -116,7 +115,6 @@
         ]
       }, 
       {
-        "status": "active", 
         "value": {
           "currency": null, 
           "amount": 475000.0, 
