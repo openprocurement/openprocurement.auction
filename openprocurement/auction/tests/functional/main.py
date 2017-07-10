@@ -35,7 +35,8 @@ def update_auctionPeriod(path, auction_type):
         json.dump(data, auction_file)
         auction_file.seek(0)
     yield auction_file.name
-    auction_file.close()
+    auction_file.close() 
+
 
 def run_simple(tender_file_path, auction_id):
     with update_auctionPeriod(tender_file_path, auction_type='simple') as auction_file:
@@ -56,38 +57,27 @@ def run_multilot(tender_file_path, auction_id, lot_id=''):
 
 
 ACTIONS = {
-    'simple': ({'action': run_simple, 'suite_dir': PWD},),
-    'multilot': ({'action': run_multilot, 'suite_dir': PWD},),
-    'all': ({'action': run_simple, 'suite_dir': PWD},
-            {'action': run_multilot, 'suite_dir': PWD})
+    'simple': (run_simple,),
+    'multilot': (run_multilot,),
+    'all': (run_simple, run_multilot)
 }
-
-
-for entry_point in iter_entry_points('openprocurement.auction.robottests'):
-    plugin = entry_point.load()
-    plugin(ACTIONS)
 
 
 def main():
     parser = argparse.ArgumentParser("Auction test runner")
     parser.add_argument('suite', choices=ACTIONS.keys(), default='simple', help='test_suite')
     args = parser.parse_args()
+    tender_file_path = os.path.join(PWD, "../data/tender_{}.json".format(args.suite))
     for action in ACTIONS.get(args.suite):
-        tender_file_path = os.path.join(action['suite_dir'], "data/tender_{}.json".format(args.suite))
-        action['action'](tender_file_path, auction_id="11111111111111111111111111111111")
-        auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD)
-        if args.suite == 'esco':
-            auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_esco.yaml'.format(CWD)
-        cli_args = ['-L', 'DEBUG', '--exitonfailure',
-            '-v', 'tender_file_path:{}'.format(tender_file_path),
-            '-v', auction_worker_defaults,
-            '-l', '{0}/logs/log_simple_auction'.format(CWD),
-            '-r', '{0}/logs/report_simple_auction'.format(CWD),
-            '-d', os.path.join(CWD, "logs"), action['suite_dir']
-        ]
+        action(tender_file_path, auction_id="11111111111111111111111111111111")
         sleep(4)
         try:
-            run_cli(cli_args)
+            run_cli(['-L', 'DEBUG', '--exitonfailure',
+                     '-v', 'tender_file_path:{}'.format(tender_file_path),
+                     '-v', 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD),
+                     '-l', '{0}/logs/log_simple_auction'.format(CWD),
+                     '-r', '{0}/logs/report_simple_auction'.format(CWD),
+                     '-d', os.path.join(CWD, "logs"), PWD])
         except SystemExit, e:
             exit_code = e.code
     sys.exit(exit_code or 0)
