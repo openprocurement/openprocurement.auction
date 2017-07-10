@@ -31,17 +31,7 @@
 		    }
 	    }
     ], 
-    "minimalStep": {
-      "currency": "UAH", 
-      "amount": 35000.0, 
-      "valueAddedTaxIncluded": true
-    }, 
-    "auctionPeriod": {
-      "startDate": "2017-06-21T16:35:50.468041+03:00", 
-      "endDate": null
-    }, 
-    "title": "Tender Title", 
-    "procurementMethodType": "belowThreshold", 
+    "procurementMethodType": "belowThreshold",
     "value": {
       "currency": "UAH", 
       "amount": 500000.0, 

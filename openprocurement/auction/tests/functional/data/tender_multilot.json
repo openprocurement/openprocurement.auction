@@ -63,7 +63,6 @@
     ], 
     "bids": [
       {
-        "status": "active", 
         "value": {
           "currency": null, 
           "amount": 475000.0, 
@@ -79,44 +78,10 @@
               "amount": 474000.0, 
               "valueAddedTaxIncluded": true
             }
-          }, 
-          {
-            "date": "2015-11-02T12:43:12.482645+02:00", 
-            "relatedLot": "aee0feec3eda4c85bad28eddd78dc3e6", 
-            "value": {
-              "currency": "UAH", 
-              "amount": 174000.0, 
-              "valueAddedTaxIncluded": true
-            }
-          }
-        ], 
-        "tenderers": [
-          {
-            "contactPoint": {
-              "name_ru": "  ", 
-              "name_en": "  ", 
-              "telephone": "+380507525312", 
-              "name": "\u041a\u0430\u043b\u0430\u0432\u0430\u0439 \u0406\u0440\u0438\u043d\u0430 \u0410\u043d\u0430\u0442\u043e\u043b\u0456\u0454\u0432\u043d\u0430", 
-              "email": "kalavay.ia@gmail.com"
-            }, 
-            "identifier": {
-              "scheme": "UA-EDR", 
-              "id": "34046713", 
-              "legalName": "\u0410\u0422 \u041d\u0412\u041a \u0413\u0456\u0440\u043d\u0438\u0447\u0456 \u041c\u0430\u0448\u0438\u043d\u0438"
-            }, 
-            "name": "\u0410\u0422 \u041d\u0412\u041a \u0413\u0456\u0440\u043d\u0438\u0447\u0456 \u041c\u0430\u0448\u0438\u043d\u0438", 
-            "address": {
-              "postalCode": "01601", 
-              "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430", 
-              "streetAddress": "\u0421\u043f\u043e\u0440\u0442\u0438\u0432\u043d\u0430 \u041f\u043b\u043e\u0449\u0430, 3\u0412", 
-              "region": "\u043c. \u041a\u0438\u0457\u0432", 
-              "locality": "\u041a\u0438\u0457\u0432"
-            }
           }
         ]
-      }, 
+      },
       {
-        "status": "active", 
         "value": {
           "currency": null, 
           "amount": 475000.0, 
