@@ -75,9 +75,12 @@ def main():
     for action in ACTIONS.get(args.suite):
         tender_file_path = os.path.join(action['suite_dir'], "data/tender_{}.json".format(args.suite))
         action['action'](tender_file_path, auction_id="11111111111111111111111111111111")
+        auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD)
+        if args.suite == 'esco':
+            auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_esco.yaml'.format(CWD)
         cli_args = ['-L', 'DEBUG', '--exitonfailure',
             '-v', 'tender_file_path:{}'.format(tender_file_path),
-            '-v', 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD),
+            '-v', auction_worker_defaults,
             '-l', '{0}/logs/log_simple_auction'.format(CWD),
             '-r', '{0}/logs/report_simple_auction'.format(CWD),
             '-d', os.path.join(CWD, "logs"), action['suite_dir']
