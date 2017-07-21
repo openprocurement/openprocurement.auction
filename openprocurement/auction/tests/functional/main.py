@@ -36,10 +36,15 @@ def update_auctionPeriod(path, auction_type):
         auction_file.seek(0)
     yield auction_file.name
     auction_file.close()
+# <<<<<<< Updated upstream
+# =======
+
+# >>>>>>> Stashed changes
 
 def run_simple(tender_file_path, auction_id):
     with update_auctionPeriod(tender_file_path, auction_type='simple') as auction_file:
-        check_output('{0}/bin/auction_worker planning {1}'
+        print '{0}/bin/auction_esco planning {1} {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2}'.format(CWD, auction_id, auction_file).split()
+        check_output('{0}/bin/auction_esco planning {1}'
                      ' {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2}'.format(CWD, auction_id, auction_file).split())
     sleep(30)
 
@@ -62,32 +67,53 @@ ACTIONS = {
             {'action': run_multilot, 'suite_dir': PWD})
 }
 
-
-for entry_point in iter_entry_points('openprocurement.auction.robottests'):
-    plugin = entry_point.load()
-    plugin(ACTIONS)
-
-
+# <<<<<<< Updated upstream
+#
+# for entry_point in iter_entry_points('openprocurement.auction.robottests'):
+#     plugin = entry_point.load()
+#     plugin(ACTIONS)
+#
+#
+# =======
+# >>>>>>> Stashed changes
 def main():
+    """
+    /data/yarsanich/auctions/no-static/openprocurement.auction.buildout/bin/auction_esco run 11111111111111111111111111111111 /data/yarsanich/auctions/no-static/openprocurement.auction.buildout/etc/auction_worker_defaults.yaml --auction_info /tmp/tmpZV24eM
+    """
     parser = argparse.ArgumentParser("Auction test runner")
     parser.add_argument('suite', choices=ACTIONS.keys(), default='simple', help='test_suite')
     args = parser.parse_args()
     for action in ACTIONS.get(args.suite):
-        tender_file_path = os.path.join(action['suite_dir'], "data/tender_{}.json".format(args.suite))
-        action['action'](tender_file_path, auction_id="11111111111111111111111111111111")
-        auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD)
-        if args.suite == 'esco':
-            auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_esco.yaml'.format(CWD)
-        cli_args = ['-L', 'DEBUG', '--exitonfailure',
-            '-v', 'tender_file_path:{}'.format(tender_file_path),
-            '-v', auction_worker_defaults,
-            '-l', '{0}/logs/log_simple_auction'.format(CWD),
-            '-r', '{0}/logs/report_simple_auction'.format(CWD),
-            '-d', os.path.join(CWD, "logs"), action['suite_dir']
-        ]
-        sleep(4)
-        try:
-            run_cli(cli_args)
-        except SystemExit, e:
-            exit_code = e.code
-    sys.exit(exit_code or 0)
+# <<<<<<< Updated upstream
+#         tender_file_path = os.path.join(action['suite_dir'], "data/tender_{}.json".format(args.suite))
+#         action['action'](tender_file_path, auction_id="11111111111111111111111111111111")
+#         auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD)
+#         if args.suite == 'esco':
+#             auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_esco.yaml'.format(CWD)
+#         cli_args = ['-L', 'DEBUG', '--exitonfailure',
+#             '-v', 'tender_file_path:{}'.format(tender_file_path),
+#             '-v', auction_worker_defaults,
+#             '-l', '{0}/logs/log_simple_auction'.format(CWD),
+#             '-r', '{0}/logs/report_simple_auction'.format(CWD),
+#             '-d', os.path.join(CWD, "logs"), action['suite_dir']
+#         ]
+#         sleep(4)
+#         try:
+#             run_cli(cli_args)
+#         except SystemExit, e:
+#             exit_code = e.code
+#     sys.exit(exit_code or 0)
+# =======
+        action(tender_file_path, auction_id="11111111111111111111111111111111")
+        # sleep(4)
+        # try:
+        #     run_cli(['-L', 'DEBUG', '--exitonfailure',
+        #              '-v', 'tender_file_path:{}'.format(tender_file_path),
+        #              '-v', 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD),
+        #              '-l', '{0}/logs/log_simple_auction'.format(CWD),
+        #              '-r', '{0}/logs/report_simple_auction'.format(CWD),
+        #              '-d', os.path.join(CWD, "logs"), PWD])
+        # except SystemExit, e:
+        #     exit_code = e.code
+    # sys.exit(exit_code or 0)
+# >>>>>>> Stashed changes
