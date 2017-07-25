@@ -31,7 +31,7 @@
 		    }
 	    }
     ],
-    "procurementMethodType": "esco.EU",
+    "procurementMethodType": "belowThreshold",
     "value": {
       "currency": "UAH",
       "amount": 500000.0,
@@ -75,7 +75,6 @@
         "region": "\u043c. \u0412\u0456\u043d\u043d\u0438\u0446\u044f",
         "locality": "\u043c. \u0412\u0456\u043d\u043d\u0438\u0446\u044f"
       }
-    },
-    "NBUdiscountRate": 0.22
+    }
   }
 }
