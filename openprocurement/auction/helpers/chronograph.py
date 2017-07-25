@@ -147,8 +147,7 @@ class AuctionScheduler(GeventScheduler):
         sleep(random())
         if self.use_consul:
             i = LOCK_RETRIES
-            session = self.consul.session.create(behavior='delete',
-                                                 ttl=WORKER_TIME_RUN)
+            session = self.consul.session.create(behavior='delete', ttl=ttl)
             while i > 0:
                 if self.consul.kv.put("auction_{}".format(document_id),
                                       self.server_name, acquire=session):
