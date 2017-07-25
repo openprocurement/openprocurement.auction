@@ -15,6 +15,7 @@ from pytz import timezone as tz
 from restkit.conn import Connection
 from socketpool import ConnectionPool
 from sse import Sse as PySse
+from pkg_resources import iter_entry_points
 from urlparse import urlparse, urljoin, urlunparse
 
 from .utils import get_mapping
@@ -84,8 +85,7 @@ def health():
     return response
 
 
-@auctions_server.route('/tenders/<auction_doc_id>/<path:path>',
-                       methods=['GET', 'POST'])
+
 def auctions_proxy(auction_doc_id, path):
     auctions_server.logger.debug('Auction_doc_id: {}'.format(auction_doc_id))
     proxy_path = auctions_server.proxy_mappings.get(
@@ -218,4 +218,9 @@ def make_auctions_app(global_conf,
     auctions_server.db = auctions_server.couch_server[auctions_server.config['COUCH_DB']]
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
+
+    for pkg in iter_entry_points('openprocurement.auction.routes'):
+        plugin = pkg.load()
+        plugin(auctions_server)
+
     return auctions_server
