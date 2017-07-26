@@ -8,7 +8,7 @@ class TestClient(object):
 
 
 class TestChronograph(object):
-    def test_view_job_add(self, db, chronograph, auction):
+    def test_view_job_add(self, log_for_test, db, chronograph, auction):
         auction.prepare_auction_document()
         sleep(0.1)
         resp = chronograph['client'].get("http://0.0.0.0:9005/jobs")

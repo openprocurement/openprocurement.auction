@@ -84,3 +84,10 @@ def auction(request):
             auction_data=json.load(auction_updated_data),
             lot_id=False
         )
+
+@pytest.fixture(scope="function")
+def log_for_test(request):
+    LOGGER.debug('-------- Test Start ---------')
+    LOGGER.debug('Current module: {0}'.format(request.module.__name__))
+    LOGGER.debug('Current test class: {0}'.format(request.cls.__name__))
+    LOGGER.debug('Current test function: {0}'.format(request.function.__name__))
