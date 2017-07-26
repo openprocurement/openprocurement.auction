@@ -7,7 +7,8 @@ import os.path
 import sys
 import argparse
 from gevent.subprocess import check_output, sleep
-from ..utils import update_auctionPeriod
+from openprocurement.auction.tests.utils import update_auctionPeriod, \
+    AUCTION_DATA
 from robot import run_cli
 
 
@@ -15,17 +16,17 @@ PWD = os.path.dirname(os.path.realpath(__file__))
 CWD = os.getcwd()
 
 
-def run_simple(tender_file_path, auction_id):
-    with update_auctionPeriod(tender_file_path, auction_type='simple') as auction_file:
+def run_simple(auction_id):
+    with update_auctionPeriod(AUCTION_DATA['simple'], auction_type='simple') as auction_file:
         check_output('{0}/bin/auction_worker planning {1}'
                      ' {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2}'.format(CWD, auction_id, auction_file).split())
     sleep(30)
 
 
-def run_multilot(tender_file_path, auction_id, lot_id=''):
+def run_multilot(auction_id, lot_id=''):
     if not lot_id:
         lot_id = "aee0feec3eda4c85bad28eddd78dc3e6"
-    with update_auctionPeriod(tender_file_path, auction_type='multilot') as auction_file:
+    with update_auctionPeriod(AUCTION_DATA['multilot'], auction_type='multilot') as auction_file:
         command_line = '{0}/bin/auction_worker planning {1} {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2} --lot {3}'.format(
             CWD, auction_id, auction_file, lot_id
         )
@@ -46,7 +47,7 @@ def main():
     args = parser.parse_args()
     tender_file_path = os.path.join(PWD, "../data/tender_{}.json".format(args.suite))
     for action in ACTIONS.get(args.suite):
-        action(tender_file_path, auction_id="11111111111111111111111111111111")
+        action(auction_id="11111111111111111111111111111111")
         sleep(4)
         try:
             run_cli(['-L', 'DEBUG', '--exitonfailure',

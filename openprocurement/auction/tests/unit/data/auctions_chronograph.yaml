@@ -1,0 +1,60 @@
+main:
+  tenders_api_server: http://127.0.0.1:6543/
+  tenders_api_version: "2.3"
+  tenders_api_token: auction
+  couch_url: http://admin:zaq1xsw2@0.0.0.0:9000/
+  auctions_db: auctions
+  timezone: Europe/Kiev
+  auction_worker: /data/an.andrusyk/OP_PROJECTS/openprocurement.auction.buildout/bin/auction_worker
+  auction_worker_config: /data/an.andrusyk/OP_PROJECTS/openprocurement.auction.buildout/etc/auction_worker_defaults.yaml
+  auction_worker_config_for_api_version_dev: /data/an.andrusyk/OP_PROJECTS/openprocurement.auction.buildout/etc/auction_worker_defaults.yaml
+  limit_auctions: 500
+  limit_free_memory: 0.15
+  web_app: 9004
+  use_consul: False
+  plugins: ["belowThreshold", "aboveThresholdUA", "aboveThresholdEU", "competitiveDialogueEU.stage2", "competitiveDialogueUA.stage2", "aboveThresholdUA.defense"]
+
+version: 1
+
+formatters:
+  simple:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: ERROR
+    formatter: simple
+    stream: ext://sys.stdout
+
+  journal:
+    class: ExtendedJournalHandler.ExtendedJournalHandler
+    level: INFO
+    SYSLOG_IDENTIFIER: AUCTIONS_CHRONOGRAPH
+    TENDERS_API_VERSION: "2.3"
+    TENDERS_API_URL: http://127.0.0.1:6543/
+
+loggers:
+  Auction Chronograph:
+    handlers: [console, journal]
+    propagate: no
+    level: INFO
+
+  apscheduler.scheduler:
+    handlers: [console, journal]
+    propagate: no
+    level: ERROR
+
+  openprocurement.auction.sync:
+    handlers: [console, journal]
+    propagate: no
+    level: ERROR
+
+  apscheduler.executors.default:
+    handlers: [console, journal]
+    propagate: no
+    level: ERROR
+
+  "":
+    handlers: [console, journal]
+    level: ERROR

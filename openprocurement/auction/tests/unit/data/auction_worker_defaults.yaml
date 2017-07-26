@@ -1,0 +1,59 @@
+---
+TENDERS_API_URL: "http://127.0.0.1:6543/"
+TENDERS_API_VERSION: "2.3"
+TENDERS_API_TOKEN: "auction"
+AUCTIONS_URL: "http://localhost:8090/tenders/{auction_id}"
+HASH_SECRET: "0478095c8ece0bbc11f94663ac2c4f10b29666de"
+COUCH_DATABASE: "http://admin:zaq1xsw2@0.0.0.0:9000/auctions"
+OAUTH_CLIENT_ID: "9Nu8QpojpoWpoSBP5OKxjsiSvDBALKeJLrA27hQU"
+OAUTH_CLIENT_SECRET: "8VeRc4QFKJU44IJ5sz7jPUKxmUSAw2iNE87bDW4F"
+OAUTH_BASE_URL: "http://localhost:9003/api/"
+OAUTH_REQUEST_TOKEN_URL: ""
+OAUTH_ACCESS_TOKEN_URL: "http://localhost:9003/oauth/token"
+OAUTH_AUTHORIZE_URL: "http://localhost:9003/oauth/authorize"
+STARTS_PORT: 9010
+WORKER_BIND_IP: "localhost"
+REDIS_URL: "redis://:12345@0.0.0.0:9002/0"
+sentinel: [["0.0.0.0", 9007]]
+redis_password: "12345"
+redis_database: "0"
+sentinel_cluster_name: "redis-cluster"
+planning_procerude: "full"
+sandbox_mode: "1"
+with_document_service: false
+DOCUMENT_SERVICE:
+  url: ""
+  username: ""
+  password: ""
+version: 1
+formatters:
+  simpleFormatter:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: simpleFormatter
+    level: ERROR
+  journal:
+    class: ExtendedJournalHandler.ExtendedJournalHandler
+    formatter: simpleFormatter
+    level: INFO
+    SYSLOG_IDENTIFIER: AUCTION_WORKER
+loggers:
+  Auction Worker:
+    level: INFO
+    handlers:
+    - console
+    - journal
+    propagate: false
+  apscheduler.executors.default:
+    level: INFO
+    handlers:
+    - console
+    - journal
+    propagate: false
+  '':
+    level: INFO
+    handlers:
+    - console
+    - journal
