@@ -76,8 +76,8 @@ def main():
         tender_file_path = os.path.join(action['suite_dir'], "data/tender_{}.json".format(args.suite))
         action['action'](tender_file_path, auction_id="11111111111111111111111111111111")
         auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD)
-        if args.suite == 'esco':
-            auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_esco.yaml'.format(CWD)
+        if args.suite == 'dutch':
+            auction_worker_defaults = 'auction_worker_defaults:{0}/etc/auction_worker_dutch.yaml'.format(CWD)
         cli_args = ['-L', 'DEBUG', '--exitonfailure',
             '-v', 'tender_file_path:{}'.format(tender_file_path),
             '-v', auction_worker_defaults,
