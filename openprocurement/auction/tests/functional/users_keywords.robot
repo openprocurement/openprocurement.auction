@@ -29,21 +29,21 @@
     Highlight Elements With Text On Time    Ви
 
 
-Поставити максимально допустиму ставку
+Поставити мінімально допустиму ставку
     Wait Until Page Contains Element    id=max_bid_amount_price
     ${last_amount}=     Get Text    id=max_bid_amount_price
     Highlight Elements With Text On Time    ${last_amount}
     Поставити ставку   ${last_amount}   Заявку прийнято
 
 
-Поставити велику ціну в ставці
+Поставити низьку ціну в ставці
     [Arguments]    ${extra_amount}
     Wait Until Page Contains Element    id=max_bid_amount_price
     ${last_amount}=     Get Text    id=max_bid_amount_price
     Highlight Elements With Text On Time    ${last_amount}
     ${last_amount}=     convert_amount_to_number    ${last_amount}
-    ${last_amount}=    Evaluate      ${last_amount}+${extra_amount}
-    Поставити ставку   ${last_amount}   Надто висока заявка
+    ${last_amount}=    Evaluate      ${last_amount}-${extra_amount}
+    Поставити ставку   ${last_amount}   Надто низька заявка
 
 Поставити ставку
     [Arguments]    ${amount}  ${msg}
