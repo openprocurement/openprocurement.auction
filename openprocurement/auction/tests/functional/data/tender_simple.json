@@ -31,7 +31,7 @@
 		    }
 	    }
     ],
-    "procurementMethodType": "belowThreshold",
+    "procurementMethodType": "dgfOtherAssets",
     "value": {
       "currency": "UAH",
       "amount": 500000.0,
