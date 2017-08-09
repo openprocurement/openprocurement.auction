@@ -5,14 +5,17 @@ from requests import Session
 import yaml
 from openprocurement.auction.chronograph import AuctionsChronograph
 from openprocurement.auction.tests.utils import update_auctionPeriod, AUCTION_DATA
+from openprocurement.auction.tests.unit.utils import TestClient
+from openprocurement.auction.tests.unit.utils import kill_child_processes
 from openprocurement.auction.worker.auction import Auction, SCHEDULER
-from gevent import spawn, sleep
+from gevent import spawn, sleep, killall, GreenletExit
 from ..utils import PWD
 import json
 import logging
 from openprocurement.auction.helpers.chronograph import MAX_AUCTION_START_TIME_RESERV
 import datetime
-
+import gc
+from greenlet import greenlet
 
 LOGGER = logging.getLogger('Log For Tests')
 
@@ -57,6 +60,7 @@ def db(request):
 
     if name in server:
         delete()
+
     data_base = server.create(name)
 
     request.addfinalizer(delete)
@@ -66,24 +70,73 @@ def db(request):
 
 @pytest.fixture(scope='function')
 def chronograph(request):
-    # webapp = true
     logging.config.dictConfig(test_chronograph_config)
     chrono = AuctionsChronograph(test_chronograph_config)
-    client = Session()  # TODO: Add prefix path
+    client = TestClient('http://0.0.0.0:{port}'.
+                        format(port=chrono.config['main'].get('web_app')))
     spawn(chrono.run)
+
+    def delete_chronograph():
+        chrono.server.stop()
+
+        kill_child_processes()
+
+        jobs = chrono.scheduler.get_jobs()
+        for job in jobs:
+             chrono.scheduler.remove_job(job.id)
+
+        # chrono.scheduler.shutdown()
+        # TODO: find out why the previous command causes the problems.
+        # But we can skip it as scheduler is turned off by the following block.
+
+        try:
+            killall(
+                [obj for obj in gc.get_objects() if isinstance(obj, greenlet)])
+        except GreenletExit:
+            print("Correct exception 'GreenletExit' raised.")
+        except Exception as e:
+            print("Gevent couldn't close gracefully.")
+            raise e
+
+    request.addfinalizer(delete_chronograph)
+
     return {'chronograph': chrono, 'client': client}
 
+#
+# @pytest.yield_fixture(scope="function")
+# def auction(request):
+#     DELTA_T = datetime.timedelta(seconds=10)
+#     with update_auctionPeriod(auction_data_simple, auction_type='simple', time_shift=MAX_AUCTION_START_TIME_RESERV+DELTA_T) as updated_doc, open(updated_doc, 'r') as auction_updated_data:
+#         yield Auction(
+#             tender_id=auction_data_simple['data']['tenderID'],
+#             worker_defaults=yaml.load(open(worker_defaults_file_path)),
+#             auction_data=json.load(auction_updated_data),
+#             lot_id=False
+#         )
 
 @pytest.yield_fixture(scope="function")
 def auction(request):
-    DELTA_T = datetime.timedelta(seconds=10)
-    with update_auctionPeriod(auction_data_simple, auction_type='simple', time_shift=MAX_AUCTION_START_TIME_RESERV+DELTA_T) as updated_doc, open(updated_doc, 'r') as auction_updated_data:
+    # TODO: change it (MAX_AUCTION_START_TIME_RESERV)
+
+    defaults = {'time': MAX_AUCTION_START_TIME_RESERV,
+                'delta_t': datetime.timedelta(seconds=10)}
+
+    params = request.param if len(request.param) else defaults
+    for key in defaults.keys():
+        params[key] = defaults[key] if params.get(key, 'default') == 'default'\
+            else params[key]
+
+    with update_auctionPeriod(
+            auction_data_simple,
+            auction_type='simple',
+            time_shift=params['time']+params['delta_t']) \
+            as updated_doc, open(updated_doc, 'r') as auction_updated_data:
         yield Auction(
             tender_id=auction_data_simple['data']['tenderID'],
             worker_defaults=yaml.load(open(worker_defaults_file_path)),
             auction_data=json.load(auction_updated_data),
-            lot_id=False
-        )
+            lot_id=False)
+
 
 @pytest.fixture(scope="function")
 def log_for_test(request):

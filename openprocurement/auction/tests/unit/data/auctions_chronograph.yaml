@@ -10,7 +10,7 @@ main:
   auction_worker_config_for_api_version_dev: /data/an.andrusyk/OP_PROJECTS/openprocurement.auction.buildout/etc/auction_worker_defaults.yaml
   limit_auctions: 500
   limit_free_memory: 0.15
-  web_app: 9004
+  web_app: 9005
   use_consul: False
   plugins: ["belowThreshold", "aboveThresholdUA", "aboveThresholdEU", "competitiveDialogueEU.stage2", "competitiveDialogueUA.stage2", "aboveThresholdUA.defense"]
 
