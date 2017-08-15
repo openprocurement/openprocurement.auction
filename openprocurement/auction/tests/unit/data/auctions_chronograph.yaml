@@ -15,6 +15,7 @@ main:
   plugins: ["belowThreshold", "aboveThresholdUA", "aboveThresholdEU", "competitiveDialogueEU.stage2", "competitiveDialogueUA.stage2", "aboveThresholdUA.defense"]
 
 version: 1
+disable_existing_loggers: false
 
 formatters:
   simple:

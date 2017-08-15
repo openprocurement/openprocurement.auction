@@ -21,6 +21,7 @@ sentinel_cluster_name: "redis-cluster"
 planning_procerude: "full"
 sandbox_mode: "1"
 with_document_service: false
+disable_existing_loggers: false
 DOCUMENT_SERVICE:
   url: ""
   username: ""
