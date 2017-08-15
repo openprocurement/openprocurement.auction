@@ -10,16 +10,11 @@ from openprocurement.auction.helpers.chronograph \
 import datetime
 
 
-class TestClient(object):
-    """TODO: """
-
-
 class TestChronograph(object):
     # def test_view_job_add(self, log_for_test, db, chronograph, auction):
     #     auction.prepare_auction_document()
     #     sleep(0.1)
-    #     # TODO: to get rid of the prefix http://0.0.0.0:9005
-    #     resp = chronograph['client'].get('http://0.0.0.0:9005/jobs')
+    #     resp = chronograph['client'].get('jobs')
     #     one_job_is_added = True if len(json.loads(resp.content)) == 1 \
     #         else False
     #
@@ -32,11 +27,11 @@ class TestChronograph(object):
     def test_listing(self, db, chronograph, auction):
         auction.prepare_auction_document()
         sleep(65)
-        resp = chronograph['client'].get('http://0.0.0.0:9005/active_jobs')
+        resp = chronograph['client'].get('active_jobs')
         job_is_active = (len(json.loads(resp.content)) == 1)
         assert job_is_active
 
     # def test_shutdown(self, chronograph):
-    #     resp = self.client.get('/active_jobs')
+    #     resp = self.client.get('active_jobs')
     #     assert resp.test == "Start shutdown"
 
