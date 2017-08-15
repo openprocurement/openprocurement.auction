@@ -1,5 +1,6 @@
 import contextlib
 from requests import Session as Sess
+import signal, psutil
 import os
 
 
@@ -18,3 +19,13 @@ class TestClient(Sess):
     def get(self, url, **kwargs):
         return super(self.__class__, self)\
             .get('/'.join([self.pref, url]), **kwargs)
+
+
+def kill_child_processes(parent_pid=os.getpid(), sig=signal.SIGTERM):
+    try:
+        parent = psutil.Process(parent_pid)
+    except psutil.NoSuchProcess:
+        return
+    children = parent.children(recursive=True)
+    for process in children:
+        process.send_signal(sig)
