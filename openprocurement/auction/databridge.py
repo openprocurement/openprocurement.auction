@@ -1,6 +1,8 @@
 from gevent import monkey
 monkey.patch_all()
 
+from openprocurement_client.sync import get_resource_items
+
 try:
     import urllib3.contrib.pyopenssl
     urllib3.contrib.pyopenssl.inject_into_urllib3()
@@ -24,7 +26,6 @@ from openprocurement.auction.utils import FeedItem
 
 from openprocurement.auction.systemd_msgs_ids import\
     DATA_BRIDGE_PLANNING_DATA_SYNC, DATA_BRIDGE_PLANNING_START_BRIDGE
-from openprocurement_client.sync import get_tenders
 from openprocurement.auction.design import sync_design
 
 
@@ -40,7 +41,7 @@ class AuctionsDataBridge(object):
     def __init__(self, config, re_planning=False, debug=False):
         super(AuctionsDataBridge, self).__init__()
         self.config = config
-        self.tenders_ids_list = []
+        self.resource_ids_list = []
         self.tz = tzlocal()
         self.debug = debug
         self.mapper = components.qA(self, IAuctionsManager)
@@ -52,7 +53,6 @@ class AuctionsDataBridge(object):
         )
         self.db = Database(self.couch_url,
                            session=Session(retry_delays=range(10)))
-        sync_design(self.db)
 
     def config_get(self, name):
         return self.config.get('main').get(name)
@@ -62,13 +62,11 @@ class AuctionsDataBridge(object):
             self.run_re_planning()
             return
 
-        LOGGER.info('Start Auctions Bridge',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_START_BRIDGE})
-        LOGGER.info('Start data sync...',
-                    extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_DATA_SYNC})
-        for item in get_tenders(host=self.config_get('tenders_api_server'),
-                                version=self.config_get('tenders_api_version'),
-                                key='', extra_params=API_EXTRA):
+        for item in get_resource_items(
+                host=self.config_get('resource_api_server'),
+                version=self.config_get('resource_api_version'),
+                resource=self.config_get('resource_name'),
+                key='', extra_params=API_EXTRA):
             # magic goes here
             feed = FeedItem(item)
             planning = self.mapper(feed)

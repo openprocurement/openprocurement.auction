@@ -122,7 +122,7 @@ def sorting_by_amount(bids, reverse=False):
         if full_amount_bid1 == full_amount_bid2:
             time_of_bid1 = get_time(bid1)
             time_of_bid2 = get_time(bid2)
-            return -cmp(time_of_bid2, time_of_bid1)
+            return cmp(time_of_bid2, time_of_bid1)
         else:
             return cmp(full_amount_bid1, full_amount_bid2)
 
