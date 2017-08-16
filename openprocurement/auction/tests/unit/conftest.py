@@ -102,17 +102,6 @@ def chronograph(request):
 
     return {'chronograph': chrono, 'client': client}
 
-#
-# @pytest.yield_fixture(scope="function")
-# def auction(request):
-#     DELTA_T = datetime.timedelta(seconds=10)
-#     with update_auctionPeriod(auction_data_simple, auction_type='simple', time_shift=MAX_AUCTION_START_TIME_RESERV+DELTA_T) as updated_doc, open(updated_doc, 'r') as auction_updated_data:
-#         yield Auction(
-#             tender_id=auction_data_simple['data']['tenderID'],
-#             worker_defaults=yaml.load(open(worker_defaults_file_path)),
-#             auction_data=json.load(auction_updated_data),
-#             lot_id=False
-#         )
 
 @pytest.yield_fixture(scope="function")
 def auction(request):
@@ -121,7 +110,7 @@ def auction(request):
     defaults = {'time': MAX_AUCTION_START_TIME_RESERV,
                 'delta_t': datetime.timedelta(seconds=10)}
 
-    params = request.param if len(request.param) else defaults
+    params = getattr(request, 'param', defaults)
     for key in defaults.keys():
         params[key] = defaults[key] if params.get(key, 'default') == 'default'\
             else params[key]
