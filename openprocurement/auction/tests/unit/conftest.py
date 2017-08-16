@@ -12,7 +12,8 @@ from gevent import spawn, sleep, killall, GreenletExit
 from ..utils import PWD
 import json
 import logging
-from openprocurement.auction.helpers.chronograph import MAX_AUCTION_START_TIME_RESERV
+from openprocurement.auction.helpers.chronograph import \
+    MIN_AUCTION_START_TIME_RESERV, MAX_AUCTION_START_TIME_RESERV
 import datetime
 import gc
 from greenlet import greenlet
@@ -68,12 +69,36 @@ def db(request):
     return data_base
 
 
+test_client = \
+    TestClient('http://0.0.0.0:{port}'.
+               format(port=test_chronograph_config['main'].get('web_app')))
+
+
+def job_is_added():
+    resp = test_client.get('jobs')
+    return (len(json.loads(resp.content)) == 1)
+
+
+def job_is_not_added():
+    resp = test_client.get('jobs')
+    return (len(json.loads(resp.content)) == 0)
+
+
+def job_is_active():
+    resp = test_client.get('active_jobs')
+    return (len(json.loads(resp.content)) == 1)
+
+
+def job_is_not_active():
+    resp = test_client.get('active_jobs')
+    return (len(json.loads(resp.content)) == 0)
+
+
+
 @pytest.fixture(scope='function')
 def chronograph(request):
     logging.config.dictConfig(test_chronograph_config)
     chrono = AuctionsChronograph(test_chronograph_config)
-    client = TestClient('http://0.0.0.0:{port}'.
-                        format(port=chrono.config['main'].get('web_app')))
     spawn(chrono.run)
 
     def delete_chronograph():
@@ -100,7 +125,7 @@ def chronograph(request):
 
     request.addfinalizer(delete_chronograph)
 
-    return {'chronograph': chrono, 'client': client}
+    return chrono
 
 
 @pytest.yield_fixture(scope="function")
