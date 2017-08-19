@@ -20,6 +20,7 @@ import datetime
 import gc
 from greenlet import greenlet
 from openprocurement.auction.databridge import AuctionsDataBridge
+from copy import deepcopy
 
 
 LOGGER = logging.getLogger('Log For Tests')
@@ -61,7 +62,7 @@ with open(databridge_conf_file_path) as stream:
     test_bridge_config['disable_existing_loggers'] = False
     test_bridge_config['handlers']['journal']['formatter'] = 'simple'
 
-test_bridge_config_error_port = test_bridge_config.copy()
+test_bridge_config_error_port = deepcopy(test_bridge_config)
 test_bridge_config_error_port['main']['couch_url'] = 'http://admin:zaq1xsw2@0.0.0.0:9001/'
 
 

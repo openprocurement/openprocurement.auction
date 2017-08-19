@@ -72,7 +72,7 @@ class AuctionsDataBridge(object):
         )
 
     def config_get(self, name):
-        return self.config.get('main').get(name)
+        return self.config['main'][name]
 
     def run(self):
         if self.re_planning:
