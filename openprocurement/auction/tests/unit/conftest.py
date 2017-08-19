@@ -1,3 +1,5 @@
+# TODO: fix configuration yaml files and avoid absolute pathes
+
 import couchdb
 import os
 import pytest
@@ -17,6 +19,8 @@ from openprocurement.auction.helpers.chronograph import \
 import datetime
 import gc
 from greenlet import greenlet
+from openprocurement.auction.databridge import AuctionsDataBridge
+
 
 LOGGER = logging.getLogger('Log For Tests')
 
@@ -51,6 +55,17 @@ with open(chronograph_conf_file_path) as stream:
     test_chronograph_config['handlers']['journal']['formatter'] = 'simple'
 
 
+databridge_conf_file_path = os.path.join(PWD, "unit/data/auctions_data_bridge.yaml")
+with open(databridge_conf_file_path) as stream:
+    test_bridge_config = yaml.load(stream)
+    test_bridge_config['disable_existing_loggers'] = False
+    test_bridge_config['handlers']['journal']['formatter'] = 'simple'
+
+test_bridge_config_error_port = test_bridge_config.copy()
+test_bridge_config_error_port['main']['couch_url'] = 'http://admin:zaq1xsw2@0.0.0.0:9001/'
+
+
+# todo: pass URL server
 @pytest.fixture(scope='function')
 def db(request):
     server = couchdb.Server("http://" + worker_defaults['COUCH_DATABASE'].split('/')[2])
@@ -92,7 +107,6 @@ def job_is_active():
 def job_is_not_active():
     resp = test_client.get('active_jobs')
     return (len(json.loads(resp.content)) == 0)
-
 
 
 @pytest.fixture(scope='function')
@@ -150,6 +164,14 @@ def auction(request):
             worker_defaults=yaml.load(open(worker_defaults_file_path)),
             auction_data=json.load(auction_updated_data),
             lot_id=False)
+
+
+@pytest.fixture(scope='function')
+def bridge(request):
+    # todo: Mock supbrocess && get_tedners
+    params = getattr(request, 'param', {})
+    bridge_config = params.get('bridge_config', test_bridge_config)
+    return AuctionsDataBridge(bridge_config)
 
 
 @pytest.fixture(scope="function")
