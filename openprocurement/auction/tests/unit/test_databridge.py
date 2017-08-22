@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# TODO: test self.mapper from databridge
+
 # TODO: check that only "active.auction" tender status are taken into account
 # TODO: check with different data for 'planning', 'cancel', 'qualification'
 # TODO: with lot_id no lot_id
@@ -16,13 +18,13 @@ import uuid
 from gevent import sleep
 from gevent.queue import Queue
 from couchdb import Server
-from mock import MagicMock, patch
+from mock import MagicMock, patch, call
 from munch import munchify
 from httplib import IncompleteRead
 from openprocurement_client.exceptions import RequestFailed
 import pytest
 from openprocurement.auction.databridge import AuctionsDataBridge
-# from openprocurement.auction.tests.utils import MockFeedItem
+from openprocurement.auction.utils import FeedItem
 from .conftest import test_bridge_config, test_bridge_config_error_port
 from .conftest import test_bridge_config
 from urlparse import urljoin
@@ -30,7 +32,7 @@ from pytest import raises
 from copy import deepcopy
 import openprocurement.auction.databridge as databridge_module
 from openprocurement.auction.tests.unit.utils import \
-    no_lots_tender_data_template, get_tenders_dummy, API_EXTRA, \
+    tender_data_templ, get_tenders_dummy, API_EXTRA, \
     check_call_dummy
 from gevent import spawn
 from openprocurement.auction import core as core_module
@@ -119,8 +121,76 @@ class TestDataBridgeGetTenders(object):
         assert mock_check_call.call_count == 0
 
 
+class TestDataBridgeFeedItem(object):
+    @pytest.mark.parametrize("number_of_tenders", [0, 1, 2])
+    def test_mapper_call_number(self, db, bridge, mocker, number_of_tenders):
+        """
+        Test checks:
+        1) that 'self.mapper' method is called the correct number of times.
+        2) that 'FeedItem' class is instantiated the correct number of times.
+        Actually the number of tenders provided by 'get_tenders' function.
+        """
+        mocker.patch.object(databridge_module, 'get_tenders',
+                            side_effect=
+                            get_tenders_dummy([{}] * number_of_tenders),
+                            autospec=True)
 
-# assertRaises
+        mock_feed_item = mocker.patch.object(databridge_module, 'FeedItem',
+                                             side_effect=FeedItem,
+                                             autospec=True)
+
+        mock_mapper = MagicMock()
+        bridge.mapper = mock_mapper
+
+        spawn(bridge.run)
+        sleep(0.5)
+
+        assert mock_feed_item.call_count == number_of_tenders
+        assert mock_mapper.call_count == number_of_tenders
+
+    def test_mapper_args_value(self, db, bridge, mocker):
+        """
+        Test checks:
+        1) that 'FeedItem' class is instantiated once with correct arguments
+        2) that 'self.mapper' method is called once with correct arguments,
+        Actually, with the item yielded by 'get_tenders' function.
+        3) that 'self.mapper' was called AFTER 'FeedItem' class instantiated.
+        """
+        mocker.patch.object(databridge_module, 'get_tenders',
+                            side_effect=get_tenders_dummy([tender_data_templ]),
+                            autospec=True)
+
+        mock_feed_item = mocker.patch.object(databridge_module, 'FeedItem',
+                                             side_effect=FeedItem,
+                                             autospec=True)
+        mock_check_call = \
+            mocker.patch.object(core_module, 'check_call',
+                                side_effect=check_call_dummy,
+                                autospec=True)
+
+        manager = MagicMock()
+
+        mock_mapper = MagicMock()
+        bridge.mapper = mock_mapper
+
+        manager.attach_mock(mock_mapper, 'mock_mapper')
+        manager.attach_mock(mock_feed_item, 'mock_feed_item')
+
+        spawn(bridge.run)
+        sleep(0.5)
+
+        manager.assert_has_calls(
+            [call.mock_feed_item(tender_data_templ),
+             call.mock_mapper(mock_feed_item(tender_data_templ))]
+        )
+
+        # check that 'check_call' was not called as tender documents
+        # doesn't contain appropriate data
+        assert mock_check_call.call_count == 0
+
+
+
+        # assertRaises
 
 # endDate
 # no_lots_tender_data = deepcopy(no_lots_tender_data_template)

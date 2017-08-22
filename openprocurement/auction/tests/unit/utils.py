@@ -31,7 +31,7 @@ def kill_child_processes(parent_pid=os.getpid(), sig=signal.SIGTERM):
         process.send_signal(sig)
 
 
-no_lots_tender_data_template = {'id': 'UA-11111', 'status': 'active.auction'}
+tender_data_templ = {'id': 'UA-11111', 'status': 'active.auction'}
 
 
 def get_tenders_dummy(tender_data_list, *args, **kwargs):
