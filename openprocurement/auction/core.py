@@ -113,7 +113,8 @@ class Planning(object):
         return self
 
     def __iter__(self):
-        if self.item['status'] == "active.auction":
+        status = self.item.get('status', None)
+        if status == "active.auction":
             if 'lots' not in self.item and 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] \
                     and 'endDate' not in self.item['auctionPeriod']:
 
@@ -131,7 +132,7 @@ class Planning(object):
                     LOGGER.info("Tender {} already planned while replanning".format(self.item['id']),
                                 extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_TENDER_ALREADY_PLANNED})
                     raise StopIteration
-                elif not self.bridge.re_planning and [row.id for row in auctions_start_in_date.rows if row.id == self.item['id']]:
+                if not self.bridge.re_planning and [row.id for row in auctions_start_in_date.rows if row.id == self.item['id']]:
                     LOGGER.info("Tender {} already planned on same date".format(self.item['id']),
                                 extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_TENDER_ALREADY_PLANNED})
                     raise StopIteration
@@ -163,7 +164,7 @@ class Planning(object):
                                         extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_LOT_ALREADY_PLANNED})
                             raise StopIteration
                         yield ("planning", str(self.item["id"]), str(lot["id"]))
-        if self.item['status'] == "active.qualification" and 'lots' in self.item:
+        if status == "active.qualification" and 'lots' in self.item:
             for lot in self.item['lots']:
                 if lot["status"] == "active":
                     is_pre_announce = PreAnnounce_view(self.bridge.db)
@@ -171,7 +172,7 @@ class Planning(object):
                     if [row.id for row in is_pre_announce.rows if row.id == auction_id]:
                         yield ('announce', self.item['id'], lot['id'])
             raise StopIteration
-        if self.item['status'] == "cancelled":
+        if status == "cancelled":
             future_auctions = endDate_view(
                 self.bridge.db, startkey=time() * 1000
             )
