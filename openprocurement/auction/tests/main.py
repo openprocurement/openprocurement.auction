@@ -8,6 +8,7 @@ import json
 import tempfile
 import contextlib
 from datetime import datetime, timedelta
+from dateutil.tz import tzlocal
 from robot import run_cli
 from pkg_resources import iter_entry_points
 from gevent.subprocess import sleep
@@ -17,7 +18,7 @@ TESTS = {}
 PAUSE_SECONDS = timedelta(seconds=120)
 PWD = os.path.dirname(os.path.realpath(__file__))
 CWD = os.getcwd()
-print(CWD)
+
 
 @contextlib.contextmanager
 def update_auctionPeriod(path, auction_type):
@@ -53,7 +54,6 @@ def main():
 
     tender_file_path = os.path.join(
         test['suite'], "data/tender_{}.json".format(args.suite))
-    
     test['runner'](tender_file_path)
     
     auction_worker_defaults = test.get('auction_worker_defaults')
@@ -68,12 +68,11 @@ def main():
         '-l', '{0}/logs/log_{1}'.format(CWD, args.suite),
         '-r', '{0}/logs/report_{1}'.format(CWD, args.suite),
         '-P', test['suite'],
-        '-d', os.path.join(PWD, "logs"),
+        '-d', os.path.join(CWD, "logs"),
         test['suite']
     ]
     sleep(4)
     try:
-        os.chdir(test['suite'])
         run_cli(cli_args)
     except SystemExit, e:
         exit_code = e.code
