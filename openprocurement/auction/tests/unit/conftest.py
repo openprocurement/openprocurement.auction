@@ -30,7 +30,8 @@ test_log_config = {
      'disable_existing_loggers': False,
      'formatters': {'simpleFormatter': {'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'}},
      'handlers': {'journal': {'class': 'ExtendedJournalHandler.ExtendedJournalHandler', 'formatter': 'simpleFormatter', 'SYSLOG_IDENTIFIER': 'AUCTIONS_LOG_FOR_TESTS', 'level': 'DEBUG'}},
-     'loggers': {'Log For Tests': {'handlers': ['journal'], 'propagate': False, 'level': 'DEBUG'}}
+     'loggers': {'Log For Tests': {'handlers': ['journal'], 'propagate': False, 'level': 'DEBUG'},
+                 '': {'handlers': ['journal'], 'propagate': False, 'level': 'DEBUG'}}
      }
 
 logging.config.dictConfig(test_log_config)
@@ -160,11 +161,14 @@ def auction(request):
             auction_type='simple',
             time_shift=params['time']+params['delta_t']) \
             as updated_doc, open(updated_doc, 'r') as auction_updated_data:
-        yield Auction(
+        auction = Auction(
             tender_id=auction_data_simple['data']['tenderID'],
             worker_defaults=yaml.load(open(worker_defaults_file_path)),
             auction_data=json.load(auction_updated_data),
             lot_id=False)
+        yield auction
+
+    auction._end_auction_event.set()
 
 
 @pytest.fixture(scope='function')

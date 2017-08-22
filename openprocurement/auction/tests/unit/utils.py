@@ -29,3 +29,30 @@ def kill_child_processes(parent_pid=os.getpid(), sig=signal.SIGTERM):
     children = parent.children(recursive=True)
     for process in children:
         process.send_signal(sig)
+
+
+no_lots_tender_data_template = {'id': 'UA-11111', 'status': 'active.auction'}
+
+
+def get_tenders_dummy(tender_data_list, *args, **kwargs):
+    class GetTenders(object):
+        ind = 0
+
+        @classmethod
+        def iterator(self, tender_data_list):
+            for elem in tender_data_list:
+                self.ind += 1
+                yield elem
+
+        def __call__(self, *args, **kwargs):
+            return self.iterator(tender_data_list)
+
+    a = GetTenders()
+    return a
+
+
+def check_call_dummy(*args, **kwargs):
+    pass
+
+
+API_EXTRA = {'opt_fields': 'status,auctionPeriod,lots,procurementMethodType', 'mode': '_all_'}
