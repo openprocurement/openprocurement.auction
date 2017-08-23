@@ -44,18 +44,21 @@ logger.level = logging.DEBUG
 class TestDatabridgeConfig(object):
     def test_config_init(self, db, bridge):
         # TODO: check if value of bridge.config corresponds to config file
-        assert 'tenders_api_server' in bridge.config['main']
-        assert 'tenders_api_version' in bridge.config['main']
-        assert 'tenders_api_token' in bridge.config['main']
-        assert 'couch_url' in bridge.config['main']
-        assert 'auctions_db' in bridge.config['main']
-        assert 'timezone' in bridge.config['main']
-        assert 'auction_worker' in bridge.config['main']
-        assert 'auction_worker_config' in bridge.config['main']
-        assert 'plugins' in bridge.config['main']
-        assert 'esco.EU' in bridge.config['main']
-        assert 'auction_worker' in bridge.config['main']['esco.EU']
-        assert bridge.couch_url == urljoin(bridge.config['main']['couch_url'], bridge.config['main']['auctions_db'])
+        bridge_inst = bridge['bridge']
+        assert 'tenders_api_server' in bridge_inst.config['main']
+        assert 'tenders_api_version' in bridge_inst.config['main']
+        assert 'tenders_api_token' in bridge_inst.config['main']
+        assert 'couch_url' in bridge_inst.config['main']
+        assert 'auctions_db' in bridge_inst.config['main']
+        assert 'timezone' in bridge_inst.config['main']
+        assert 'auction_worker' in bridge_inst.config['main']
+        assert 'auction_worker_config' in bridge_inst.config['main']
+        assert 'plugins' in bridge_inst.config['main']
+        assert 'esco.EU' in bridge_inst.config['main']
+        assert 'auction_worker' in bridge_inst.config['main']['esco.EU']
+        assert bridge_inst.couch_url == \
+               urljoin(bridge_inst.config['main']['couch_url'],
+                       bridge_inst.config['main']['auctions_db'])
 
     def test_connetcion_refused(self, db):
         with raises(Exception) as exc_info:
@@ -81,65 +84,57 @@ class TestDataBridgeRunLogInformation(object):
 
 
 class TestDataBridgeGetTenders(object):
-    @pytest.mark.parametrize("number_of_tenders", [0, 1, 2])
-    def test_run_get_tenders_once(self, log_for_test, db, bridge, mocker,
-                                  number_of_tenders):
+    @pytest.mark.parametrize(
+        'bridge', [({'tenders': [{}]*0}), ({'tenders': [{}]*1}),
+                   ({'tenders': [{}]*2})], indirect=['bridge'])
+    def test_run_get_tenders_once(self, db, bridge, mocker):
         """
         Test checks:
         1) 'get_tenders' function is called once inside bridge.run method.
         2) 'get_tenders' yields the same number of tenders the database
            contains
         """
-        mock_get_tenders = \
-            mocker.patch.object(databridge_module, 'get_tenders',
-                                side_effect=
-                                get_tenders_dummy([{}]*number_of_tenders),
-                                autospec=True)
-        mocker.patch.object(core_module, 'check_call',
-                            side_effect=check_call_dummy,
-                            autospec=True)
-
-        spawn(bridge.run)
+        spawn(bridge['bridge'].run)
         sleep(0.5)
 
         # check that 'get_tenders' function was called once
-        mock_get_tenders.assert_called_once_with(
+        bridge['mock_get_tenders'].assert_called_once_with(
             host=test_bridge_config['main']['tenders_api_server'],
             version=test_bridge_config['main']['tenders_api_version'],
             key='',
             extra_params=API_EXTRA)
 
         # check that 'get_tenders' yielded the correct number of tenders
-        assert mock_get_tenders.side_effect.ind == number_of_tenders
+        assert bridge['mock_get_tenders'].side_effect.ind == \
+               len(bridge['tenders'])
 
 
 class TestDataBridgeFeedItem(object):
-    @pytest.mark.parametrize("number_of_tenders", [0, 1, 2])
-    def test_mapper_call_number(self, db, bridge, mocker, number_of_tenders):
+    @pytest.mark.parametrize(
+        'bridge', [({'tenders': [{}] * 0}), ({'tenders': [{}] * 1}),
+                   ({'tenders': [{}] * 2})], indirect=['bridge'])
+    def test_mapper_call_number(self, db, bridge, mocker):
         """
         Test checks:
         1) that 'self.mapper' method is called the correct number of times.
         2) that 'FeedItem' class is instantiated the correct number of times.
         Actually the number of tenders provided by 'get_tenders' function.
         """
-        mocker.patch.object(databridge_module, 'get_tenders',
-                            side_effect=
-                            get_tenders_dummy([{}] * number_of_tenders),
-                            autospec=True)
-
         mock_feed_item = mocker.patch.object(databridge_module, 'FeedItem',
                                              side_effect=FeedItem,
                                              autospec=True)
 
         mock_mapper = MagicMock()
-        bridge.mapper = mock_mapper
+        bridge['bridge'].mapper = mock_mapper
 
-        spawn(bridge.run)
+        spawn(bridge['bridge'].run)
         sleep(0.5)
 
-        assert mock_feed_item.call_count == number_of_tenders
-        assert mock_mapper.call_count == number_of_tenders
+        assert mock_feed_item.call_count == len(bridge['tenders'])
+        assert mock_mapper.call_count == len(bridge['tenders'])
 
+    @pytest.mark.parametrize(
+        'bridge', [({'tenders': [tender_data_templ]})], indirect=['bridge'])
     def test_mapper_args_value(self, db, bridge, mocker):
         """
         Test checks:
@@ -148,27 +143,19 @@ class TestDataBridgeFeedItem(object):
         Actually, with the item yielded by 'get_tenders' function.
         3) that 'self.mapper' was called AFTER 'FeedItem' class instantiated.
         """
-        mocker.patch.object(databridge_module, 'get_tenders',
-                            side_effect=get_tenders_dummy([tender_data_templ]),
-                            autospec=True)
-
         mock_feed_item = mocker.patch.object(databridge_module, 'FeedItem',
                                              side_effect=FeedItem,
                                              autospec=True)
-        mock_check_call = \
-            mocker.patch.object(core_module, 'check_call',
-                                side_effect=check_call_dummy,
-                                autospec=True)
 
         manager = MagicMock()
 
         mock_mapper = MagicMock()
-        bridge.mapper = mock_mapper
+        bridge['bridge'].mapper = mock_mapper
 
         manager.attach_mock(mock_mapper, 'mock_mapper')
         manager.attach_mock(mock_feed_item, 'mock_feed_item')
 
-        spawn(bridge.run)
+        spawn(bridge['bridge'].run)
         sleep(0.5)
 
         manager.assert_has_calls(
@@ -178,28 +165,21 @@ class TestDataBridgeFeedItem(object):
 
 
 class TestDataBridgePlanning(object):
-    @pytest.mark.parametrize("tender_data",
-                             [{}, tender_data_templ, tender_in_past_data])
-    def test_wrong_tender_no_planning(self, db, bridge, tender_data, mocker):
+    @pytest.mark.parametrize(
+        'bridge', [({'tenders': [{}]}), ({'tenders': [tender_data_templ]}),
+                   ({'tenders': [tender_in_past_data]})], indirect=['bridge'])
+    def test_wrong_tender_no_planning(self, db, bridge, mocker):
         """
         Test checks that the function gevent.subprocess.check_call responsible
         for running the process planning the auction is not called if tender's
         data are inappropriate.
         """
-        mocker.patch.object(databridge_module, 'get_tenders',
-                            side_effect=get_tenders_dummy([tender_data]),
-                            autospec=True)
-        mock_check_call = \
-            mocker.patch.object(core_module, 'check_call',
-                                side_effect=check_call_dummy,
-                                autospec=True)
-
-        spawn(bridge.run)
+        spawn(bridge['bridge'].run)
         sleep(0.5)
 
         # check that 'check_call' was not called as tender documents
         # doesn't contain appropriate data
-        assert mock_check_call.call_count == 0
+        assert bridge['mock_check_call'].call_count == 0
 
 
         # assertRaises

@@ -21,6 +21,10 @@ import gc
 from greenlet import greenlet
 from openprocurement.auction.databridge import AuctionsDataBridge
 from copy import deepcopy
+from openprocurement.auction import core as core_module
+import openprocurement.auction.databridge as databridge_module
+from openprocurement.auction.tests.unit.utils import \
+    get_tenders_dummy, check_call_dummy
 
 
 LOGGER = logging.getLogger('Log For Tests')
@@ -172,11 +176,26 @@ def auction(request):
 
 
 @pytest.fixture(scope='function')
-def bridge(request):
-    # todo: Mock supbrocess && get_tedners
-    params = getattr(request, 'param', {})
+def bridge(request, mocker):
+    params = getattr(request, 'param', {'tenders': [{}]})
     bridge_config = params.get('bridge_config', test_bridge_config)
-    return AuctionsDataBridge(bridge_config)
+
+    mock_get_tenders = \
+        mocker.patch.object(databridge_module, 'get_tenders',
+                            side_effect=
+                            get_tenders_dummy(params['tenders']),
+                            autospec=True)
+
+    mock_check_call = \
+        mocker.patch.object(core_module, 'check_call',
+                            side_effect=check_call_dummy,
+                            autospec=True)
+
+    return {'bridge': AuctionsDataBridge(bridge_config),
+            'tenders': params['tenders'],
+            'mock_get_tenders': mock_get_tenders,
+            'mock_check_call': mock_check_call
+            }
 
 
 @pytest.fixture(scope="function")
