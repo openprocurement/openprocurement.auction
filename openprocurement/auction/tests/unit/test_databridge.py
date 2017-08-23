@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-# TODO: test self.mapper from databridge
+# TODO: create tests for self.mapper = components.qA(self, IAuctionsManager)
+
 
 # TODO: check that only "active.auction" tender status are taken into account
 # TODO: check with different data for 'planning', 'cancel', 'qualification'
 # TODO: with lot_id no lot_id
-
 
 
 from gevent import monkey
@@ -26,14 +26,13 @@ import pytest
 from openprocurement.auction.databridge import AuctionsDataBridge
 from openprocurement.auction.utils import FeedItem
 from .conftest import test_bridge_config, test_bridge_config_error_port
-from .conftest import test_bridge_config
 from urlparse import urljoin
 from pytest import raises
 from copy import deepcopy
 import openprocurement.auction.databridge as databridge_module
 from openprocurement.auction.tests.unit.utils import \
     tender_data_templ, get_tenders_dummy, API_EXTRA, \
-    check_call_dummy
+    check_call_dummy, tender_in_past_data
 from gevent import spawn
 from openprocurement.auction import core as core_module
 
@@ -90,18 +89,15 @@ class TestDataBridgeGetTenders(object):
         1) 'get_tenders' function is called once inside bridge.run method.
         2) 'get_tenders' yields the same number of tenders the database
            contains
-        3) the function gevent.subprocess.check_call is not called if
-           tender's data are empty.
         """
         mock_get_tenders = \
             mocker.patch.object(databridge_module, 'get_tenders',
                                 side_effect=
                                 get_tenders_dummy([{}]*number_of_tenders),
                                 autospec=True)
-        mock_check_call = \
-            mocker.patch.object(core_module, 'check_call',
-                                side_effect=check_call_dummy,
-                                autospec=True)
+        mocker.patch.object(core_module, 'check_call',
+                            side_effect=check_call_dummy,
+                            autospec=True)
 
         spawn(bridge.run)
         sleep(0.5)
@@ -115,10 +111,6 @@ class TestDataBridgeGetTenders(object):
 
         # check that 'get_tenders' yielded the correct number of tenders
         assert mock_get_tenders.side_effect.ind == number_of_tenders
-
-        # check that 'check_call' was not called as tender documents
-        # doesn't contain any data
-        assert mock_check_call.call_count == 0
 
 
 class TestDataBridgeFeedItem(object):
@@ -184,10 +176,30 @@ class TestDataBridgeFeedItem(object):
              call.mock_mapper(mock_feed_item(tender_data_templ))]
         )
 
+
+class TestDataBridgePlanning(object):
+    @pytest.mark.parametrize("tender_data",
+                             [{}, tender_data_templ, tender_in_past_data])
+    def test_wrong_tender_no_planning(self, db, bridge, tender_data, mocker):
+        """
+        Test checks that the function gevent.subprocess.check_call responsible
+        for running the process planning the auction is not called if tender's
+        data are inappropriate.
+        """
+        mocker.patch.object(databridge_module, 'get_tenders',
+                            side_effect=get_tenders_dummy([tender_data]),
+                            autospec=True)
+        mock_check_call = \
+            mocker.patch.object(core_module, 'check_call',
+                                side_effect=check_call_dummy,
+                                autospec=True)
+
+        spawn(bridge.run)
+        sleep(0.5)
+
         # check that 'check_call' was not called as tender documents
         # doesn't contain appropriate data
         assert mock_check_call.call_count == 0
-
 
 
         # assertRaises

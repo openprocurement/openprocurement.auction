@@ -2,6 +2,7 @@ import contextlib
 from requests import Session as Sess
 import signal, psutil
 import os
+from copy import deepcopy
 
 
 @contextlib.contextmanager
@@ -32,6 +33,11 @@ def kill_child_processes(parent_pid=os.getpid(), sig=signal.SIGTERM):
 
 
 tender_data_templ = {'id': 'UA-11111', 'status': 'active.auction'}
+tender_data_wrong_status = {'id': 'UA-11111', 'status': 'wrong.status'}
+
+tender_in_past_data = deepcopy(tender_data_templ)
+tender_in_past_data['auctionPeriod'] = \
+    {'startDate': '2017-06-28T10:32:19.233669+03:00'}
 
 
 def get_tenders_dummy(tender_data_list, *args, **kwargs):
