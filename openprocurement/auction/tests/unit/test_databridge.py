@@ -33,7 +33,6 @@ import openprocurement.auction.databridge as databridge_module
 from openprocurement.auction.tests.unit.utils import \
     tender_data_templ, get_tenders_dummy, API_EXTRA, \
     check_call_dummy, tender_in_past_data
-from gevent import spawn
 from openprocurement.auction import core as core_module
 
 
@@ -94,7 +93,6 @@ class TestDataBridgeGetTenders(object):
         2) 'get_tenders' yields the same number of tenders the database
            contains
         """
-        spawn(bridge['bridge'].run)
         sleep(0.5)
 
         # check that 'get_tenders' function was called once
@@ -127,7 +125,6 @@ class TestDataBridgeFeedItem(object):
         mock_mapper = MagicMock()
         bridge['bridge'].mapper = mock_mapper
 
-        spawn(bridge['bridge'].run)
         sleep(0.5)
 
         assert mock_feed_item.call_count == len(bridge['tenders'])
@@ -155,7 +152,6 @@ class TestDataBridgeFeedItem(object):
         manager.attach_mock(mock_mapper, 'mock_mapper')
         manager.attach_mock(mock_feed_item, 'mock_feed_item')
 
-        spawn(bridge['bridge'].run)
         sleep(0.5)
 
         manager.assert_has_calls(
@@ -174,7 +170,6 @@ class TestDataBridgePlanning(object):
         for running the process planning the auction is not called if tender's
         data are inappropriate.
         """
-        spawn(bridge['bridge'].run)
         sleep(0.5)
 
         # check that 'check_call' was not called as tender documents

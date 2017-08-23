@@ -191,7 +191,10 @@ def bridge(request, mocker):
                             side_effect=check_call_dummy,
                             autospec=True)
 
-    return {'bridge': AuctionsDataBridge(bridge_config),
+    bridge_inst = AuctionsDataBridge(bridge_config)
+    spawn(bridge_inst.run)
+
+    return {'bridge': bridge_inst,
             'tenders': params['tenders'],
             'mock_get_tenders': mock_get_tenders,
             'mock_check_call': mock_check_call
