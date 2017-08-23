@@ -1,10 +1,99 @@
 # -*- coding: utf-8 -*-
 # TODO: create tests for self.mapper = components.qA(self, IAuctionsManager)
 
+# TODO: create test checking that iteration over planning called startDate_view
+# TODO: with proper arguments: self.bridge.db.resource.url =
+# TODO: 'http://0.0.0.0:9000/auctions')
+
+# TODO: consider the case of planning already planned auction
+
 
 # TODO: check that only "active.auction" tender status are taken into account
 # TODO: check with different data for 'planning', 'cancel', 'qualification'
 # TODO: with lot_id no lot_id
+
+# TODO: add pytest-cov
+
+
+# 1) wrong.status 2) no_lots
+# 3) 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] and 'endDate' not in self.item['auctionPeriod']
+# 4a) datetime.now(self.bridge.tz) > start_date
+# None
+
+# 1) wrong LOT status (not 'active') 2) lots
+# 3) 'auctionPeriod' in self.LOT and 'startDate' in self.item['auctionPeriod'] and 'endDate' not in self.item['auctionPeriod']
+# 4a) datetime.now(self.bridge.tz) > start_date
+# None
+
+
+# +++++++
+
+# POSITIVE!!!
+# 1) active.auction 2) no_lots:
+# 3) 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] and 'endDate' not in self.item['auctionPeriod']
+# 4a) datetime.now(self.bridge.tz) > start_date
+# yield ("planning", str(self.item['id']), "")
+
+
+
+# 1), 2)
+# 3) 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] and 'endDate' not in self.item['auctionPeriod']
+# 4b) datetime.now(self.bridge.tz) < start_date
+# None
+
+
+
+# 1), 2)
+# 3) 'auctionPeriod' not in self.item
+# 4b) datetime.now(self.bridge.tz) > start_date
+# None
+
+
+
+# 1), 2)
+# 3) 'auctionPeriod' in self.item and 'startDate' NOT in self.item['auctionPeriod']
+# 4b) datetime.now(self.bridge.tz) > start_date
+# None
+
+
+
+# 1), 2)
+# 3) 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] and 'endDate' IN self.item['auctionPeriod']
+# 4b) datetime.now(self.bridge.tz) > start_date
+# None
+
+# +++++++
+# POSITIVE!!!
+# TODO: find out
+# 1) "active.qualification" 2) LOTS!!!:
+# 2.5) one lot and its status is "active"
+# 3) в базі аукціонів має лежати PreAnnounce_view auction: (doc.stages.length - 2) == doc.current_stage)
+# yield ('announce', self.item['id'], lot['id'])
+
+# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$4
+# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$4
+# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$4
+
+# +++++++
+# POSITIVE!!!
+# 1) "cancelled" 2) lots (n=1):
+# 3) auction_id in [i.id for i in future_auctions]. (Date(doc.endDate||doc.stages[0].start).getTime())
+# yield ('announce', self.item['id'], lot['id'])
+# має один раз бути викликана функція "call"!!!
+
+# +++++++
+# POSITIVE!!!
+# 1) "cancelled" 2) lots (n=2):
+# 3) в базі аукціонів має лежати PreAnnounce_view auction.
+# yield ('announce', self.item['id'], lot['id'])
+# має 2 рази бути викликана функція "call"!!!
+
+
+# +++++++
+# POSITIVE!!!
+# 1) "cancelled" 2) no_lots:
+# 2) self.item["id"] in [i.id for i in future_auctions]: ((doc.endDate||doc.stages[0].start).getTime())
+# 3) yield ('cancel', self.item['id'], "").
 
 
 from gevent import monkey
