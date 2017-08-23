@@ -128,12 +128,14 @@ class Planning(object):
                     LOGGER.info("Tender {} start date in past. Skip it for planning".format(self.item['id']),
                                 extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_TENDER_SKIP})
                     raise StopIteration
+                # TODO: Find out about the value of field tenders_ids_list
+                # TODO: It is not initialized but used.
                 if self.bridge.re_planning and self.item['id'] in self.tenders_ids_list:
                     LOGGER.info("Tender {} already planned while replanning".format(self.item['id']),
                                 extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_TENDER_ALREADY_PLANNED})
                     raise StopIteration
                 if not self.bridge.re_planning and [row.id for row in auctions_start_in_date.rows if row.id == self.item['id']]:
-                    LOGGER.info("Tender {} already planned on same date".format(self.item['id']),
+                    LOGGER.info("Tender {} already planned on the same date".format(self.item['id']),
                                 extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_TENDER_ALREADY_PLANNED})
                     raise StopIteration
                 yield ("planning", str(self.item['id']), "")
