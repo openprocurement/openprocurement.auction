@@ -5,6 +5,9 @@ import os
 from copy import deepcopy
 
 
+ID = 'UA-11111'
+
+
 @contextlib.contextmanager
 def put_test_doc(db, doc):
     id, rev = db.save(doc)
@@ -32,12 +35,19 @@ def kill_child_processes(parent_pid=os.getpid(), sig=signal.SIGTERM):
         process.send_signal(sig)
 
 
-tender_data_templ = {'id': 'UA-11111', 'status': 'active.auction'}
-tender_data_wrong_status = {'id': 'UA-11111', 'status': 'wrong.status'}
+tender_data_templ = {'id': ID, 'status': 'active.auction'}
+tender_data_wrong_status = {'id': ID, 'status': 'wrong.status'}
 
 tender_in_past_data = deepcopy(tender_data_templ)
 tender_in_past_data['auctionPeriod'] = \
     {'startDate': '2017-06-28T10:32:19.233669+03:00'}
+
+tender_data_active_auction_no_lots = deepcopy(tender_data_templ)
+tender_data_active_auction_no_lots['auctionPeriod'] = \
+    {'startDate': '2100-06-28T10:32:19.233669+03:00'}
+
+# TODO: make appropriate changes!!!
+tender_data_active_auction_with_lots = deepcopy(tender_data_templ)
 
 
 def get_tenders_dummy(tender_data_list, *args, **kwargs):

@@ -14,6 +14,10 @@
 
 # TODO: add pytest-cov
 
+# TODO: mock do_until_success instead mock_check_call in conftest (bridge)
+
+# TODO: test do_until_success
+
 
 # 1) wrong.status 2) no_lots
 # 3) 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] and 'endDate' not in self.item['auctionPeriod']
@@ -27,7 +31,6 @@
 
 
 # +++++++
-
 # POSITIVE!!!
 # 1) active.auction 2) no_lots:
 # 3) 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] and 'endDate' not in self.item['auctionPeriod']
@@ -120,8 +123,9 @@ from pytest import raises
 from copy import deepcopy
 import openprocurement.auction.databridge as databridge_module
 from openprocurement.auction.tests.unit.utils import \
-    tender_data_templ, get_tenders_dummy, API_EXTRA, \
-    check_call_dummy, tender_in_past_data
+    tender_data_templ, get_tenders_dummy, API_EXTRA, ID, check_call_dummy, \
+    tender_in_past_data, tender_data_active_auction_no_lots, \
+    tender_data_active_auction_with_lots
 from openprocurement.auction import core as core_module
 
 
@@ -266,15 +270,60 @@ class TestDataBridgePlanning(object):
         assert bridge['mock_check_call'].call_count == 0
 
 
-        # assertRaises
+class TestDataBridgeActiveAuctionPositive(object):
+    @pytest.mark.parametrize(
+        'bridge', [({'tenders': [tender_data_active_auction_no_lots]})],
+        indirect=['bridge'])
+    def test_no_lots(self, db, bridge, mocker):
+        # TODO: improve documentation
+        """
+        # 1) active.auction 2) no_lots:
+        # 3) 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] and 'endDate' not in self.item['auctionPeriod']
+        # 4a) datetime.now(self.bridge.tz) < start_date
+        # yield ("planning", str(self.item['id']), "")
+        """
+
+        mock_do_until_success = \
+            mocker.patch.object(core_module, 'do_until_success',
+                                return_value=True,
+                                autospec=True)
+
+        sleep(0.5)
+
+        mock_do_until_success.assert_called_once_with(
+            core_module.check_call,
+            args=([test_bridge_config['main']['auction_worker'], 'planning', ID, test_bridge_config['main']['auction_worker_config']],),
+        )
+
+    @pytest.mark.parametrize(
+        'bridge', [({'tenders': [tender_data_active_auction_with_lots]})],
+        indirect=['bridge'])
+    def test_with_lots(self, db, bridge, mocker):
+        # TODO: create documentation
+        """
+        """
+
+        mock_do_until_success = \
+            mocker.patch.object(core_module, 'do_until_success',
+                                return_value=True,
+                                autospec=True)
+
+        sleep(0.5)
+
+        # TODO: place correct arguments mock was called with
+        mock_do_until_success.assert_called_once_with(
+            core_module.check_call,
+            args=([],),
+        )
+
+
+
+            # assertRaises
 
 # endDate
 # no_lots_tender_data = deepcopy(no_lots_tender_data_template)
 # no_lots_tender_data['auctionPeriod'] = \
 #     {'startDate': '2017-06-28T10:32:19.233669+03:00'}
-
-    def test_active_auction_with_lots(self):
-        """TODO: """
 
     def test_announce(self):
         """Only multilot tenders in auction.qualification status"""
