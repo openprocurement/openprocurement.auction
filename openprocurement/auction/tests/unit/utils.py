@@ -6,7 +6,7 @@ from copy import deepcopy
 
 
 ID = 'UA-11111'
-
+LOT_ID = '11111111111111111111111111111111'
 
 @contextlib.contextmanager
 def put_test_doc(db, doc):
@@ -48,6 +48,12 @@ tender_data_active_auction_no_lots['auctionPeriod'] = \
 
 # TODO: make appropriate changes!!!
 tender_data_active_auction_with_lots = deepcopy(tender_data_templ)
+tender_data_active_auction_with_lots['auctionPeriod'] = \
+    {'startDate': '2017-06-28T10:32:19.233669+03:00'}
+tender_data_active_auction_with_lots['lots'] = \
+    [{'id': LOT_ID, 'status': 'active', 'auctionPeriod':
+        {'startDate': '2100-06-28T10:32:19.233669+03:00'}
+      }]
 
 
 def get_tenders_dummy(tender_data_list, *args, **kwargs):

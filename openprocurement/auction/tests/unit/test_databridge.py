@@ -125,7 +125,7 @@ import openprocurement.auction.databridge as databridge_module
 from openprocurement.auction.tests.unit.utils import \
     tender_data_templ, get_tenders_dummy, API_EXTRA, ID, check_call_dummy, \
     tender_in_past_data, tender_data_active_auction_no_lots, \
-    tender_data_active_auction_with_lots
+    tender_data_active_auction_with_lots, LOT_ID
 from openprocurement.auction import core as core_module
 
 
@@ -299,8 +299,14 @@ class TestDataBridgeActiveAuctionPositive(object):
         'bridge', [({'tenders': [tender_data_active_auction_with_lots]})],
         indirect=['bridge'])
     def test_with_lots(self, db, bridge, mocker):
-        # TODO: create documentation
         """
+        # 1) active.auction 
+        # 2) have a 'lots' in self.item:
+        # 3) lot["status"] is 'active and 'auctionPeriod' is in lot and 'startDate' in lot['auctionPeriod']
+        #    and 'endDate' not in lot['auctionPeriod']
+        # 4) datetime.now(self.bridge.tz) > start_date
+        # yield ("planning", str(self.item['id']), str(lot["id"]))
+        # The test that passes this cycle and gives the status True
         """
 
         mock_do_until_success = \
@@ -310,20 +316,11 @@ class TestDataBridgeActiveAuctionPositive(object):
 
         sleep(0.5)
 
-        # TODO: place correct arguments mock was called with
         mock_do_until_success.assert_called_once_with(
             core_module.check_call,
-            args=([],),
+            args=([test_bridge_config['main']['auction_worker'], 'planning', ID,
+                   test_bridge_config['main']['auction_worker_config'], '--lot', LOT_ID],),
         )
-
-
-
-            # assertRaises
-
-# endDate
-# no_lots_tender_data = deepcopy(no_lots_tender_data_template)
-# no_lots_tender_data['auctionPeriod'] = \
-#     {'startDate': '2017-06-28T10:32:19.233669+03:00'}
 
     def test_announce(self):
         """Only multilot tenders in auction.qualification status"""
