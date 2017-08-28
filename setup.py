@@ -37,7 +37,8 @@ extras_require = {
         'robotframework-selenium2screenshots',
         'chromedriver',
         'webtest',
-        'mock'
+        'mock',
+        'pytest-cov'
     ]
 }
 entry_points = {
