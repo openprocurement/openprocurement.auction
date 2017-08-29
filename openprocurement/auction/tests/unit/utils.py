@@ -63,6 +63,14 @@ tender_data_active_qualification = deepcopy(tender_data_active_qualification_sta
 tender_data_active_qualification['lots'] = \
     [{'id': LOT_ID, 'status': 'active'}]
 
+# Data for test with 'cancelled' status
+tender_data_cancelled = {'id': ID, 'status': 'cancelled'}
+
+# Data for test with 'cancelled' status and with lots
+tender_data_cancelled_with_lots = deepcopy(tender_data_cancelled)
+tender_data_cancelled_with_lots['lots'] = \
+    [{'id': LOT_ID, 'status': 'active'}]
+
 
 def get_tenders_dummy(tender_data_list, *args, **kwargs):
     class GetTenders(object):
