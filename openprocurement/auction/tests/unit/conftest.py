@@ -77,6 +77,8 @@ def db(request):
     server = couchdb.Server("http://" + worker_defaults['COUCH_DATABASE'].split('/')[2])
     name = worker_defaults['COUCH_DATABASE'].split('/')[3]
 
+    document = getattr(request, 'param', None)
+
     def delete():
         del server[name]
 
@@ -85,6 +87,9 @@ def db(request):
 
     data_base = server.create(name)
 
+    if document:
+        data_base.save(document)
+            
     request.addfinalizer(delete)
 
     return data_base

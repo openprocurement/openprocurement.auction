@@ -8,6 +8,7 @@ from copy import deepcopy
 ID = 'UA-11111'
 LOT_ID = '11111111111111111111111111111111'
 
+
 @contextlib.contextmanager
 def put_test_doc(db, doc):
     id, rev = db.save(doc)
@@ -42,11 +43,12 @@ tender_in_past_data = deepcopy(tender_data_templ)
 tender_in_past_data['auctionPeriod'] = \
     {'startDate': '2017-06-28T10:32:19.233669+03:00'}
 
+# Data for test with 'active.auction' status and no lots
 tender_data_active_auction_no_lots = deepcopy(tender_data_templ)
 tender_data_active_auction_no_lots['auctionPeriod'] = \
     {'startDate': '2100-06-28T10:32:19.233669+03:00'}
 
-# TODO: make appropriate changes!!!
+# Data for test with 'active.auction' status and with lots
 tender_data_active_auction_with_lots = deepcopy(tender_data_templ)
 tender_data_active_auction_with_lots['auctionPeriod'] = \
     {'startDate': '2017-06-28T10:32:19.233669+03:00'}
@@ -54,6 +56,12 @@ tender_data_active_auction_with_lots['lots'] = \
     [{'id': LOT_ID, 'status': 'active', 'auctionPeriod':
         {'startDate': '2100-06-28T10:32:19.233669+03:00'}
       }]
+
+# Data for test with 'active.qualification' status
+tender_data_active_qualification_status = {'id': ID, 'status': 'active.qualification'}
+tender_data_active_qualification = deepcopy(tender_data_active_qualification_status)
+tender_data_active_qualification['lots'] = \
+    [{'id': LOT_ID, 'status': 'active'}]
 
 
 def get_tenders_dummy(tender_data_list, *args, **kwargs):
