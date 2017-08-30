@@ -124,9 +124,8 @@ from copy import deepcopy
 import openprocurement.auction.databridge as databridge_module
 from openprocurement.auction.tests.unit.utils import \
     tender_data_templ, get_tenders_dummy, API_EXTRA, ID, check_call_dummy, \
-    tender_in_past_data, tender_data_active_auction_no_lots, \
-    tender_data_active_auction_with_lots, LOT_ID, tender_data_active_qualification, \
-    tender_data_cancelled_with_lots, tender_data_cancelled_no_lots
+    tender_data_cancelled, LOT_ID, tender_data_active_qualification, \
+    tender_data_active_auction
 from openprocurement.auction import core as core_module
 
 
@@ -257,7 +256,7 @@ class TestDataBridgeFeedItem(object):
 class TestDataBridgePlanning(object):
     @pytest.mark.parametrize(
         'bridge', [({'tenders': [{}]}), ({'tenders': [tender_data_templ]}),
-                   ({'tenders': [tender_in_past_data]})], indirect=['bridge'])
+                   ({'tenders': [tender_data_active_auction['tender_in_past_data']]})], indirect=['bridge'])
     def test_wrong_tender_no_planning(self, db, bridge, mocker):
         """
         Test checks that the function gevent.subprocess.check_call responsible
@@ -271,11 +270,11 @@ class TestDataBridgePlanning(object):
         assert bridge['mock_check_call'].call_count == 0
 
 
-class TestDataBridgeActiveAuctionPositive(object):
+class TestForDataBridgePositive(object):
     @pytest.mark.parametrize(
-        'bridge', [({'tenders': [tender_data_active_auction_no_lots]})],
+        'bridge', [({'tenders': [tender_data_active_auction['tender_data_no_lots']]})],
         indirect=['bridge'])
-    def test_no_lots(self, db, bridge, mocker):
+    def test_active_auction_no_lots(self, db, bridge, mocker):
         # TODO: improve documentation
         """
         # 1) active.auction 2) no_lots:
@@ -297,9 +296,9 @@ class TestDataBridgeActiveAuctionPositive(object):
         )
 
     @pytest.mark.parametrize(
-        'bridge', [({'tenders': [tender_data_active_auction_with_lots]})],
+        'bridge', [({'tenders': [tender_data_active_auction['tender_data_with_lots']]})],
         indirect=['bridge'])
-    def test_with_lots(self, db, bridge, mocker):
+    def test_active_auction_with_lots(self, db, bridge, mocker):
         """
         # 1) active.auction 
         # 2) have a 'lots' in self.item:
@@ -326,7 +325,7 @@ class TestDataBridgeActiveAuctionPositive(object):
     @pytest.mark.parametrize(
         'db, bridge',
         [({'_id': ID + '_' + LOT_ID, 'stages': ['a', 'b', 'c'], 'current_stage': 1},
-            {'tenders': [tender_data_active_qualification]})],
+            {'tenders': [tender_data_active_qualification['tender_data_active_qualification']]})],
         indirect=['db', 'bridge'])
     def test_active_qualification(self, db, bridge, mocker):
         """
@@ -349,7 +348,7 @@ class TestDataBridgeActiveAuctionPositive(object):
     @pytest.mark.parametrize(
         'db, bridge',
         [({'_id': ID + '_' + LOT_ID, 'endDate': '2100-06-28T10:32:19.233669+03:00'},
-          {'tenders': [tender_data_cancelled_with_lots]})],
+          {'tenders': [tender_data_cancelled['tender_data_with_lots']]})],
         indirect=['db', 'bridge'])
     def test_cancelled_with_lots(self, db, bridge, mocker):
         """Auction has been cancelled with lots"""
@@ -368,7 +367,7 @@ class TestDataBridgeActiveAuctionPositive(object):
     @pytest.mark.parametrize(
         'db, bridge',
         [({'_id': ID, 'endDate': '2100-06-28T10:32:19.233669+03:00'},
-          {'tenders': [tender_data_cancelled_no_lots]})],
+          {'tenders': [tender_data_cancelled['tender_data_no_lots']]})],
         indirect=['db', 'bridge'])
     def test_cancelled_no_lots(self, db, bridge, mocker):
         """Auction has been cancelled with no lots"""
@@ -383,3 +382,7 @@ class TestDataBridgeActiveAuctionPositive(object):
             args=([test_bridge_config['main']['auction_worker'], 'cancel', ID,
                    test_bridge_config['main']['auction_worker_config']],),
         )
+
+
+class TestForDataBridgeNegative(object):
+    pass

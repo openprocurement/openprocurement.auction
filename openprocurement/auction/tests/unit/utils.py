@@ -35,10 +35,20 @@ def kill_child_processes(parent_pid=os.getpid(), sig=signal.SIGTERM):
     for process in children:
         process.send_signal(sig)
 
-
+# = = = = = = = = = Data for different statuses = = = = = = = = =
+# Data for test with 'active.auction' status
 tender_data_templ = {'id': ID, 'status': 'active.auction'}
 tender_data_wrong_status = {'id': ID, 'status': 'wrong.status'}
 
+# Data for test with 'active.qualification' status
+tender_data_active_qualification_status = {'id': ID, 'status': 'active.qualification'}
+
+# Data for test with 'cancelled' status
+tender_data_cancelled = {'id': ID, 'status': 'cancelled'}
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+# = = = = = = = = = Data for positive tests = = = = = = = = = = = = =
+# Data for test with auction periods
 tender_in_past_data = deepcopy(tender_data_templ)
 tender_in_past_data['auctionPeriod'] = \
     {'startDate': '2017-06-28T10:32:19.233669+03:00'}
@@ -58,13 +68,9 @@ tender_data_active_auction_with_lots['lots'] = \
       }]
 
 # Data for test with 'active.qualification' status
-tender_data_active_qualification_status = {'id': ID, 'status': 'active.qualification'}
 tender_data_active_qualification = deepcopy(tender_data_active_qualification_status)
 tender_data_active_qualification['lots'] = \
     [{'id': LOT_ID, 'status': 'active'}]
-
-# Data for test with 'cancelled' status
-tender_data_cancelled = {'id': ID, 'status': 'cancelled'}
 
 # Data for test with 'cancelled' status and with lots
 tender_data_cancelled_with_lots = deepcopy(tender_data_cancelled)
@@ -73,6 +79,25 @@ tender_data_cancelled_with_lots['lots'] = \
 
 # Data for test with 'cancelled' status and no lots
 tender_data_cancelled_no_lots = deepcopy(tender_data_cancelled)
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+# = = = = = = = = = Data for negative tests = = = = = = = = = = = = =
+
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+tender_data_active_auction = {
+    'tender_in_past_data': tender_in_past_data,
+    'tender_data_no_lots': tender_data_active_auction_no_lots,
+    'tender_data_with_lots': tender_data_active_auction_with_lots,
+}
+tender_data_active_qualification = {
+    'tender_data_active_qualification': tender_data_active_qualification
+}
+tender_data_cancelled = {
+    'tender_data_with_lots': tender_data_cancelled_with_lots,
+    'tender_data_no_lots': tender_data_cancelled_no_lots,
+}
+
 
 def get_tenders_dummy(tender_data_list, *args, **kwargs):
     class GetTenders(object):
