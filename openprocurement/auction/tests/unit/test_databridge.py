@@ -126,7 +126,7 @@ from openprocurement.auction.tests.unit.utils import \
     tender_data_templ, get_tenders_dummy, API_EXTRA, ID, check_call_dummy, \
     tender_in_past_data, tender_data_active_auction_no_lots, \
     tender_data_active_auction_with_lots, LOT_ID, tender_data_active_qualification, \
-    tender_data_cancelled_with_lots
+    tender_data_cancelled_with_lots, tender_data_cancelled_no_lots
 from openprocurement.auction import core as core_module
 
 
@@ -323,7 +323,6 @@ class TestDataBridgeActiveAuctionPositive(object):
                    test_bridge_config['main']['auction_worker_config'], '--lot', LOT_ID],),
         )
 
-
     @pytest.mark.parametrize(
         'db, bridge',
         [({'_id': ID + '_' + LOT_ID, 'stages': ['a', 'b', 'c'], 'current_stage': 1},
@@ -366,3 +365,21 @@ class TestDataBridgeActiveAuctionPositive(object):
                    test_bridge_config['main']['auction_worker_config'], '--lot', LOT_ID],),
         )
 
+    @pytest.mark.parametrize(
+        'db, bridge',
+        [({'_id': ID, 'endDate': '2100-06-28T10:32:19.233669+03:00'},
+          {'tenders': [tender_data_cancelled_no_lots]})],
+        indirect=['db', 'bridge'])
+    def test_cancelled_no_lots(self, db, bridge, mocker):
+        """Auction has been cancelled with no lots"""
+        mock_do_until_success = \
+            mocker.patch.object(core_module, 'do_until_success',
+                                return_value=True,
+                                autospec=True)
+        sleep(0.5)
+
+        mock_do_until_success.assert_called_once_with(
+            core_module.check_call,
+            args=([test_bridge_config['main']['auction_worker'], 'cancel', ID,
+                   test_bridge_config['main']['auction_worker_config']],),
+        )

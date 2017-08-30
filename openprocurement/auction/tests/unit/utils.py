@@ -71,6 +71,8 @@ tender_data_cancelled_with_lots = deepcopy(tender_data_cancelled)
 tender_data_cancelled_with_lots['lots'] = \
     [{'id': LOT_ID, 'status': 'active'}]
 
+# Data for test with 'cancelled' status and no lots
+tender_data_cancelled_no_lots = deepcopy(tender_data_cancelled)
 
 def get_tenders_dummy(tender_data_list, *args, **kwargs):
     class GetTenders(object):
