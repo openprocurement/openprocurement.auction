@@ -40,28 +40,28 @@ ${BROWSER}       phantomjs
     sleep                      1s
 
 
-Дочекатистись паузи перед ${round_id} раундом
+Дочекатись паузи перед ${round_id} раундом
     Wait Until Page Contains    → ${round_id}    5 min
 
-Дочекатистись завершення паузи перед ${round_id} раундом
+Дочекатись завершення паузи перед ${round_id} раундом
     Wait Until Page Does Not Contain    → ${round_id}    5 min
 
 
-Дочекатистись учасником початку стадії ставок
+Дочекатись учасником початку стадії ставок
     [Arguments]    ${timeout}=2 min
     Wait Until Page Contains        до закінчення вашої черги   ${timeout}
 
 
-Дочекатистись учасником закінчення стадії ставок
+Дочекатись учасником закінчення стадії ставок
     [Arguments]    ${timeout}=2 min
     Wait Until Page Does Not Contain         до закінчення вашої черги   ${timeout}
 
-Дочекатистись до завершення аукціону
+Дочекатись до завершення аукціону
     [Arguments]    ${timeout}=5 min
     Wait Until Page Does Not Contain   Очікуємо на розкриття імен учасників.  ${timeout}
     Wait Until Page Contains      Аукціон завершився   ${timeout}
 
-Дочекатистись до завершення аукціону без розкриття імен учасників
+Дочекатись до завершення аукціону без розкриття імен учасників
     [Arguments]    ${timeout}=10 min
     Wait Until Page Contains      Очікуємо на розкриття імен учасників.  ${timeout}
 
