@@ -50,9 +50,10 @@ setup(name='openprocurement.auction',
           'pyopenssl',
           'ndg-httpsclient',
           'pyasn1',
-          'openprocurement_client',
+          'openprocurement_client>=2.0b7',
           'python-consul',
           'retrying',
+          'pyramidtiming[flask]',
       ],
       extras_require={
           'test': [

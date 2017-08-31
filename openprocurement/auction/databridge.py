@@ -41,7 +41,8 @@ from systemd_msgs_ids import (
     DATA_BRIDGE_RE_PLANNING_LOT_ALREADY_PLANNED,
     DATA_BRIDGE_RE_PLANNING_FINISHED
 )
-from openprocurement_client.sync import get_tenders
+# from openprocurement_client.sync import get_tenders
+from openprocurement_client.sync import ResourceFeeder
 from yaml import load
 from .design import endDate_view, startDate_view, PreAnnounce_view
 from .utils import do_until_success
@@ -73,13 +74,17 @@ class AuctionsDataBridge(object):
                            session=Session(retry_delays=range(10)))
         sync_design(self.db)
 
+        self.feeder = ResourceFeeder(
+            host=self.config_get('tenders_api_server'), resource='tenders',
+            version=self.config_get('tenders_api_version'), key='',
+            extra_params={'opt_fields': 'status,auctionPeriod,lots',
+                          'mode': '_all_'})
+
     def config_get(self, name):
         return self.config.get('main').get(name)
 
     def get_teders_list(self, re_planning=False):
-        for item in get_tenders(host=self.config_get('tenders_api_server'),
-                                version=self.config_get('tenders_api_version'),
-                                key='', extra_params={'opt_fields': 'status,auctionPeriod,lots', 'mode': '_all_'}):
+        for item in self.feeder.get_resource_items():
             if item['status'] == "active.auction":
                 if 'lots' not in item and 'auctionPeriod' in item and 'startDate' in item['auctionPeriod'] \
                         and 'endDate' not in item['auctionPeriod']:
@@ -159,9 +164,19 @@ class AuctionsDataBridge(object):
                   self.config_get('auction_worker_config')]
         if lot_id:
             params += ['--lot', lot_id]
+            logger.debug(
+                'Start auction worker with param \`--lot\`',
+                 extra={'MESSAGE_ID': 'BRIDGE_START_WORKER_WITH_LOT_PARAM'})
 
         if with_api_version:
             params += ['--with_api_version', with_api_version]
+            logger.debug(
+                'Start auction worker with param \`--with_api_version\`',
+                extra={'MESSAGE_ID': 'BRIDGE_START_WORKER_WITH_API_V_PARAM'}
+            )
+        message_id = 'BRIDGE_START_WORKER_WITH_{}_CMD'.format(cmd)
+        logger.debug('Start auction worker with cmd: {}'.format(cmd),
+                     extra={'MESSAGE_ID': message_id})
         result = do_until_success(
             check_call,
             args=(params,),
