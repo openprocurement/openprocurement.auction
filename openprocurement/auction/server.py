@@ -110,6 +110,9 @@ def authorized():
         app.logger.info("Get response from Oauth: {}".format(repr(resp)))
         session['remote_oauth'] = (resp['access_token'], '')
         session['client_id'] = os.urandom(16).encode('hex')
+    else:
+        app.logger.info("Error on user authorization. Error: {}".format(request.get('error', '')))
+        return abort(403, 'Access denied')
     bidder_data = get_bidder_id(app, session)
     app.logger.info("Bidder {} with client_id {} authorized".format(
                     bidder_data['bidder_id'], session['client_id'],
