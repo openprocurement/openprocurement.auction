@@ -118,8 +118,13 @@ class AuctionScheduler(GeventScheduler):
 
         try:
             rc = check_call(params)
+            self.logger.info(
+                "Finished {}".format(document_id),
+                extra={'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_SUCCESSFUL'})
         except CalledProcessError, error:
-            self.logger.error("Exit with error {}".format(document_id))
+            self.logger.error(
+                "Exit with error {}".format(document_id),
+                extra={'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_EXCEPTION'})
 
     def run_auction_func(self, tender_id, lot_id, view_value, ttl=WORKER_TIME_RUN):
         if self._count_auctions >= self._limit_auctions:
@@ -141,7 +146,8 @@ class AuctionScheduler(GeventScheduler):
             session = self.consul.session.create(behavior='delete', ttl=WORKER_TIME_RUN)
             while i > 0:
                 if self.consul.kv.put("auction_{}".format(document_id), self.server_name, acquire=session):
-                    self.logger.info("Run worker for document {}".format(document_id))
+                    self.logger.info("Run worker for document {}".format(document_id),
+                                     extra={'MESSAGE_ID': 'CHRONOGRAPH_RUN_WORKER'})
                     with self._limit_pool_lock:
                         self._count_auctions += 1
 
@@ -159,6 +165,8 @@ class AuctionScheduler(GeventScheduler):
             self.logger.debug("Locked on other server")
             self.consul.session.destroy(session)
         else:
+            self.logger.info("Run worker for document {}".format(document_id),
+                             extra={'MESSAGE_ID': 'CHRONOGRAPH_RUN_WORKER'})
             self._auction_fucn(document_id, tender_id, lot_id, view_value)
 
     def schedule_auction(self, document_id, view_value):
@@ -186,7 +194,8 @@ class AuctionScheduler(GeventScheduler):
         else:
             tender_id = document_id
             lot_id = None
-        self.logger.info('Scedule start of {} at {} ({})'.format(document_id, AW_date, view_value['start']))
+        self.logger.info('Scedule start of {} at {} ({})'.format(document_id, AW_date, view_value['start']),
+                         extra={'MESSAGE_ID': 'CHRONOGRAPH_PLANNED_WORKER'})
 
         self.add_job(self.run_auction_func, args=(tender_id, lot_id, view_value),
                           misfire_grace_time=60,
