@@ -82,13 +82,16 @@ tender_data_cancelled_no_lots = deepcopy(tender_data_cancelled)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 # = = = = = = = = = Data for negative tests = = = = = = = = = = = = =
-
+tender_data_active_auction_wrong_startDate = deepcopy(tender_data_templ)
+tender_data_active_auction_wrong_startDate['auctionPeriod'] = \
+    {'startDate': '2017-06-28T10:32:19.233669+03:00'}
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 tender_data_active_auction = {
     'tender_in_past_data': tender_in_past_data,
     'tender_data_no_lots': tender_data_active_auction_no_lots,
     'tender_data_with_lots': tender_data_active_auction_with_lots,
+    'wrong_startDate': tender_data_active_auction_wrong_startDate,
 }
 tender_data_active_qualification = {
     'tender_data_active_qualification': tender_data_active_qualification

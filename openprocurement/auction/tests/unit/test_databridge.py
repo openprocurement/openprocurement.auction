@@ -128,9 +128,11 @@ from openprocurement.auction.tests.unit.utils import \
     tender_data_active_auction
 from openprocurement.auction import core as core_module
 
+# from openprocurement.auction.databridge import LOGGER
+from openprocurement.auction.core import LOGGER
+from StringIO import StringIO
 
-logger = logging.getLogger()
-logger.level = logging.DEBUG
+LOGGER.setLevel(logging.DEBUG)
 
 
 class TestDatabridgeConfig(object):
@@ -385,4 +387,20 @@ class TestForDataBridgePositive(object):
 
 
 class TestForDataBridgeNegative(object):
-    pass
+    @pytest.mark.parametrize(
+        'bridge', [({'tenders': [tender_data_active_auction['wrong_startDate']]})],
+        indirect=['bridge'])
+    def test_active_auction_wrong_date(self, db, bridge, mocker):
+        """
+        # If the start date of the tender in the past then skip it for planning
+        # 1) status - "active.auction"
+        # 2) no lots
+        # 3 Wrong start date
+        """
+        log_capture_string = StringIO()
+        ch = logging.StreamHandler(log_capture_string)
+        ch.setLevel(logging.DEBUG)
+        LOGGER.addHandler(ch)
+        sleep(0.5)
+        log_strings = log_capture_string.getvalue().split('\n')
+        assert (log_strings[0] == 'Tender UA-11111 start date in past. Skip it for planning')
