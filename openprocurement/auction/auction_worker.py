@@ -623,7 +623,6 @@ class Auction(object):
     def schedule_auction(self):
         self.generate_request_id()
         self.get_auction_document()
-        self.get_auction_document()
         if self.debug:
             logger.info("Get _auction_data from auction_document")
             self._auction_data = self.auction_document.get('test_auction_data', {})
