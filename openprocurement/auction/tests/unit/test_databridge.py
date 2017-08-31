@@ -127,8 +127,7 @@ from openprocurement.auction.tests.unit.utils import \
     tender_data_cancelled, LOT_ID, tender_data_active_qualification, \
     tender_data_active_auction
 from openprocurement.auction import core as core_module
-
-# from openprocurement.auction.databridge import LOGGER
+from openprocurement.auction.databridge import LOGGER as logger_from_databridge
 from openprocurement.auction.core import LOGGER
 from StringIO import StringIO
 
@@ -170,11 +169,21 @@ class TestDatabridgeConfig(object):
 
 
 class TestDataBridgeRunLogInformation(object):
-    # LOGGER.info('Start Auctions Bridge',
-    #             extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_START_BRIDGE})
-    # LOGGER.info('Start data sync...',
-    #             extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_DATA_SYNC})
-    pass
+    log_capture_string = StringIO()
+    ch = logging.StreamHandler(log_capture_string)
+    ch.setLevel(logging.DEBUG)
+    logger_from_databridge.addHandler(ch)
+    @pytest.mark.parametrize(
+        'bridge', [({'tenders': [{}] * 0})], indirect=['bridge'])
+    def test_check_log_for_start_bridge(self, db, bridge, mocker):
+        """
+        # Test check the message in the log for the start of the bridge
+        # Text message: 'Start Auctions Bridge' and 'Start data sync...'
+        """
+        sleep(0.5)
+        log_strings = self.log_capture_string.getvalue().split('\n')
+        assert (log_strings[0] == 'Start Auctions Bridge')
+        assert (log_strings[1] == 'Start data sync...')
 
 
 class TestDataBridgeGetTenders(object):
