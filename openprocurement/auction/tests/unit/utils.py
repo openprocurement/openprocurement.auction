@@ -82,9 +82,25 @@ tender_data_cancelled_no_lots = deepcopy(tender_data_cancelled)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 # = = = = = = = = = Data for negative tests = = = = = = = = = = = = =
+# Data for test with 'active.auction' status, no lots and wrong data
 tender_data_active_auction_wrong_startDate = deepcopy(tender_data_templ)
 tender_data_active_auction_wrong_startDate['auctionPeriod'] = \
     {'startDate': '2017-06-28T10:32:19.233669+03:00'}
+
+# Data for test with 'active.auction' status, no lots and re_planning
+tender_data_re_planning = deepcopy(tender_data_templ)
+tender_data_re_planning['auctionPeriod'] = \
+    {'startDate': '2100-06-28T10:32:19.233669+03:00'}
+
+# Data for test with 'active.auction' status, no lots and planned_on_the_same_date
+tender_data_planned_on_the_same_date = deepcopy(tender_data_templ)
+tender_data_planned_on_the_same_date['auctionPeriod'] = \
+    {'startDate': '2100-06-28T10:32:19.233669+03:00'}
+
+# Data for test with 'active.qualification' status and not active status in lot
+tender_data_active_qualification_no_active_lot = deepcopy(tender_data_active_qualification_status)
+tender_data_active_qualification_no_active_lot['lots'] = \
+    [{'id': LOT_ID, 'status': 'deleted'}]
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 tender_data_active_auction = {
@@ -92,9 +108,12 @@ tender_data_active_auction = {
     'tender_data_no_lots': tender_data_active_auction_no_lots,
     'tender_data_with_lots': tender_data_active_auction_with_lots,
     'wrong_startDate': tender_data_active_auction_wrong_startDate,
+    're_planning': tender_data_re_planning,
+    'planned_on_the_same_date': tender_data_planned_on_the_same_date,
 }
 tender_data_active_qualification = {
-    'tender_data_active_qualification': tender_data_active_qualification
+    'tender_data_active_qualification': tender_data_active_qualification,
+    'no_active_status_in_lot': tender_data_active_qualification_no_active_lot
 }
 tender_data_cancelled = {
     'tender_data_with_lots': tender_data_cancelled_with_lots,

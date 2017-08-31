@@ -173,6 +173,7 @@ class TestDataBridgeRunLogInformation(object):
     ch = logging.StreamHandler(log_capture_string)
     ch.setLevel(logging.DEBUG)
     logger_from_databridge.addHandler(ch)
+
     @pytest.mark.parametrize(
         'bridge', [({'tenders': [{}] * 0})], indirect=['bridge'])
     def test_check_log_for_start_bridge(self, db, bridge, mocker):
@@ -412,4 +413,33 @@ class TestForDataBridgeNegative(object):
         LOGGER.addHandler(ch)
         sleep(0.5)
         log_strings = log_capture_string.getvalue().split('\n')
-        assert (log_strings[0] == 'Tender UA-11111 start date in past. Skip it for planning')
+        assert (log_strings[0] == 'Tender ' + ID + ' start date in past. Skip it for planning')
+
+    # @pytest.mark.parametrize(
+    #     'bridge', [({'tenders': [tender_data_active_auction['re_planning']]})],
+    #     indirect=['bridge'])
+    # def test_active_auction_re_planning(self, db, bridge, mocker):
+    #     sleep(0.5)
+    #     # TODO Write test
+    #     pass
+    #
+    # @pytest.mark.parametrize(
+    #     'bridge', [({'tenders': [tender_data_active_auction['planned_on_the_same_date']]})],
+    #     indirect=['bridge'])
+    # def test_active_auction_planned_on_the_same_date(self, db, bridge, mocker):
+    #     sleep(0.5)
+    #     # TODO Write test
+    #     pass
+
+    @pytest.mark.parametrize(
+        'bridge', [({'tenders': [tender_data_active_qualification['no_active_status_in_lot']]})],
+        indirect=['bridge'])
+    def test_active_qualification_no_active_status_in_lot(self, db, bridge, mocker):
+        """
+        1) status -  "active.qualification"
+        2) Tender must contain lots
+        3) The status of the lot should not be 'active'
+        """
+
+        sleep(0.5)
+        assert(bridge['tenders'][0]['lots'][0]['status'] != 'active')
