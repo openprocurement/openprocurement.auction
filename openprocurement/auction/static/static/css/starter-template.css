@@ -33,7 +33,7 @@ body {
 .header-auction-item-visual {
   display: block;
   max-height: 61px;
-  line-height: 1.1em;
+  line-height: normal;
   overflow: hidden;
   }
 
