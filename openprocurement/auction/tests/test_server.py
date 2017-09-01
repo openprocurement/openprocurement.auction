@@ -88,7 +88,7 @@ class TestAuctionSever(object):
     def test_kickclient(self):
         data = bidder_data_invalid
         with self.client.get('/kickclient', data=data) as resp:
-            assert resp.status = 401
+            assert resp.status == 401
 
         data = bidder_data_valid
         with self.client.post('/kickclient', data=data) as resp:
