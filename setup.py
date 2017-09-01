@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2.0.4'
+version = '2.1.0.dev19+auction.worker.sharding'
 
 
 setup(name='openprocurement.auction',
@@ -50,7 +50,10 @@ setup(name='openprocurement.auction',
           'pyopenssl',
           'ndg-httpsclient',
           'pyasn1',
-          'openprocurement_client'
+          'openprocurement_client>=2.0b7',
+          'python-consul',
+          'retrying',
+          'pyramidtiming[flask]',
       ],
       extras_require={
           'test': [
@@ -65,6 +68,7 @@ setup(name='openprocurement.auction',
       entry_points={
           'console_scripts': [
               'auction_worker = openprocurement.auction.auction_worker:main',
+              'auctions_chronograph = openprocurement.auction.chronograph:main',
               'auctions_data_bridge = openprocurement.auction.databridge:main',
               'auction_test = openprocurement.auction.tests.main:main [test]'
           ],

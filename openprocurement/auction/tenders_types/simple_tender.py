@@ -7,7 +7,7 @@ from ..utils import calculate_hash
 from ..utils import (
     get_tender_data,
     get_latest_bid_for_bidder,
-    patch_tender_data
+    make_request
 )
 from ..systemd_msgs_ids import(
     AUCTION_WORKER_API_AUCTION_CANCEL,
@@ -168,19 +168,19 @@ def prepare_auction_and_participation_urls(self):
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_SET_AUCTION_URLS})
     logger.info(repr(patch_data))
-    patch_tender_data(self.tender_url + '/auction', patch_data,
-                      user=self.worker_defaults["TENDERS_API_TOKEN"],
-                      request_id=self.request_id, session=self.session)
+    make_request(self.tender_url + '/auction', patch_data,
+                 user=self.worker_defaults["TENDERS_API_TOKEN"],
+                 request_id=self.request_id, session=self.session)
 
 
-def post_results_data(self):
-    all_bids = self.auction_document["results"]
+def post_results_data(self, with_auctions_results=True):
 
-    for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
-        if bid_info.get('status', 'active') == 'active':
-            auction_bid_info = get_latest_bid_for_bidder(all_bids, bid_info["id"])
-            self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
-            self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
+    if with_auctions_results:
+        for index, bid_info in enumerate(self._auction_data["data"]["bids"]):
+            if bid_info.get('status', 'active') == 'active':
+                auction_bid_info = get_latest_bid_for_bidder(self.auction_document["results"], bid_info["id"])
+                self._auction_data["data"]["bids"][index]["value"]["amount"] = auction_bid_info["amount"]
+                self._auction_data["data"]["bids"][index]["date"] = auction_bid_info["time"]
 
     data = {'data': {'bids': self._auction_data["data"]['bids']}}
     logger.info(
@@ -188,7 +188,7 @@ def post_results_data(self):
         extra={"JOURNAL_REQUEST_ID": self.request_id,
                "MESSAGE_ID": AUCTION_WORKER_API_APPROVED_DATA}
     )
-    return patch_tender_data(
+    return make_request(
         self.tender_url + '/auction', data=data,
         user=self.worker_defaults["TENDERS_API_TOKEN"],
         method='post',

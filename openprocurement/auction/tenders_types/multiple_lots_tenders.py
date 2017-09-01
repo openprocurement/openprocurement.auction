@@ -6,7 +6,7 @@ from ..utils import calculate_hash
 from ..utils import (
     get_tender_data,
     get_latest_bid_for_bidder,
-    patch_tender_data
+    make_request
 )
 from ..systemd_msgs_ids import(
     AUCTION_WORKER_API_AUCTION_CANCEL,
@@ -71,7 +71,7 @@ def get_auction_info(self, prepare=False):
         self._lot_data['auctionPeriod']['startDate']
     )
     self.bidders_features = None
-    self.features = None
+    self.features = self._lot_data.get('features', None)
     if not prepare:
         codes = [i['code'] for i in self._lot_data['features']]
         self.bidders_data = []
@@ -176,30 +176,30 @@ def prepare_auction_and_participation_urls(self):
                 extra={"JOURNAL_REQUEST_ID": self.request_id,
                        "MESSAGE_ID": AUCTION_WORKER_SET_AUCTION_URLS})
     logger.info(repr(patch_data))
-    patch_tender_data(self.tender_url + '/auction/{}'.format(self.lot_id), patch_data,
-                      user=self.worker_defaults["TENDERS_API_TOKEN"],
-                      request_id=self.request_id, session=self.session)
+    make_request(self.tender_url + '/auction/{}'.format(self.lot_id), patch_data,
+                 user=self.worker_defaults["TENDERS_API_TOKEN"],
+                 request_id=self.request_id, session=self.session)
     return patch_data
 
 
-def post_results_data(self):
-    all_bids = self.auction_document["results"]
+def post_results_data(self, with_auctions_results=True):
     patch_data = {'data': {'bids': list(self._auction_data['data']['bids'])}}
-    for bid_index, bid in enumerate(self._auction_data['data']['bids']):
-        if bid.get('status', 'active') == 'active':
-            for lot_index, lot_bid in enumerate(bid['lotValues']):
-                if lot_bid['relatedLot'] == self.lot_id and lot_bid.get('status', 'active') == 'active':
-                    auction_bid_info = get_latest_bid_for_bidder(all_bids, bid["id"])
-                    patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["value"]["amount"] = auction_bid_info["amount"]
-                    patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["date"] = auction_bid_info["time"]
-                    break
+    if with_auctions_results:
+        for bid_index, bid in enumerate(self._auction_data['data']['bids']):
+            if bid.get('status', 'active') == 'active':
+                for lot_index, lot_bid in enumerate(bid['lotValues']):
+                    if lot_bid['relatedLot'] == self.lot_id and lot_bid.get('status', 'active') == 'active':
+                        auction_bid_info = get_latest_bid_for_bidder(self.auction_document["results"], bid["id"])
+                        patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["value"]["amount"] = auction_bid_info["amount"]
+                        patch_data['data']['bids'][bid_index]['lotValues'][lot_index]["date"] = auction_bid_info["time"]
+                        break
 
     logger.info(
         "Approved data: {}".format(patch_data),
         extra={"JOURNAL_REQUEST_ID": self.request_id,
                "MESSAGE_ID": AUCTION_WORKER_API_APPROVED_DATA}
     )
-    results = patch_tender_data(
+    results = make_request(
         self.tender_url + '/auction/{}'.format(self.lot_id), data=patch_data,
         user=self.worker_defaults["TENDERS_API_TOKEN"],
         method='post',

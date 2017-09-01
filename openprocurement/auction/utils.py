@@ -4,6 +4,8 @@ try:
 except ImportError:
     pass
 
+from retrying import retry
+
 import iso8601
 from datetime import MINYEAR, datetime
 from pytz import timezone
@@ -16,13 +18,16 @@ from hashlib import sha1
 from gevent.pywsgi import WSGIServer
 from gevent.baseserver import parse_address
 from redis import Redis
+from redis.sentinel import Sentinel
 import uuid
 
 from pkg_resources import parse_version
 from restkit.wrappers import BodyWrapper
 from barbecue import chef
 from fractions import Fraction
+from yaml import safe_dump as yaml_dump
 
+logger = logging.getLogger('Auction Worker')
 
 EXTRA_LOGGING_VALUES = {
     'X-Request-ID': 'JOURNAL_REQUEST_ID',
@@ -208,8 +213,8 @@ def get_tender_data(tender_url, user="", password="", retry_count=10,
     return None
 
 
-def patch_tender_data(tender_url, data=None, files=None, user="", password="",
-                      retry_count=10, method='patch', request_id=None, session=None):
+def make_request(url, data=None, files=None, user="", password="",
+                 retry_count=10, method='patch', request_id=None, session=None):
     if not session:
         session = requests.Session()
     if not request_id:
@@ -226,7 +231,7 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
         try:
             if data:
                 response = getattr(session, method)(
-                    tender_url,
+                    url,
                     auth=auth,
                     headers=extra_headers,
                     data=json.dumps(data),
@@ -234,7 +239,7 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
                 )
             else:
                 response = getattr(session, method)(
-                    tender_url,
+                    url,
                     auth=auth,
                     headers=extra_headers,
                     files=files,
@@ -243,33 +248,33 @@ def patch_tender_data(tender_url, data=None, files=None, user="", password="",
 
             if response.ok:
                 logging.info("Response from {}: status: {} text: {}".format(
-                    tender_url, response.status_code, response.text),
+                    url, response.status_code, response.text),
                     extra={"JOURNAL_REQUEST_ID": request_id}
                 )
                 return response.json()
             elif response.status_code == 412 and response.text:
-                get_tender_data(tender_url, user=user, password=password,
+                get_tender_data(url, user=user, password=password,
                                 request_id=request_id, session=session)
             elif response.status_code == 403:
                 logging.info("Response from {}: status: {} text: {}".format(
-                    tender_url, response.status_code, response.text),
+                    url, response.status_code, response.text),
                     extra={"JOURNAL_REQUEST_ID": request_id}
                 )
                 return None
             else:
                 logging.error("Response from {}: status: {} text: {}".format(
-                    tender_url, response.status_code, response.text),
+                    url, response.status_code, response.text),
                     extra={"JOURNAL_REQUEST_ID": request_id}
                 )
         except requests.exceptions.RequestException, e:
             logging.error("Request error {} error: {}".format(
-                tender_url,
+                url,
                 e),
                 extra={"JOURNAL_REQUEST_ID": request_id}
             )
         except Exception, e:
             logging.error("Unhandled error {} error: {}".format(
-                tender_url,
+                url,
                 e),
                 extra={"JOURNAL_REQUEST_ID": request_id}
             )
@@ -301,26 +306,28 @@ def calculate_hash(bidder_id, hash_secret):
     return digest.hexdigest()
 
 
-def get_lisener(port, host=''):
-    lisener = None
-    while lisener is None:
-        family, address = parse_address((host, port))
-        try:
-            lisener = WSGIServer.get_listener(address, family=family)
-        except Exception, e:
-            pass
-        port += 1
-    return lisener
+def get_database(config, master=True):
+    if config['sentinel']:
+        sentinal = Sentinel(config['sentinel'], socket_timeout=0.1,
+                            password=config['redis_password'], db=config['redis_database'])
+        if master:
+            return sentinal.master_for(config['sentinel_cluster_name'])
+        else:
+            return sentinal.slave_for(config['sentinel_cluster_name'])
+    else:
+        return Redis.from_url(config['redis'])
 
+@retry(stop_max_attempt_number=3)
+def create_mapping(config, auction_id, auction_url):
+    return get_database(config).set(auction_id, auction_url)
 
-def create_mapping(redis_url, auction_id, auction_url):
-    mapings = Redis.from_url(redis_url)
-    return mapings.set(auction_id, auction_url)
+@retry(stop_max_attempt_number=3)
+def get_mapping(config, auction_id, master=False):
+    return get_database(config).get(auction_id)
 
-
-def delete_mapping(redis_url, auction_id):
-    mapings = Redis.from_url(redis_url)
-    return mapings.delete(auction_id)
+@retry(stop_max_attempt_number=3)
+def delete_mapping(config, auction_id):
+    return get_database(config).delete(auction_id)
 
 
 def prepare_extra_journal_fields(headers):
@@ -390,3 +397,4 @@ def filter_amount(stage):
     if 'coeficient' in stage:
         del stage['coeficient']
     return stage
+

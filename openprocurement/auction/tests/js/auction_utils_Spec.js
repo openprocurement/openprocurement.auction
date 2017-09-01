@@ -40,6 +40,15 @@ describe('Unit: Testing AuctionUtils "prepare_info_timer_data" ', function() {
     });
   }]));
 
+  it('should inform about tender rescheduled', angular.mock.inject(['AuctionUtils', function(AuctionUtils) {
+    auction.current_stage = -101;
+    expect(AuctionUtils.prepare_info_timer_data(current_time, auction, bidder_id, Rounds)).toEqual({
+      countdown: false,
+      start_time: true,
+      msg: 'Auction has not started and will be rescheduled'
+    });
+  }]));
+
   it('should inform about expectations start of the auction', angular.mock.inject(['AuctionUtils', function(AuctionUtils) {
     auction.current_stage = -1;
     auction.stages[0].start = 
