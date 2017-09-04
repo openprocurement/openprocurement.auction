@@ -15,11 +15,11 @@
     "tests"
   ],
   "dependencies": {
-    "angular": "1.3.8",
-    "angular-translate": "2.4.2",
-    "angular-cookies": "1.3.8",
-    "angular-translate-storage-cookie": "2.4.2",
-    "angular-translate-storage-local": "2.4.2",
+    "angular": "1.6.5",
+    "angular-translate": "2.15.2",
+    "angular-cookies": "1.5.8",
+    "angular-translate-storage-cookie": "2.15.2",
+    "angular-translate-storage-local": "2.15.2",
     "event-source-polyfill": "0.0.3",
     "pouchdb": "http://op:x9W3jZ@dist.quintagroup.com/op/pouchdb-5.1.1-prerelease-openprocurement.tgz",
     "angular-gtm-logger": "http://op:x9W3jZ@dist.quintagroup.com/op/angular-gtm-logger-1.0.2.tgz",
@@ -33,6 +33,8 @@
     "angular-ellipses": "0.1.3"
   },
   "resolutions": {
-    "angular": "1.3.8"
+    "angular": "1.3.8",
+    "angular-translate": "2.15.2",
+    "angular-translate-storage-cookie": "~2.15.2"
   }
 }

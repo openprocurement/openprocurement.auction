@@ -1,5 +1,6 @@
 var app = angular.module('auction', ['ui.bootstrap', 'ngCookies', 'pascalprecht.translate', 'timer', 'angular-growl', 'angular-ellipses', 'GTMLogger']);
 var db = {};
+var _LTracker = _LTracker || [];
 var bidder_id = "0";
 var auction_doc_id = auction_doc_id || "";
 var db_url = db_url || "";
@@ -20,7 +21,8 @@ app.filter('formatnumber', ['$filter',
   }
 ]);
 
-app.config(['$logProvider', 'AuctionConfig', 'growlProvider', 'GTMLoggerProvider', function($logProvider, AuctionConfig, growlProvider, GTMLoggerProvider) {
+app.config(['$qProvider', '$logProvider', 'AuctionConfig', 'growlProvider', 'GTMLoggerProvider', function($qProvider, $logProvider, AuctionConfig, growlProvider, GTMLoggerProvider) {
+    $qProvider.errorOnUnhandledRejections(false);
     GTMLoggerProvider.level('INFO').includeTimestamp( true )
     $logProvider.debugEnabled(AuctionConfig.debug); // default is true
     growlProvider.globalTimeToLive({

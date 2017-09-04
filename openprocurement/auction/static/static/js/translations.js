@@ -1,6 +1,7 @@
 angular.module('auction')
   .config(['$translateProvider', function($translateProvider) {
     $translateProvider.useLocalStorage();
+    $translateProvider.useSanitizeValueStrategy(null);
     $translateProvider.translations('en', {
       'at': 'at',
       'Announcement': 'Announcement',
