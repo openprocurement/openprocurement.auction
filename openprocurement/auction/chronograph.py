@@ -1,7 +1,9 @@
 from gevent import monkey
 monkey.patch_all()
 
-
+import os
+import signal
+from gevent import signal as gevent_signal
 try:
     import urllib3.contrib.pyopenssl
     urllib3.contrib.pyopenssl.inject_into_urllib3()
@@ -57,10 +59,22 @@ class AuctionsChronograph(object):
     def init_web_app(self):
         self.web_application = chronograph_webapp
         self.web_application.chronograph = self
-        self.server = WSGIServer(get_lisener(self.config['main'].get('web_app')), self.web_application, spawn=100)
+        self.server = WSGIServer(get_lisener(self.config['main'].get('web_app'), host="0.0.0.0"), self.web_application, spawn=100)
         self.server.start()
 
     def run(self):
+
+        def sigterm():
+            logger.info('Starting SIGTERM')
+            self.scheduler.shutdown(True)
+
+        gevent_signal(signal.SIGTERM, sigterm)
+
+        def sigusr1():
+            logger.info('Starting SIGUSR1')
+            self.scheduler.shutdown()
+
+        gevent_signal(signal.SIGUSR1, sigusr1)
 
         logger.info('Starting node: {}'.format(self.server_name))
 

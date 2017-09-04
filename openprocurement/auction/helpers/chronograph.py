@@ -8,7 +8,7 @@ import consul
 import iso8601
 from datetime import timedelta, datetime
 from apscheduler.schedulers.gevent import GeventScheduler
-from gevent.subprocess import check_call, CalledProcessError
+from gevent.subprocess import check_call, CalledProcessError, Popen
 
 from uuid import uuid4
 
@@ -81,6 +81,7 @@ class AuctionScheduler(GeventScheduler):
         self._limit_free_memory = self.config['main'].get('limit_free_memory', float(limit_free_memory))
         self._count_auctions = 0
         self.exit = False
+        self.processes = {}
 
     def _create_default_executor(self):
         return AuctionExecutor()
@@ -97,9 +98,13 @@ class AuctionScheduler(GeventScheduler):
 
         return self.config['main']['auction_worker_config']
 
-    def shutdown(self, *args, **kwargs):
+    def shutdown(self, SIGKILL=False):
         self.exit = True
-        response = super(AuctionScheduler, self).shutdown(*args, **kwargs)
+        if SIGKILL:
+            for pid in self.processes:
+                self.logger.info("Killed {}".format(pid))
+                self.processes[pid].terminate()
+        response = super(AuctionScheduler, self).shutdown()
         self.execution_stopped = True
         return response
 
@@ -117,14 +122,21 @@ class AuctionScheduler(GeventScheduler):
             params += ['--auction_info_from_db', 'true']
 
         try:
-            rc = check_call(params)
-            self.logger.info(
-                "Finished {}".format(document_id),
-                extra={'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_SUCCESSFUL'})
-        except CalledProcessError, error:
-            self.logger.error(
+            process = Popen(params)
+            self.processes[process.pid] = process
+            if process.wait():
+                self.logger.info(
+                    "Finished {}".format(document_id),
+                    extra={'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_SUCCESSFUL'})
+            else:
+                self.logger.error(
+                    "Exit with error {}".format(document_id),
+                    extra={'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_EXCEPTION'})
+        except Exception, error:
+            self.logger.critical(
                 "Exit with error {}".format(document_id),
                 extra={'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_EXCEPTION'})
+        del self.processes[process.pid]
 
     def run_auction_func(self, tender_id, lot_id, view_value, ttl=WORKER_TIME_RUN):
         if self._count_auctions >= self._limit_auctions:
