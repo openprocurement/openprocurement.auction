@@ -124,7 +124,8 @@ class AuctionScheduler(GeventScheduler):
         try:
             process = Popen(params)
             self.processes[process.pid] = process
-            if process.wait():
+            rc = process.wait()
+            if rc == 0:
                 self.logger.info(
                     "Finished {}".format(document_id),
                     extra={'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_SUCCESSFUL'})

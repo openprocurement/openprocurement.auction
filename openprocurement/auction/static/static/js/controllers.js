@@ -39,13 +39,20 @@ angular.module('auction').controller('AuctionController', [
         $rootScope.evtSrc.close();
       }
     }
-
-
+    if (AuctionConfig.auction_doc_id.indexOf("_") > 0 ){
+      dataLayer.push({
+        "tenderId": AuctionConfig.auction_doc_id.split("_")[0],
+        "lotId": AuctionConfig.auction_doc_id.split("_")[1]
+      });
+    } else {
+      dataLayer.push({
+        "tenderId": AuctionConfig.auction_doc_id
+      });
+    }
     $log.info({
       message: "Start session",
       browser_client_id: $rootScope.browser_client_id,
-      user_agent: navigator.userAgent,
-      tenderId: AuctionConfig.auction_doc_id
+      user_agent: navigator.userAgent
     })
     $rootScope.change_view = function() {
       if ($rootScope.bidder_coeficient) {
@@ -87,9 +94,7 @@ angular.module('auction').controller('AuctionController', [
     };
     $rootScope.growlMessages = growlMessages;
     growlMessages.initDirective(0, 10);
-    dataLayer.push({
-      "tenderId": AuctionConfig.auction_doc_id
-    });
+
     if (($translate.storage().get($translate.storageKey()) === "undefined") || ($translate.storage().get($translate.storageKey()) === undefined)) {
       $translate.use(AuctionConfig.default_lang);
       $rootScope.lang = AuctionConfig.default_lang;
@@ -601,6 +606,9 @@ angular.module('auction').controller('AuctionController', [
           $rootScope.replace_document(resp.doc);
           if ($rootScope.auction_doc.current_stage == ($rootScope.auction_doc.stages.length - 1)) {
             $rootScope.changes.cancel();
+            if ($rootScope.evtSrc){
+                $rootScope.evtSrc.close();
+            }
           }
         }
       }).on('error', function(err) {
@@ -856,7 +864,6 @@ angular.module('auction')
           }
         });
         ctrl.$parsers.unshift(function(viewValue) {
-          console.log(viewValue);
           if (viewValue) {
             var plainNumber = Number((viewValue || "").replace(/ /g, '').replace(/,/g, "."));
             if (plainNumber >= 0) {
