@@ -64,12 +64,6 @@
     "bids": [
       {
         "status": "active", 
-        "value": {
-          "currency": null, 
-          "amount": 475000.0, 
-          "valueAddedTaxIncluded": true
-        }, 
-        "id": "d3ba84c66c9e4f34bfb33cc3c686f137", 
         "lotValues": [
           {
             "date": "2015-11-01T12:43:12.482645+02:00", 
@@ -79,25 +73,22 @@
               "amount": 474000.0, 
               "valueAddedTaxIncluded": true
             }
-          }, 
-          {
-            "date": "2015-11-02T12:43:12.482645+02:00", 
-            "relatedLot": "aee0feec3eda4c85bad28eddd78dc3e6", 
-            "value": {
-              "currency": "UAH", 
-              "amount": 174000.0, 
-              "valueAddedTaxIncluded": true
-            }
           }
         ], 
+        "id": "d3ba84c66c9e4f34bfb33cc3c686f137", 
+        "value": {
+          "currency": null, 
+          "amount": 475000.0, 
+          "valueAddedTaxIncluded": true
+        }, 
         "tenderers": [
           {
             "contactPoint": {
               "name_ru": "  ", 
+              "email": "kalavay.ia@gmail.com", 
               "name_en": "  ", 
               "telephone": "+380507525312", 
-              "name": "\u041a\u0430\u043b\u0430\u0432\u0430\u0439 \u0406\u0440\u0438\u043d\u0430 \u0410\u043d\u0430\u0442\u043e\u043b\u0456\u0454\u0432\u043d\u0430", 
-              "email": "kalavay.ia@gmail.com"
+              "name": "\u041a\u0430\u043b\u0430\u0432\u0430\u0439 \u0406\u0440\u0438\u043d\u0430 \u0410\u043d\u0430\u0442\u043e\u043b\u0456\u0454\u0432\u043d\u0430"
             }, 
             "identifier": {
               "scheme": "UA-EDR", 
@@ -117,12 +108,6 @@
       }, 
       {
         "status": "active", 
-        "value": {
-          "currency": null, 
-          "amount": 475000.0, 
-          "valueAddedTaxIncluded": true
-        }, 
-        "id": "5675acc9232942e8940a034994ad883e", 
         "lotValues": [
           {
             "date": "2015-11-02T12:43:13.482645+02:00", 
@@ -133,7 +118,13 @@
               "valueAddedTaxIncluded": true
             }
           }
-        ]
+        ], 
+        "id": "5675acc9232942e8940a034994ad883e", 
+        "value": {
+          "currency": null, 
+          "amount": 475000.0, 
+          "valueAddedTaxIncluded": true
+        }
       }
     ], 
     "value": {
@@ -152,7 +143,7 @@
           "valueAddedTaxIncluded": false
         }, 
         "auctionPeriod": {
-          "startDate": "2017-06-28T13:19:40.465234+03:00", 
+          "startDate": "2017-09-04T19:18:25.688894+03:00", 
           "shouldStartAfter": "2017-06-25T00:00:00+03:00"
         }, 
         "title_en": "Capitally repaired combine KSH1KHU 00.00.000-51R / 33 (left) with an additional set of spare parts", 
@@ -180,11 +171,11 @@
         "locality": "\u0414\u043e\u043d\u0435\u0446\u044c\u043a"
       }, 
       "contactPoint": {
-        "email": "tender_dp_ku@ukr.net", 
-        "name_en": "\u0420\u0443\u0434\u0430 \u0422\u0435\u0442\u044f\u043d\u0430 ", 
         "telephone": "+380623964065", 
+        "name_en": "\u0420\u0443\u0434\u0430 \u0422\u0435\u0442\u044f\u043d\u0430 ", 
+        "name": "\u0420\u0443\u0434\u0430 \u0422\u0435\u0442\u044f\u043d\u0430 ", 
         "availableLanguage": "uk", 
-        "name": "\u0420\u0443\u0434\u0430 \u0422\u0435\u0442\u044f\u043d\u0430 "
+        "email": "tender_dp_ku@ukr.net"
       }, 
       "identifier": {
         "scheme": "UA-EDR", 
