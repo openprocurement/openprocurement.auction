@@ -55,6 +55,13 @@ MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}"  # {TENDER_ID}_{LOT_ID}
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_RETRIEVERS_PARAMS = {
+    'down_requests_sleep': 1,
+    'up_requests_sleep': 1,
+    'up_wait_sleep': 30,
+    'up_wait_sleep_min': 5,
+    'queue_size': 501
+}
 
 class AuctionsDataBridge(object):
 
@@ -65,7 +72,7 @@ class AuctionsDataBridge(object):
         self.config = config
         self.tenders_ids_list = []
         self.tz = tzlocal()
-
+        DEFAULT_RETRIEVERS_PARAMS.update(self.config.get('main').get('retrievers_params', {}))
         self.couch_url = urljoin(
             self.config_get('couch_url'),
             self.config_get('auctions_db')
@@ -78,7 +85,9 @@ class AuctionsDataBridge(object):
             host=self.config_get('tenders_api_server'), resource='tenders',
             version=self.config_get('tenders_api_version'), key='',
             extra_params={'opt_fields': 'status,auctionPeriod,lots',
-                          'mode': '_all_'})
+                          'mode': '_all_'},
+            retrievers_params=DEFAULT_RETRIEVERS_PARAMS
+        )
 
     def config_get(self, name):
         return self.config.get('main').get(name)
