@@ -45,6 +45,7 @@ from .templates import (
 from .tenders_types import simple_tender, multiple_lots_tenders
 
 from yaml import safe_dump as yaml_dump
+from yaml import load
 from barbecue import cooking
 from fractions import Fraction
 
@@ -1124,7 +1125,7 @@ def main():
     args = parser.parse_args()
 
     if os.path.isfile(args.auction_worker_config):
-        worker_defaults = json.load(open(args.auction_worker_config))
+        worker_defaults = load(open(args.auction_worker_config).read())
         if args.with_api_version:
             worker_defaults['TENDERS_API_VERSION'] = args.with_api_version
         if args.cmd != 'cleanup':
