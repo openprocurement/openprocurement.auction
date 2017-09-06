@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '3.0.0'
+version = '3.0.1'
 
 
 setup(name='openprocurement.auction',
@@ -46,6 +46,7 @@ setup(name='openprocurement.auction',
           'restkit',
           'PyMemoize',
           'barbecue',
+          'CouchDB'
           # ssl warning
           'pyopenssl',
           'ndg-httpsclient',
@@ -61,7 +62,6 @@ setup(name='openprocurement.auction',
               'robotframework-selenium2library',
               'robotframework-debuglibrary',
               'robotframework-selenium2screenshots',
-              'chromedriver',
               'mock'
           ]
       },
