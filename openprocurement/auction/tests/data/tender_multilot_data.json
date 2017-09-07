@@ -85,9 +85,9 @@
           {
             "contactPoint": {
               "name_ru": "  ", 
-              "email": "kalavay.ia@gmail.com", 
               "name_en": "  ", 
               "telephone": "+380507525312", 
+              "email": "kalavay.ia@gmail.com", 
               "name": "\u041a\u0430\u043b\u0430\u0432\u0430\u0439 \u0406\u0440\u0438\u043d\u0430 \u0410\u043d\u0430\u0442\u043e\u043b\u0456\u0454\u0432\u043d\u0430"
             }, 
             "identifier": {
@@ -143,7 +143,7 @@
           "valueAddedTaxIncluded": false
         }, 
         "auctionPeriod": {
-          "startDate": "2017-09-04T19:18:25.688894+03:00", 
+          "startDate": "2017-09-07T16:21:11.161579+03:00", 
           "shouldStartAfter": "2017-06-25T00:00:00+03:00"
         }, 
         "title_en": "Capitally repaired combine KSH1KHU 00.00.000-51R / 33 (left) with an additional set of spare parts", 
@@ -171,11 +171,11 @@
         "locality": "\u0414\u043e\u043d\u0435\u0446\u044c\u043a"
       }, 
       "contactPoint": {
-        "telephone": "+380623964065", 
-        "name_en": "\u0420\u0443\u0434\u0430 \u0422\u0435\u0442\u044f\u043d\u0430 ", 
         "name": "\u0420\u0443\u0434\u0430 \u0422\u0435\u0442\u044f\u043d\u0430 ", 
+        "name_en": "\u0420\u0443\u0434\u0430 \u0422\u0435\u0442\u044f\u043d\u0430 ", 
+        "email": "tender_dp_ku@ukr.net", 
         "availableLanguage": "uk", 
-        "email": "tender_dp_ku@ukr.net"
+        "telephone": "+380623964065"
       }, 
       "identifier": {
         "scheme": "UA-EDR", 
