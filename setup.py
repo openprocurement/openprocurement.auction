@@ -8,26 +8,33 @@ install_requires = [
     'APScheduler',
     'iso8601',
     'python-dateutil',
+    'flask_oauthlib',
     'Flask',
+    'Flask-Assets'
     'Flask-Redis',
+    'WTForms',
+    'WTForms-JSON',
     'WSGIProxy2',
     'gevent',
     'sse',
-    'flask_oauthlib',
     'PyYAML',
+    'cssmin',
+    'jsmin',
     'request_id_middleware',
     'restkit',
     'PyMemoize',
     'barbecue',
+    'CouchDB',
     # ssl warning
     'pyopenssl',
     'ndg-httpsclient',
     'pyasn1',
-    'openprocurement_client',
+    'openprocurement_client>=2.0b7',
     'python-consul',
     'retrying',
     'zope.interface',
-    'walkabout'
+    'walkabout',
+    'pyramidtiming[flask]'
 ]
 extras_require = {
     'test': [

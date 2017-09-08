@@ -55,7 +55,7 @@ def main():
     tender_file_path = os.path.join(
         test['suite'], "data/tender_{}.json".format(args.suite))
     test['runner'](tender_file_path)
-    
+
     auction_worker_defaults = test.get('auction_worker_defaults')
     cwd = test.get('cwd')
     cli_args = [
