@@ -18,6 +18,7 @@ from pytz import timezone
 from gevent import sleep
 from gevent.pywsgi import WSGIServer
 from datetime import datetime, timedelta
+from urlparse import urlparse
 
 from openprocurement.auction.utils import FeedItem
 from openprocurement.auction.core import components
@@ -55,21 +56,38 @@ class AuctionsChronograph(object):
         ))
 
     def init_scheduler(self):
-        self.scheduler = AuctionScheduler(self.server_name, self.config, logger=LOGGER,
-                                          timezone=self.timezone)
+        self.scheduler = AuctionScheduler(
+            self.server_name,
+            self.config,
+            logger=LOGGER,
+            timezone=self.timezone)
         self.scheduler.chronograph = self
         self.scheduler.start()
 
     def init_web_app(self):
         self.web_application = chronograph_webapp
         self.web_application.chronograph = self
-        self.server = WSGIServer(get_lisener(self.config['main'].get('web_app')), self.web_application, spawn=100)
+        location = self.config['main'].get('web_app')
+        if ':' in location:
+            if not location.startswith('//'):
+                location = "//{}".format(location)
+            o = urlparse(location)
+            self.server = WSGIServer(
+                get_lisener(o.port, o.hostname),
+                self.web_application,
+                spawn=100
+            )
+        else:
+            self.server = WSGIServer(
+                get_lisener(location),
+                self.web_application,
+                spawn=100
+            )
         self.server.start()
 
     def run(self):
 
         LOGGER.info('Starting node: {}'.format(self.server_name))
-
         for auction_item in iterview(self.config['main']["couch_url"], self.config['main']['auctions_db'], 'chronograph/start_date'):
             datestamp = (datetime.now(self.timezone) + timedelta(minutes=1)).isoformat()
             # ADD FILTER BY VALUE {start: '2016-09-10T14:36:40.378777+03:00', test: false}
