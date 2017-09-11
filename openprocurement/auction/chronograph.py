@@ -68,7 +68,7 @@ class AuctionsChronograph(object):
         self.web_application = chronograph_webapp
         self.web_application.chronograph = self
         location = self.config['main'].get('web_app')
-        if ':' in location:
+        if ':' in str(location):
             if not location.startswith('//'):
                 location = "//{}".format(location)
             o = urlparse(location)
