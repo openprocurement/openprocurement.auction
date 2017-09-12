@@ -153,7 +153,7 @@ class TestDatabridgeConfig(object):
                urljoin(bridge_inst.config['main']['couch_url'],
                        bridge_inst.config['main']['auctions_db'])
 
-    def test_connetcion_refused(self, db):
+    def test_connection_refused(self, db):
         with raises(Exception) as exc_info:
             AuctionsDataBridge(test_bridge_config_error_port)
         assert exc_info.value.strerror == 'Connection refused'
