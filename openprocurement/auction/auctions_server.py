@@ -204,13 +204,20 @@ def log():
 @auctions_server.route('/health')
 def health():
     data = auctions_server.couch_server.tasks()
-    response = Response(dumps(data))
-    progress = [
-        task['progress'] > auctions_server.config.get('limit_replications_progress', 99)
+    health_threshold = auctions_server.config.get('limit_replications_progress', 1024)
+    output = {
+        task['replication_id']: task['progress']
         for task in data if 'type' in task and task['type'] == 'replication'
-    ]
-    limit_replications_func = LIMIT_REPLICATIONS_LIMIT_FUNCTIONS.get(auctions_server.config.get('limit_replications_func', 'any'))
-    if not(progress and limit_replications_func(progress)):
+    }
+    response = Response(dumps(output))
+    limit_replications_func = LIMIT_REPLICATIONS_LIMIT_FUNCTIONS.get(
+        auctions_server.config.get('limit_replications_func', 'any')
+    )
+
+    if not(output and limit_replications_func(
+            [True if (task['source_seq'] - task['checkpointed_source_seq']) <= health_threshold else False
+             for task in data if 'type' in task and task['type'] == 'replication']
+    )):
         response.status_code = 503
     return response
 
