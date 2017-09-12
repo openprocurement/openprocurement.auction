@@ -89,15 +89,6 @@ class AuctionScheduler(GeventScheduler):
     def convert_datetime(self, datetime_stamp):
         return iso8601.parse_date(datetime_stamp).astimezone(self.timezone)
 
-    def get_auction_worker_configuration_path(self, view_value, key='api_version'):
-        value = view_value.get(key, '')
-        if value:
-            return self.config['main'].get(
-                'auction_worker_config_for_{}_{}'.format(key, value), self.config['main']['auction_worker_config']
-            )
-
-        return self.config['main']['auction_worker_config']
-
     def shutdown(self, *args, **kwargs):
         self.exit = True
         response = super(AuctionScheduler, self).shutdown(*args, **kwargs)
