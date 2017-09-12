@@ -50,7 +50,7 @@ def main():
         action(auction_id="11111111111111111111111111111111")
         sleep(4)
         try:
-            run_cli(['-L', 'DEBUG', '--exitonfailure',
+            run_cli(['-L', 'TRACE:INFO', '--exitonfailure',
                      '-v', 'tender_file_path:{}'.format(tender_file_path),
                      '-v', 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD),
                      '-l', '{0}/logs/log_simple_auction'.format(CWD),
