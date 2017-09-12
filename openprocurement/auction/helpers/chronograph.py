@@ -110,7 +110,7 @@ class AuctionScheduler(GeventScheduler):
         except CalledProcessError:
             self.logger.error("Exit with error {}".format(args[0]))
 
-    def run_auction_func(self, args, ttl=WORKER_TIME_RUN, start=''):
+    def run_auction_func(self, args, ttl=WORKER_TIME_RUN, start='', document_id=''):
         if self._count_auctions >= self._limit_auctions:
             self.logger.info("Limited by count")
             return
@@ -118,7 +118,8 @@ class AuctionScheduler(GeventScheduler):
         if free_memory() <= self._limit_free_memory:
             self.logger.info("Limited by memory")
             return
-        document_id = args[0]
+        if not document_id:
+            document_id = args[2]
         sleep(random())
         if self.use_consul:
             i = LOCK_RETRIES
@@ -167,7 +168,8 @@ class AuctionScheduler(GeventScheduler):
                                                                  AW_date,
                                                                  view_value['start']))
 
-        self.add_job(self.run_auction_func, kwargs=dict(args=args, start=view_value['start']),
+        self.add_job(self.run_auction_func,
+                     kwargs=dict(args=args, start=view_value['start'], document_id=document_id),
                      misfire_grace_time=60,
                      next_run_time=AW_date,
                      id=document_id,
