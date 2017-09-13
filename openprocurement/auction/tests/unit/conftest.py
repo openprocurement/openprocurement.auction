@@ -23,8 +23,7 @@ from openprocurement.auction.databridge import AuctionsDataBridge
 from copy import deepcopy
 from openprocurement.auction import core as core_module
 import openprocurement.auction.databridge as databridge_module
-from openprocurement.auction.tests.unit.utils import \
-    get_tenders_dummy, do_until_success_dummy
+from openprocurement.auction.tests.unit.utils import get_tenders_dummy
 
 
 LOGGER = logging.getLogger('Log For Tests')
@@ -192,9 +191,7 @@ def bridge(request, mocker):
                             autospec=True)
 
     mock_do_until_success = \
-        mocker.patch.object(core_module, 'do_until_success',
-                            side_effect=do_until_success_dummy,
-                            autospec=True)
+        mocker.patch.object(core_module, 'do_until_success', autospec=True)
 
     bridge_inst = AuctionsDataBridge(bridge_config)
     spawn(bridge_inst.run)

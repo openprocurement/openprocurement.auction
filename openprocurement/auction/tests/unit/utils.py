@@ -137,8 +137,4 @@ def get_tenders_dummy(tender_data_list):
     return a
 
 
-def do_until_success_dummy(*args, **kwargs):
-    pass
-
-
 API_EXTRA = {'opt_fields': 'status,auctionPeriod,lots,procurementMethodType', 'mode': '_all_'}
