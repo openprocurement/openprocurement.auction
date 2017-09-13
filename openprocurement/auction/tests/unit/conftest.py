@@ -170,25 +170,25 @@ def auction(request):
             auction_type='simple',
             time_shift=params['time']+params['delta_t']) \
             as updated_doc, open(updated_doc, 'r') as auction_updated_data:
-        auction = Auction(
+        auction_inst = Auction(
             tender_id=auction_data_simple['data']['tenderID'],
             worker_defaults=yaml.load(open(worker_defaults_file_path)),
             auction_data=json.load(auction_updated_data),
             lot_id=False)
-        yield auction
+        yield auction_inst
 
-    auction._end_auction_event.set()
+    auction_inst._end_auction_event.set()
 
 
 @pytest.fixture(scope='function')
 def bridge(request, mocker):
-    params = getattr(request, 'param', {'tenders': [{}]})
+    params = getattr(request, 'param', {})
+    tenders = params.get('tenders', [])
     bridge_config = params.get('bridge_config', test_bridge_config)
 
     mock_get_tenders = \
         mocker.patch.object(databridge_module, 'get_tenders',
-                            side_effect=
-                            get_tenders_dummy(params['tenders']),
+                            side_effect=get_tenders_dummy(tenders),
                             autospec=True)
 
     mock_check_call = \
@@ -200,10 +200,9 @@ def bridge(request, mocker):
     spawn(bridge_inst.run)
 
     return {'bridge': bridge_inst,
-            'tenders': params['tenders'],
+            'tenders': tenders,
             'mock_get_tenders': mock_get_tenders,
-            'mock_check_call': mock_check_call
-            }
+            'mock_check_call': mock_check_call}
 
 
 @pytest.fixture(scope="function")
