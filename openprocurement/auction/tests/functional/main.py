@@ -34,20 +34,28 @@ def run_multilot(auction_id, lot_id=''):
     sleep(30)
 
 
+action_simple = \
+    {'data_file': os.path.join(PWD, '..', 'data', 'tender_simple.json'),
+     'action': run_simple}
+action_multilot = \
+    {'data_file': os.path.join(PWD, '..', 'data', 'tender_multilot.json'),
+     'action': run_multilot}
+
 ACTIONS = {
-    'simple': (run_simple,),
-    'multilot': (run_multilot,),
-    'all': (run_simple, run_multilot)
+    'simple': (action_simple,),
+    'multilot': (action_multilot,),
+    'all': (action_simple, action_multilot)
 }
 
 
 def main():
     parser = argparse.ArgumentParser("Auction test runner")
-    parser.add_argument('suite', choices=ACTIONS.keys(), default='simple', help='test_suite')
+    parser.add_argument('suite', choices=ACTIONS.keys(), nargs='?',
+                        default='simple', help='test_suite')
     args = parser.parse_args()
-    tender_file_path = os.path.join(PWD, "../data/tender_{}.json".format(args.suite))
     for action in ACTIONS.get(args.suite):
-        action(auction_id="11111111111111111111111111111111")
+        tender_file_path = action['data_file']
+        action['action'](auction_id='11111111111111111111111111111111')
         sleep(4)
         try:
             run_cli(['-L', 'TRACE:INFO', '--exitonfailure',
