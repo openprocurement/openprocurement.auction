@@ -121,13 +121,12 @@ tender_data_cancelled = {
 }
 
 
-def get_tenders_dummy(tender_data_list, *args, **kwargs):
+def get_tenders_dummy(tender_data_list):
     class GetTenders(object):
         ind = 0
 
-        @classmethod
-        def iterator(self, tender_data_list):
-            for elem in tender_data_list:
+        def iterator(self, tender_list):
+            for elem in tender_list:
                 self.ind += 1
                 yield elem
 

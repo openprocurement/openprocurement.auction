@@ -247,8 +247,8 @@ class TestDataBridgeFeedItem(object):
         sleep(0.1)
 
         manager.assert_has_calls(
-            [call.mock_feed_item(tender_data_templ),
-             call.mock_mapper(mock_feed_item(tender_data_templ))]
+            [call.mock_feed_item(bridge['tenders'][0]),
+             call.mock_mapper(mock_feed_item(bridge['tenders'][0]))]
         )
 
 
