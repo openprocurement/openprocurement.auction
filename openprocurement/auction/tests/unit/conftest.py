@@ -1,21 +1,18 @@
-# TODO: fix configuration yaml files and avoid absolute pathes
-
 import couchdb
 import os
 import pytest
-from requests import Session
 import yaml
 from openprocurement.auction.chronograph import AuctionsChronograph
-from openprocurement.auction.tests.utils import update_auctionPeriod, AUCTION_DATA
+from openprocurement.auction.tests.utils import update_auctionPeriod, \
+    AUCTION_DATA, PWD
 from openprocurement.auction.tests.unit.utils import TestClient
 from openprocurement.auction.tests.unit.utils import kill_child_processes
-from openprocurement.auction.worker.auction import Auction, SCHEDULER
-from gevent import spawn, sleep, killall, GreenletExit
-from ..utils import PWD
+from openprocurement.auction.worker.auction import Auction
+from gevent import spawn, killall, GreenletExit
 import json
 import logging
 from openprocurement.auction.helpers.chronograph import \
-    MIN_AUCTION_START_TIME_RESERV, MAX_AUCTION_START_TIME_RESERV
+    MAX_AUCTION_START_TIME_RESERV
 import datetime
 import gc
 from greenlet import greenlet
@@ -27,6 +24,7 @@ from openprocurement.auction.tests.unit.utils import get_tenders_dummy
 
 
 LOGGER = logging.getLogger('Log For Tests')
+CONF_FILES_FOLDER = os.path.join(PWD, "unit", "data")
 
 test_log_config = {
      'version': 1,
@@ -47,20 +45,27 @@ logging.config.dictConfig(test_log_config)
 auction_data_simple = AUCTION_DATA['simple']
 auction_data_multilot = AUCTION_DATA['multilot']
 
-
-worker_defaults_file_path = os.path.join(PWD, "unit/data/auction_worker_defaults.yaml")
+worker_defaults_file_path = \
+    os.path.join(CONF_FILES_FOLDER, "auction_worker_defaults.yaml")
 with open(worker_defaults_file_path) as stream:
     worker_defaults = yaml.load(stream)
 
-
-chronograph_conf_file_path = os.path.join(PWD, "unit/data/auctions_chronograph.yaml")
+chronograph_conf_file_path = \
+    os.path.join(CONF_FILES_FOLDER, 'auctions_chronograph.yaml')
 with open(chronograph_conf_file_path) as stream:
     test_chronograph_config = yaml.load(stream)
     test_chronograph_config['disable_existing_loggers'] = False
     test_chronograph_config['handlers']['journal']['formatter'] = 'simple'
+    test_chronograph_config['main']['auction_worker'] = \
+        os.path.join(PWD, (".." + os.path.sep)*5, "bin", "auction_worker")
+    test_chronograph_config['main']['auction_worker_config'] = \
+        os.path.join(PWD, 'unit', 'data', 'auction_worker_defaults.yaml')
+    test_chronograph_config['main'] \
+    ['auction_worker_config_for_api_version_dev'] = \
+        os.path.join(PWD, 'unit', 'data', 'auction_worker_defaults.yaml')
 
-
-databridge_conf_file_path = os.path.join(PWD, "unit/data/auctions_data_bridge.yaml")
+databridge_conf_file_path = \
+    os.path.join(CONF_FILES_FOLDER, 'auctions_data_bridge.yaml')
 with open(databridge_conf_file_path) as stream:
     test_bridge_config = yaml.load(stream)
     test_bridge_config['disable_existing_loggers'] = False

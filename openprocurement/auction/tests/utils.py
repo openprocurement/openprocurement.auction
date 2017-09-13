@@ -31,6 +31,8 @@ def read_file_from_json(path):
 
 
 AUCTION_DATA = {
-    'simple': read_file_from_json(os.path.join(PWD, "data/tender_simple.json")),
-    'multilot': read_file_from_json(os.path.join(PWD, "data/tender_multilot.json"))
+    'simple':
+        read_file_from_json(os.path.join(PWD, 'data', 'tender_simple.json')),
+    'multilot':
+        read_file_from_json(os.path.join(PWD, 'data', 'tender_multilot.json'))
 }
