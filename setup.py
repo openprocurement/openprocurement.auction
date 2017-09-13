@@ -47,7 +47,7 @@ entry_points = {
         'auction_test = openprocurement.auction.tests.main:main [test]'
     ],
     'paste.app_factory': [
-        'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',
+        'auctions_server = openprocurement.auction.app:make_auctions_app',
     ],
     'openprocurement.auction.auctions': [
         'default = openprocurement.auction.includeme:default'
