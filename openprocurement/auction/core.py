@@ -19,10 +19,12 @@ from openprocurement.auction.systemd_msgs_ids import (
 from openprocurement.auction.design import endDate_view, startDate_view,\
     PreAnnounce_view
 from openprocurement.auction.utils import do_until_success, prepare_auction_worker_cmd
+from openprocurement.auction.auctions_server import auctions_server
 from openprocurement.auction.components import AuctionComponents
 from openprocurement.auction.predicates import ProcurementMethodType
 from openprocurement.auction.interfaces import IAuctionsManager,\
-    IAuctionsChronograph, IAuctionDatabridge
+    IAuctionsChronograph, IAuctionDatabridge, IAuctionsServer
+
 
 SIMPLE_AUCTION_TYPE = 0
 SINGLE_LOT_AUCTION_TYPE = 1
@@ -33,6 +35,7 @@ PKG_NAMESPACE = "openprocurement.auction.auctions"
 
 components = AuctionComponents()
 components.add_predicate('procurementMethodType', ProcurementMethodType)
+components.registerUtility(auctions_server, IAuctionsServer)
 
 
 class AuctionManager(object):
