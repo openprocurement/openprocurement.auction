@@ -102,18 +102,9 @@
 from gevent import monkey
 monkey.patch_all()
 
-import unittest
-import datetime
-import os
 import logging
-import uuid
 from gevent import sleep
-from gevent.queue import Queue
-from couchdb import Server
-from mock import MagicMock, patch, call
-from munch import munchify
-from httplib import IncompleteRead
-from openprocurement_client.exceptions import RequestFailed
+from mock import MagicMock, call
 import pytest
 from openprocurement.auction.databridge import AuctionsDataBridge
 from openprocurement.auction.utils import FeedItem
@@ -123,9 +114,8 @@ from pytest import raises
 from copy import deepcopy
 import openprocurement.auction.databridge as databridge_module
 from openprocurement.auction.tests.unit.utils import \
-    tender_data_templ, get_tenders_dummy, API_EXTRA, ID, check_call_dummy, \
-    tender_data_cancelled, LOT_ID, tender_data_active_qualification, \
-    tender_data_active_auction
+    tender_data_templ, API_EXTRA, ID, tender_data_cancelled, LOT_ID, \
+    tender_data_active_qualification, tender_data_active_auction
 from openprocurement.auction import core as core_module
 from openprocurement.auction.databridge import LOGGER as logger_from_databridge
 from openprocurement.auction.core import LOGGER
@@ -136,7 +126,6 @@ LOGGER.setLevel(logging.DEBUG)
 
 class TestDatabridgeConfig(object):
     def test_config_init(self, db, bridge):
-        # TODO: check if value of bridge.config corresponds to config file
         bridge_inst = bridge['bridge']
         assert 'tenders_api_server' in bridge_inst.config['main']
         assert 'tenders_api_version' in bridge_inst.config['main']
@@ -152,6 +141,7 @@ class TestDatabridgeConfig(object):
         assert bridge_inst.couch_url == \
                urljoin(bridge_inst.config['main']['couch_url'],
                        bridge_inst.config['main']['auctions_db'])
+        assert bridge_inst.config == test_bridge_config
 
     def test_connection_refused(self, db):
         with raises(Exception) as exc_info:
@@ -174,9 +164,7 @@ class TestDataBridgeRunLogInformation(object):
     ch.setLevel(logging.DEBUG)
     logger_from_databridge.addHandler(ch)
 
-    @pytest.mark.parametrize(
-        'bridge', [({'tenders': [{}] * 0})], indirect=['bridge'])
-    def test_check_log_for_start_bridge(self, db, bridge, mocker):
+    def test_check_log_for_start_bridge(self, db, bridge):
         """
         # Test check the message in the log for the start of the bridge
         # Text message: 'Start Auctions Bridge' and 'Start data sync...'
@@ -191,7 +179,7 @@ class TestDataBridgeGetTenders(object):
     @pytest.mark.parametrize(
         'bridge', [({'tenders': [{}]*0}), ({'tenders': [{}]*1}),
                    ({'tenders': [{}]*2})], indirect=['bridge'])
-    def test_run_get_tenders_once(self, db, bridge, mocker):
+    def test_run_get_tenders_once(self, db, bridge):
         """
         Test checks:
         1) 'get_tenders' function is called once inside bridge.run method.
