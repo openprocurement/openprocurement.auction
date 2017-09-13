@@ -256,7 +256,7 @@ class TestDataBridgePlanning(object):
     @pytest.mark.parametrize(
         'bridge', [({'tenders': [{}]}), ({'tenders': [tender_data_templ]}),
                    ({'tenders': [tender_data_active_auction['tender_in_past_data']]})], indirect=['bridge'])
-    def test_wrong_tender_no_planning(self, db, bridge, mocker):
+    def test_wrong_tender_no_planning(self, db, bridge):
         """
         Test checks that the function gevent.subprocess.check_call responsible
         for running the process planning the auction is not called if tender's
@@ -387,7 +387,7 @@ class TestForDataBridgeNegative(object):
     @pytest.mark.parametrize(
         'bridge', [({'tenders': [tender_data_active_auction['wrong_startDate']]})],
         indirect=['bridge'])
-    def test_active_auction_wrong_date(self, db, bridge, mocker):
+    def test_active_auction_wrong_date(self, db, bridge):
         """
         # If the start date of the tender in the past then skip it for planning
         # 1) status - "active.auction"
@@ -421,7 +421,7 @@ class TestForDataBridgeNegative(object):
     @pytest.mark.parametrize(
         'bridge', [({'tenders': [tender_data_active_qualification['no_active_status_in_lot']]})],
         indirect=['bridge'])
-    def test_active_qualification_no_active_status_in_lot(self, db, bridge, mocker):
+    def test_active_qualification_no_active_status_in_lot(self, db, bridge):
         """
         1) status -  "active.qualification"
         2) Tender must contain lots
