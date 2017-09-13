@@ -24,7 +24,7 @@ from copy import deepcopy
 from openprocurement.auction import core as core_module
 import openprocurement.auction.databridge as databridge_module
 from openprocurement.auction.tests.unit.utils import \
-    get_tenders_dummy, check_call_dummy
+    get_tenders_dummy, do_until_success_dummy
 
 
 LOGGER = logging.getLogger('Log For Tests')
@@ -191,9 +191,9 @@ def bridge(request, mocker):
                             side_effect=get_tenders_dummy(tenders),
                             autospec=True)
 
-    mock_check_call = \
-        mocker.patch.object(core_module, 'check_call',
-                            side_effect=check_call_dummy,
+    mock_do_until_success = \
+        mocker.patch.object(core_module, 'do_until_success',
+                            side_effect=do_until_success_dummy,
                             autospec=True)
 
     bridge_inst = AuctionsDataBridge(bridge_config)
@@ -202,7 +202,7 @@ def bridge(request, mocker):
     return {'bridge': bridge_inst,
             'tenders': tenders,
             'mock_get_tenders': mock_get_tenders,
-            'mock_check_call': mock_check_call}
+            'mock_do_until_success': mock_do_until_success}
 
 
 @pytest.fixture(scope="function")

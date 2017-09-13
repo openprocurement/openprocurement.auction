@@ -137,7 +137,7 @@ def get_tenders_dummy(tender_data_list):
     return a
 
 
-def check_call_dummy(*args, **kwargs):
+def do_until_success_dummy(*args, **kwargs):
     pass
 
 

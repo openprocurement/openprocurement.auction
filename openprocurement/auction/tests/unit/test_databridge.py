@@ -14,8 +14,6 @@
 
 # TODO: add pytest-cov
 
-# TODO: mock do_until_success instead mock_check_call in conftest (bridge)
-
 # TODO: test do_until_success
 
 
@@ -266,30 +264,25 @@ class TestDataBridgePlanning(object):
 
         # check that 'check_call' was not called as tender documents
         # doesn't contain appropriate data
-        assert bridge['mock_check_call'].call_count == 0
+        assert bridge['mock_do_until_success'].call_count == 0
 
 
 class TestForDataBridgePositive(object):
     @pytest.mark.parametrize(
         'bridge', [({'tenders': [tender_data_active_auction['tender_data_no_lots']]})],
         indirect=['bridge'])
-    def test_active_auction_no_lots(self, db, bridge, mocker):
-        # TODO: improve documentation
+    def test_active_auction_no_lots(self, db, bridge):
         """
+        # Conditions:
         # 1) active.auction 2) no_lots:
         # 3) 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] and 'endDate' not in self.item['auctionPeriod']
-        # 4a) datetime.now(self.bridge.tz) < start_date
+        # 4) datetime.now(self.bridge.tz) < start_date
         # yield ("planning", str(self.item['id']), "")
         """
 
-        mock_do_until_success = \
-            mocker.patch.object(core_module, 'do_until_success',
-                                return_value=True,
-                                autospec=True)
-
         sleep(0.1)
 
-        mock_do_until_success.assert_called_once_with(
+        bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
             args=([test_bridge_config['main']['auction_worker'], 'planning', ID, test_bridge_config['main']['auction_worker_config']],),
         )
@@ -297,7 +290,7 @@ class TestForDataBridgePositive(object):
     @pytest.mark.parametrize(
         'bridge', [({'tenders': [tender_data_active_auction['tender_data_with_lots']]})],
         indirect=['bridge'])
-    def test_active_auction_with_lots(self, db, bridge, mocker):
+    def test_active_auction_with_lots(self, db, bridge):
         """
         # 1) active.auction
         # 2) have a 'lots' in self.item:
@@ -308,14 +301,9 @@ class TestForDataBridgePositive(object):
         # The test that passes this cycle and gives the status True
         """
 
-        mock_do_until_success = \
-            mocker.patch.object(core_module, 'do_until_success',
-                                return_value=True,
-                                autospec=True)
-
         sleep(0.1)
 
-        mock_do_until_success.assert_called_once_with(
+        bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
             args=([test_bridge_config['main']['auction_worker'], 'planning', ID,
                    test_bridge_config['main']['auction_worker_config'], '--lot', LOT_ID],),
@@ -326,19 +314,15 @@ class TestForDataBridgePositive(object):
         [({'_id': ID + '_' + LOT_ID, 'stages': ['a', 'b', 'c'], 'current_stage': 1},
             {'tenders': [tender_data_active_qualification['tender_data_active_qualification']]})],
         indirect=['db', 'bridge'])
-    def test_active_qualification(self, db, bridge, mocker):
+    def test_active_qualification(self, db, bridge):
         """
             # Tender must contain status "active.qualification" and lots.
             # If the tender data is correct, the test will be successful.
         """
-        mock_do_until_success = \
-            mocker.patch.object(core_module, 'do_until_success',
-                                return_value=True,
-                                autospec=True)
 
         sleep(0.1)
 
-        mock_do_until_success.assert_called_once_with(
+        bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
             args=([test_bridge_config['main']['auction_worker'], 'announce', ID,
                    test_bridge_config['main']['auction_worker_config'], '--lot', LOT_ID],),
@@ -349,15 +333,12 @@ class TestForDataBridgePositive(object):
         [({'_id': ID + '_' + LOT_ID, 'endDate': '2100-06-28T10:32:19.233669+03:00'},
           {'tenders': [tender_data_cancelled['tender_data_with_lots']]})],
         indirect=['db', 'bridge'])
-    def test_cancelled_with_lots(self, db, bridge, mocker):
+    def test_cancelled_with_lots(self, db, bridge):
         """Auction has been cancelled with lots"""
-        mock_do_until_success = \
-            mocker.patch.object(core_module, 'do_until_success',
-                                return_value=True,
-                                autospec=True)
+
         sleep(0.1)
 
-        mock_do_until_success.assert_called_once_with(
+        bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
             args=([test_bridge_config['main']['auction_worker'], 'cancel', ID,
                    test_bridge_config['main']['auction_worker_config'], '--lot', LOT_ID],),
@@ -368,15 +349,11 @@ class TestForDataBridgePositive(object):
         [({'_id': ID, 'endDate': '2100-06-28T10:32:19.233669+03:00'},
           {'tenders': [tender_data_cancelled['tender_data_no_lots']]})],
         indirect=['db', 'bridge'])
-    def test_cancelled_no_lots(self, db, bridge, mocker):
+    def test_cancelled_no_lots(self, db, bridge):
         """Auction has been cancelled with no lots"""
-        mock_do_until_success = \
-            mocker.patch.object(core_module, 'do_until_success',
-                                return_value=True,
-                                autospec=True)
         sleep(0.1)
 
-        mock_do_until_success.assert_called_once_with(
+        bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
             args=([test_bridge_config['main']['auction_worker'], 'cancel', ID,
                    test_bridge_config['main']['auction_worker_config']],),
