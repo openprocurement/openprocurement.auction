@@ -348,11 +348,44 @@ class TestForDataBridgePositive(object):
 
     @pytest.mark.parametrize(
         'db, bridge',
+        [([{'_id': '{}_{}'.format(ID, LOT_ID), 'stages': [{'start': '2100-06-28T10:32:19.233669+03:00'}, 'b', 'c']}],
+          {'tenders': [tender_data_cancelled['tender_data_with_lots']]})],
+        indirect=['db', 'bridge'])
+    def test_cancelled_with_lots_2(self, db, bridge):
+        """Auction has been cancelled with lots"""
+
+        sleep(0.1)
+
+        bridge['mock_do_until_success'].assert_called_once_with(
+            core_module.check_call,
+            args=([bridge['bridge_config']['main']['auction_worker'], 'cancel', ID,
+                   bridge['bridge_config']['main']['auction_worker_config'], '--lot', LOT_ID],),
+        )
+
+    @pytest.mark.parametrize(
+        'db, bridge',
         [([{'_id': ID, 'endDate': '2100-06-28T10:32:19.233669+03:00'}],
           {'tenders': [tender_data_cancelled['tender_data_no_lots']]})],
         indirect=['db', 'bridge'])
     def test_cancelled_no_lots(self, db, bridge):
         """Auction has been cancelled with no lots"""
+
+        sleep(0.1)
+
+        bridge['mock_do_until_success'].assert_called_once_with(
+            core_module.check_call,
+            args=([bridge['bridge_config']['main']['auction_worker'], 'cancel', ID,
+                   bridge['bridge_config']['main']['auction_worker_config']],),
+        )
+
+    @pytest.mark.parametrize(
+        'db, bridge',
+        [([{'_id': ID, 'stages': [{'start': '2100-06-28T10:32:19.233669+03:00'}, 'b', 'c']}],
+          {'tenders': [tender_data_cancelled['tender_data_no_lots']]})],
+        indirect=['db', 'bridge'])
+    def test_cancelled_no_lots_2(self, db, bridge):
+        """Auction has been cancelled with no lots"""
+
         sleep(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
