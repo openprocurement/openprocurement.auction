@@ -5,7 +5,7 @@ from sse import Sse as PySse
 from systemd.journal import send
 from urlparse import urlparse, urlunparse
 
-from openprocurement.acution.utils import get_mapping
+from openprocurement.auction.utils import get_mapping
 from openprocurement.auction.proxy import StreamProxy
 
 
