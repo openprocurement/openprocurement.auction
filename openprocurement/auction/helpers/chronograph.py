@@ -117,6 +117,7 @@ class AuctionScheduler(GeventScheduler):
         return response
 
     def _auction_fucn(self, document_id, tender_id, lot_id, view_value):
+        process = None
         params = [self.config['main']['auction_worker'],
                   "run", tender_id,
                   self.get_auction_worker_configuration_path(view_value)]
@@ -148,9 +149,10 @@ class AuctionScheduler(GeventScheduler):
                 )
         except Exception:
             self.logger.critical(
-                "Exit with error {}".format(document_id),
+                "Exit with error {} params: {} error: {}".format(document_id, repr(params), repr(error)),
                 extra={'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_EXCEPTION'})
-        del self.processes[process.pid]
+        if process:
+            del self.processes[process.pid]
 
     def run_auction_func(self, tender_id, lot_id, view_value,
                          ttl=WORKER_TIME_RUN):
