@@ -9,7 +9,7 @@ from .conftest import job_is_not_added, job_is_not_active, job_is_added, \
     job_is_active
 
 
-class TestChronograph(object):
+class TemplateTestChronograph(object):
     def test_view_job_not_add(self, db, chronograph, auction):
         sleep(1)
         assert job_is_not_added()
