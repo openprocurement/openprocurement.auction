@@ -45,9 +45,8 @@ tender_data_active_qualification_status = {'id': ID, 'status': 'active.qualifica
 
 # Data for test with 'cancelled' status
 tender_data_cancelled = {'id': ID, 'status': 'cancelled'}
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-# = = = = = = = = = Data for positive tests = = = = = = = = = = = = =
+# Data for positive tests
 # Data for test with auction periods
 tender_in_past_data = deepcopy(tender_data_templ)
 tender_in_past_data['auctionPeriod'] = \
@@ -79,9 +78,8 @@ tender_data_cancelled_with_lots['lots'] = \
 
 # Data for test with 'cancelled' status and no lots
 tender_data_cancelled_no_lots = deepcopy(tender_data_cancelled)
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-# = = = = = = = = = Data for negative tests = = = = = = = = = = = = =
+# Data for negative tests
 # Data for test with 'active.auction' status, no lots and wrong data
 tender_data_active_auction_wrong_startDate = deepcopy(tender_data_templ)
 tender_data_active_auction_wrong_startDate['auctionPeriod'] = \
@@ -101,7 +99,6 @@ tender_data_planned_on_the_same_date['auctionPeriod'] = \
 tender_data_active_qualification_no_active_lot = deepcopy(tender_data_active_qualification_status)
 tender_data_active_qualification_no_active_lot['lots'] = \
     [{'id': LOT_ID, 'status': 'deleted'}]
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 tender_data_active_auction = {
     'tender_in_past_data': tender_in_past_data,

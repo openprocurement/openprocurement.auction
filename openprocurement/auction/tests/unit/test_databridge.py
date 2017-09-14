@@ -139,7 +139,7 @@ class TestDatabridgeConfig(object):
         assert bridge_inst.couch_url == \
                urljoin(bridge_inst.config['main']['couch_url'],
                        bridge_inst.config['main']['auctions_db'])
-        assert bridge_inst.config == test_bridge_config
+        assert bridge_inst.config == bridge['bridge_config']
 
     def test_connection_refused(self, db):
         with raises(Exception) as exc_info:
@@ -187,8 +187,8 @@ class TestDataBridgeGetTenders(object):
 
         # check that 'get_tenders' function was called once
         bridge['mock_get_tenders'].assert_called_once_with(
-            host=test_bridge_config['main']['tenders_api_server'],
-            version=test_bridge_config['main']['tenders_api_version'],
+            host=bridge['bridge_config']['main']['tenders_api_server'],
+            version=bridge['bridge_config']['main']['tenders_api_version'],
             key='',
             extra_params=API_EXTRA)
 
@@ -256,7 +256,7 @@ class TestDataBridgePlanning(object):
                    ({'tenders': [tender_data_active_auction['tender_in_past_data']]})], indirect=['bridge'])
     def test_wrong_tender_no_planning(self, db, bridge):
         """
-        Test checks that the function gevent.subprocess.check_call responsible
+        Test checks that the function do_until_success responsible
         for running the process planning the auction is not called if tender's
         data are inappropriate.
         """
@@ -273,18 +273,20 @@ class TestForDataBridgePositive(object):
         indirect=['bridge'])
     def test_active_auction_no_lots(self, db, bridge):
         """
-        # Conditions:
-        # 1) active.auction 2) no_lots:
-        # 3) 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] and 'endDate' not in self.item['auctionPeriod']
-        # 4) datetime.now(self.bridge.tz) < start_date
-        # yield ("planning", str(self.item['id']), "")
+        Test checks that the function do_until_success function is called once
+        for the tender satisfying the following conditions:
+        1) status: active.auction
+        2) no_lots:
+        3) 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] and 'endDate' not in self.item['auctionPeriod']
+        4) datetime.now(self.bridge.tz) < start_date
         """
 
         sleep(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
-            args=([test_bridge_config['main']['auction_worker'], 'planning', ID, test_bridge_config['main']['auction_worker_config']],),
+            args=([bridge['bridge_config']['main']['auction_worker'], 'planning', ID,
+                   bridge['bridge_config']['main']['auction_worker_config']],),
         )
 
     @pytest.mark.parametrize(
@@ -292,45 +294,45 @@ class TestForDataBridgePositive(object):
         indirect=['bridge'])
     def test_active_auction_with_lots(self, db, bridge):
         """
-        # 1) active.auction
-        # 2) have a 'lots' in self.item:
-        # 3) lot["status"] is 'active and 'auctionPeriod' is in lot and 'startDate' in lot['auctionPeriod']
-        #    and 'endDate' not in lot['auctionPeriod']
-        # 4) datetime.now(self.bridge.tz) > start_date
-        # yield ("planning", str(self.item['id']), str(lot["id"]))
-        # The test that passes this cycle and gives the status True
+        Test checks that the function do_until_success function is called once
+        for the tender satisfying the following conditions:
+        1) status: active.auction
+        2) have field 'lots'
+        3) lot["status"] is 'active' and 'auctionPeriod' is in lot and 'startDate' in lot['auctionPeriod']
+           and 'endDate' not in lot['auctionPeriod']
+        4) datetime.now(self.bridge.tz) > start_date
         """
 
         sleep(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
-            args=([test_bridge_config['main']['auction_worker'], 'planning', ID,
-                   test_bridge_config['main']['auction_worker_config'], '--lot', LOT_ID],),
+            args=([bridge['bridge_config']['main']['auction_worker'], 'planning', ID,
+                   bridge['bridge_config']['main']['auction_worker_config'], '--lot', LOT_ID],),
         )
 
     @pytest.mark.parametrize(
         'db, bridge',
-        [({'_id': ID + '_' + LOT_ID, 'stages': ['a', 'b', 'c'], 'current_stage': 1},
+        [([{'_id': '{}_{}'.format(ID, LOT_ID), 'stages': ['a', 'b', 'c'], 'current_stage': 1}],
             {'tenders': [tender_data_active_qualification['tender_data_active_qualification']]})],
         indirect=['db', 'bridge'])
     def test_active_qualification(self, db, bridge):
         """
-            # Tender must contain status "active.qualification" and lots.
-            # If the tender data is correct, the test will be successful.
+        Tender status: "active.qualification"
+        tender has 'lots'
         """
 
         sleep(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
-            args=([test_bridge_config['main']['auction_worker'], 'announce', ID,
-                   test_bridge_config['main']['auction_worker_config'], '--lot', LOT_ID],),
+            args=([bridge['bridge_config']['main']['auction_worker'], 'announce', ID,
+                   bridge['bridge_config']['main']['auction_worker_config'], '--lot', LOT_ID],),
         )
 
     @pytest.mark.parametrize(
         'db, bridge',
-        [({'_id': ID + '_' + LOT_ID, 'endDate': '2100-06-28T10:32:19.233669+03:00'},
+        [([{'_id': '{}_{}'.format(ID, LOT_ID), 'endDate': '2100-06-28T10:32:19.233669+03:00'}],
           {'tenders': [tender_data_cancelled['tender_data_with_lots']]})],
         indirect=['db', 'bridge'])
     def test_cancelled_with_lots(self, db, bridge):
@@ -340,13 +342,13 @@ class TestForDataBridgePositive(object):
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
-            args=([test_bridge_config['main']['auction_worker'], 'cancel', ID,
-                   test_bridge_config['main']['auction_worker_config'], '--lot', LOT_ID],),
+            args=([bridge['bridge_config']['main']['auction_worker'], 'cancel', ID,
+                   bridge['bridge_config']['main']['auction_worker_config'], '--lot', LOT_ID],),
         )
 
     @pytest.mark.parametrize(
         'db, bridge',
-        [({'_id': ID, 'endDate': '2100-06-28T10:32:19.233669+03:00'},
+        [([{'_id': ID, 'endDate': '2100-06-28T10:32:19.233669+03:00'}],
           {'tenders': [tender_data_cancelled['tender_data_no_lots']]})],
         indirect=['db', 'bridge'])
     def test_cancelled_no_lots(self, db, bridge):
@@ -355,8 +357,8 @@ class TestForDataBridgePositive(object):
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
-            args=([test_bridge_config['main']['auction_worker'], 'cancel', ID,
-                   test_bridge_config['main']['auction_worker_config']],),
+            args=([bridge['bridge_config']['main']['auction_worker'], 'cancel', ID,
+                   bridge['bridge_config']['main']['auction_worker_config']],),
         )
 
 

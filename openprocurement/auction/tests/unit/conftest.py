@@ -84,7 +84,7 @@ def db(request):
     server = couchdb.Server("http://" + worker_defaults['COUCH_DATABASE'].split('/')[2])
     name = worker_defaults['COUCH_DATABASE'].split('/')[3]
 
-    document = getattr(request, 'param', None)
+    documents = getattr(request, 'param', None)
 
     def delete():
         del server[name]
@@ -94,8 +94,9 @@ def db(request):
 
     data_base = server.create(name)
 
-    if document:
-        data_base.save(document)
+    if documents:
+        for doc in documents:
+            data_base.save(doc)
             
     request.addfinalizer(delete)
 
@@ -205,6 +206,7 @@ def bridge(request, mocker):
     spawn(bridge_inst.run)
 
     return {'bridge': bridge_inst,
+            'bridge_config': bridge_config,
             'tenders': tenders,
             'mock_get_tenders': mock_get_tenders,
             'mock_do_until_success': mock_do_until_success}
