@@ -116,44 +116,35 @@ class AuctionScheduler(GeventScheduler):
         self.execution_stopped = True
         return response
 
-    def _auction_fucn(self, document_id, tender_id, lot_id, view_value):
-        params = [self.config['main']['auction_worker'],
-                  "run", tender_id,
-                  self.get_auction_worker_configuration_path(view_value)]
-        if lot_id:
-            params += ['--lot', lot_id]
-
-        if view_value['api_version']:
-            params += ['--with_api_version', view_value['api_version']]
-
-        if view_value['mode'] == 'test':
-            params += ['--auction_info_from_db', 'true']
+    def _auction_fucn(self, args):
         try:
-            process = Popen(params)
+            process = Popen(args)
             self.processes[process.pid] = process
             rc = process.wait()
             if rc == 0:
                 self.logger.info(
-                    "Finished {}".format(document_id),
+                    "Finished {}".format(args[2]),
                     extra={
                         'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_SUCCESSFUL'
                     }
                 )
             else:
                 self.logger.error(
-                    "Exit with error {}".format(document_id),
+                    "Exit with error {}".format(args[2]),
                     extra={
                         'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_EXCEPTION'
                     }
                 )
-        except Exception:
+        except Exception as error:
             self.logger.critical(
-                "Exit with error {}".format(document_id),
+                "Exit with error {} params: {} error: {}".format(
+                    args[2], repr(args), repr(error)),
                 extra={'MESSAGE_ID': 'CHRONOGRAPH_WORKER_COMPLETE_EXCEPTION'})
-        del self.processes[process.pid]
+        if process:
+            del self.processes[process.pid]
 
-    def run_auction_func(self, tender_id, lot_id, view_value,
-                         ttl=WORKER_TIME_RUN):
+    def run_auction_func(self, args, ttl=WORKER_TIME_RUN, start='',
+                         document_id=''):
         if self._count_auctions >= self._limit_auctions:
             self.logger.info("Limited by count")
             return
@@ -161,10 +152,8 @@ class AuctionScheduler(GeventScheduler):
         if free_memory() <= self._limit_free_memory:
             self.logger.info("Limited by memory")
             return
-        document_id = str(tender_id)
-        if lot_id:
-            document_id += "_"
-            document_id += lot_id
+        if not document_id:
+            document_id = args[2]
         sleep(random())
         if self.use_consul:
             i = LOCK_RETRIES
@@ -179,8 +168,7 @@ class AuctionScheduler(GeventScheduler):
                     with self._limit_pool_lock:
                         self._count_auctions += 1
 
-                    self._auction_fucn(document_id, tender_id, lot_id,
-                                       view_value)
+                    self._auction_fucn(args)
 
                     self.logger.info("Finished {}".format(document_id))
                     self.consul.session.destroy(session)
@@ -195,7 +183,7 @@ class AuctionScheduler(GeventScheduler):
         else:
             self.logger.info("Run worker for document {}".format(document_id),
                              extra={'MESSAGE_ID': 'CHRONOGRAPH_RUN_WORKER'})
-            self._auction_fucn(document_id, tender_id, lot_id, view_value)
+            self._auction_fucn(args)
 
     def schedule_auction(self, document_id, view_value, args):
         auction_start_date = self.convert_datetime(view_value['start'])
@@ -218,18 +206,16 @@ class AuctionScheduler(GeventScheduler):
         else:
             return
 
-        if "_" in document_id:
-            tender_id, lot_id = document_id.split("_")
-        else:
-            tender_id = document_id
-            lot_id = None
         self.logger.info(
             'Scedule start of {} at {} ({})'.format(
                 document_id, AW_date, view_value['start']),
             extra={'MESSAGE_ID': 'CHRONOGRAPH_PLANNED_WORKER'})
 
         self.add_job(
-            self.run_auction_func, args=(tender_id, lot_id, view_value),
+            self.run_auction_func,
+            kwargs=dict(
+                args=args, start=view_value['start'], document_id=document_id
+            ),
             misfire_grace_time=60, next_run_time=AW_date, id=document_id,
             replace_existing=True
         )
