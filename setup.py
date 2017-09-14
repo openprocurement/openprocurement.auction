@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '4.0.0a1.dev1+eauctions'
+version = '4.0.0a1.dev4+eauctions'
 install_requires = [
     'setuptools',
     'requests',
@@ -10,7 +10,6 @@ install_requires = [
     'python-dateutil',
     'flask_oauthlib',
     'Flask',
-    'Flask-Assets'
     'Flask-Redis',
     'WTForms',
     'WTForms-JSON',
@@ -18,8 +17,6 @@ install_requires = [
     'gevent',
     'sse',
     'PyYAML',
-    'cssmin',
-    'jsmin',
     'request_id_middleware',
     'restkit',
     'PyMemoize',
@@ -33,8 +30,7 @@ install_requires = [
     'python-consul',
     'retrying',
     'zope.interface',
-    'walkabout',
-    'pyramidtiming[flask]'
+    'walkabout'
 ]
 extras_require = {
     'test': [
@@ -54,7 +50,7 @@ entry_points = {
         'auction_test = openprocurement.auction.tests.main:main [test]'
     ],
     'paste.app_factory': [
-        'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',
+        'auctions_server = openprocurement.auction.app:make_auctions_app',
     ],
     'openprocurement.auction.auctions': [
         'default = openprocurement.auction.includeme:default'

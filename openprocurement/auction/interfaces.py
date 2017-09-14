@@ -23,3 +23,7 @@ class IAuctionType(Interface):
 
 class IAuctionsChronograph(Interface):
     """"""
+
+
+class IAuctionsServer(Interface):
+    """"""
