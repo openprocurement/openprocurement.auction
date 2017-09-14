@@ -103,6 +103,7 @@ def db(request):
     return data_base
 
 
+# TODO: change host
 test_client = \
     TestClient('http://0.0.0.0:{port}'.
                format(port=test_chronograph_config['main'].get('web_app')))
