@@ -1,12 +1,9 @@
 # TODO: test chronograph config
 
-# pdb.set_trace = lambda: None
-
 from gevent import sleep
-import json
 import pytest
 from openprocurement.auction.helpers.chronograph \
-    import MAX_AUCTION_START_TIME_RESERV, MIN_AUCTION_START_TIME_RESERV
+    import MAX_AUCTION_START_TIME_RESERV
 import datetime
 from .conftest import job_is_not_added, job_is_not_active, job_is_added, \
     job_is_active
