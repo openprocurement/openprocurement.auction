@@ -72,10 +72,13 @@ with open(databridge_conf_file_path) as stream:
     test_bridge_config['handlers']['journal']['formatter'] = 'simple'
 
 test_bridge_config_error_port = deepcopy(test_bridge_config)
-test_bridge_config_error_port['main']['couch_url'] = 'http://admin:zaq1xsw2@0.0.0.0:9001/'
+couch_url = test_bridge_config_error_port['main']['couch_url']
+error_port = str(int(couch_url.split(':')[-1][:-1]) + 1)
+couch_url_parts = couch_url.split(':')[0:-1]
+couch_url_parts.append(error_port)
+test_bridge_config_error_port['main']['couch_url'] = ':'.join(couch_url_parts)
 
 
-# todo: pass URL server
 @pytest.fixture(scope='function')
 def db(request):
     server = couchdb.Server("http://" + worker_defaults['COUCH_DATABASE'].split('/')[2])
