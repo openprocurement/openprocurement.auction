@@ -74,11 +74,7 @@ class AuctionsDataBridge(object):
             self.run_re_planning()
             return
 
-        for item in self.feeder.get_resource_items(
-                host=self.config_get('resource_api_server'),
-                version=self.config_get('resource_api_version'),
-                resource=self.config_get('resource_name'),
-                key='', extra_params=API_EXTRA):
+        for item in self.feeder.get_resource_items():
             # magic goes here
             feed = FeedItem(item)
             planning = self.mapper(feed)
