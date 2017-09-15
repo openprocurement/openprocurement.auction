@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-# TODO: create tests for self.mapper = components.qA(self, IAuctionsManager)
 # TODO: test do_until_success function
-
-
 from gevent import monkey
 monkey.patch_all()
 
@@ -12,7 +9,8 @@ from mock import MagicMock, call
 import pytest
 from openprocurement.auction.databridge import AuctionsDataBridge
 from openprocurement.auction.utils import FeedItem
-from .conftest import test_bridge_config, test_bridge_config_error_port
+from openprocurement.auction.tests.unit.utils import test_bridge_config, \
+    test_bridge_config_error_port
 from urlparse import urljoin
 from pytest import raises
 from copy import deepcopy
@@ -21,7 +19,7 @@ from openprocurement.auction.tests.unit.utils import \
     tender_data_templ, API_EXTRA, ID, tender_data_cancelled, LOT_ID, \
     tender_data_active_qualification, tender_data_active_auction
 from openprocurement.auction import core as core_module
-from openprocurement.auction.databridge import LOGGER as logger_from_databridge
+from openprocurement.auction.databridge import LOGGER as databridge_logger
 from openprocurement.auction.core import LOGGER
 from StringIO import StringIO
 
@@ -66,7 +64,7 @@ class TestDataBridgeRunLogInformation(object):
     log_capture_string = StringIO()
     ch = logging.StreamHandler(log_capture_string)
     ch.setLevel(logging.DEBUG)
-    logger_from_databridge.addHandler(ch)
+    databridge_logger.addHandler(ch)
 
     def test_check_log_for_start_bridge(self, db, bridge):
         """

@@ -5,8 +5,8 @@ import pytest
 from openprocurement.auction.helpers.chronograph \
     import MAX_AUCTION_START_TIME_RESERV
 import datetime
-from .conftest import job_is_not_added, job_is_not_active, job_is_added, \
-    job_is_active
+from openprocurement.auction.tests.unit.utils import job_is_added, \
+    job_is_not_added, job_is_active, job_is_not_active
 
 
 class TemplateTestChronograph(object):
