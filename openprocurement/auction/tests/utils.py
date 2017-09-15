@@ -9,13 +9,15 @@ PWD = os.path.dirname(os.path.realpath(__file__))
 
 
 @contextlib.contextmanager
-def update_auctionPeriod(data, auction_type='simple', time_shift=datetime.timedelta(seconds=120)):
+def update_auctionPeriod(path, auction_type='simple', time_shift=datetime.timedelta(seconds=120)):
     new_start_time = (datetime.datetime.now(tzlocal()) + time_shift).isoformat()
-    if auction_type == 'simple':
-        data['data']['auctionPeriod']['startDate'] = new_start_time
-    elif auction_type == 'multilot':
+    with open(path) as file:
+        data = json.loads(file.read())
+    if auction_type == 'multilot':
         for lot in data['data']['lots']:
             lot['auctionPeriod']['startDate'] = new_start_time
+    else:
+        data['data']['auctionPeriod']['startDate'] = new_start_time
 
     with tempfile.NamedTemporaryFile(delete=False) as auction_file:
         json.dump(data, auction_file)
@@ -31,8 +33,8 @@ def read_file_from_json(path):
 
 
 AUCTION_DATA = {
-    'simple':
-        read_file_from_json(os.path.join(PWD, 'data', 'tender_simple.json')),
-    'multilot':
-        read_file_from_json(os.path.join(PWD, 'data', 'tender_multilot.json'))
+    'simple': {'path': os.path.join(PWD, 'data', 'tender_simple.json'),
+               'data': read_file_from_json(os.path.join(PWD, 'data', 'tender_simple.json'))},
+    'multilot': {'path': os.path.join(PWD, 'data', 'tender_multilot.json'),
+                 'data': read_file_from_json(os.path.join(PWD, 'data', 'tender_multilot.json'))}
 }

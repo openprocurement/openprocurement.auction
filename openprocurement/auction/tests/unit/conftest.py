@@ -40,10 +40,6 @@ logging.config.dictConfig(test_log_config)
 #         metafunc.addcall(funcargs=funcargs)
 
 
-auction_data_simple = AUCTION_DATA['simple']
-auction_data_multilot = AUCTION_DATA['multilot']
-
-
 @pytest.fixture(scope='function')
 def db(request):
     server = couchdb.Server("http://" + worker_defaults['COUCH_DATABASE'].split('/')[2])
@@ -112,12 +108,12 @@ def auction(request):
             else params[key]
 
     with update_auctionPeriod(
-            auction_data_simple,
+            AUCTION_DATA['simple']['path'],
             auction_type='simple',
             time_shift=params['time']+params['delta_t']) \
             as updated_doc, open(updated_doc, 'r') as auction_updated_data:
         auction_inst = Auction(
-            tender_id=auction_data_simple['data']['tenderID'],
+            tender_id=AUCTION_DATA['simple']['data']['data']['tenderID'],
             worker_defaults=yaml.load(open(worker_defaults_file_path)),
             auction_data=json.load(auction_updated_data),
             lot_id=False)
