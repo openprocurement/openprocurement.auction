@@ -21,13 +21,13 @@ def chronograph(request):
 
 
 class TestChronoggraph(object):
-    
+
     def test_view_job_add(self):
         spawn(self.chrono.run())
         with put_test_dock(some_db, update_start_auction_period(test_public_document)):
             resp = self.client.get('/jobs')
             assert resp
-             
+
     def test_listing(self):
         spawn(self.chrono.run())
         with put_test_dock(some_db, update_start_auction_period(test_public_document)):

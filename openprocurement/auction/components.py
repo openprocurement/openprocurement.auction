@@ -3,7 +3,9 @@ from zope import interface
 from zope.interface import registry
 from walkabout import PredicateDomain, PredicateMismatch
 
-from openprocurement.auction.interfaces import IComponents, IAuctionType, IFeedItem
+from openprocurement.auction.interfaces import (
+    IComponents, IAuctionType, IFeedItem
+)
 
 
 LOGGER = logging.getLogger(__name__)

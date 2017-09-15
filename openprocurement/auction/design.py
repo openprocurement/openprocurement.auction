@@ -48,7 +48,7 @@ PreAnnounce_view = ViewDefinition(
     'PreAnnounce',
     ''' function(doc) {
             if ((doc.stages.length - 2) == doc.current_stage){
-                emit(start, null);
+                emit(null, null);
             }
         }
     '''

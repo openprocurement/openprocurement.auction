@@ -2,7 +2,7 @@ import pytest
 from webtest import TestApp
 
 from openprocurement.auction.auctions_server import auctions_server as frontend
-from openprocurement.auction.server import run_server 
+from openprocurement.auction.server import run_server
 from openprocurement.auction.tests.unit.utils import MockAuction, MockClient, MockLogger
 
 
@@ -15,7 +15,7 @@ def auctions_server(request):
 
 @pytest.mark.usefixtures("auctions_server")
 class TestAuctionsServer(object):
-    
+
     def test_request_log_hooks(self):
         assert self.server
 
@@ -73,7 +73,7 @@ class TestAuctionSever(object):
         data = bidder_data_valid
         with self.client.post('/check_authorization', data=data) as resp:
             assert resp.json == {"status": "ok"}
-    
+
     def test_relogin(self):
         data = invalid_bidder_data
         with self.client.get('/relogin', data=data) as resp:
@@ -93,7 +93,7 @@ class TestAuctionSever(object):
         data = bidder_data_valid
         with self.client.post('/kickclient', data=data) as resp:
             assert resp.json == {"status": "ok"}
-    
+
     # mock_auction
     def test_postbid(self)
         data = invalid_post_data
