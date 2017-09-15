@@ -94,7 +94,17 @@ class AuctionScheduler(GeventScheduler):
 
     def convert_datetime(self, datetime_stamp):
         return iso8601.parse_date(datetime_stamp).astimezone(self.timezone)
-
+    
+    def shutdown(self, SIGKILL=False):
+        self.exit = True
+        if SIGKILL:
+            for pid in self.processes:
+                self.logger.info("Killed {}".format(pid))
+                self.processes[pid].terminate()
+        response = super(AuctionScheduler, self).shutdown()
+        self.execution_stopped = True
+        return response
+    
     def _auction_fucn(self, args):
         try:
             process = Popen(args)
