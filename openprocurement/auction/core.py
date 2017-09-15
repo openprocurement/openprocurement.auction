@@ -7,7 +7,9 @@ from time import mktime, time
 from gevent.subprocess import check_call
 from pkg_resources import iter_entry_points
 
-from openprocurement.auction.utils import get_auction_worker_configuration_path
+from openprocurement.auction.utils import (
+    prepare_auction_worker_cmd
+)
 from openprocurement.auction.systemd_msgs_ids import (
     DATA_BRIDGE_PLANNING_TENDER_SKIP,
     DATA_BRIDGE_PLANNING_TENDER_ALREADY_PLANNED,
@@ -27,7 +29,7 @@ from openprocurement.auction.interfaces import IAuctionsManager,\
 SIMPLE_AUCTION_TYPE = 0
 SINGLE_LOT_AUCTION_TYPE = 1
 MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}"  # {TENDER_ID}_{LOT_ID}
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('Openprocurement Auction')
 PKG_NAMESPACE = "openprocurement.auction.auctions"
 
 
@@ -90,22 +92,14 @@ class RunDispatcher(object):
         else:
             tender_id = document_id
             lot_id = None
-        config = self.chronograph.config['main'].get(
-            self.item.get('procurementMethodType'),
-            self.chronograph.config['main']
+        with_api_version = self.item['api_version']
+        params = prepare_auction_worker_cmd(
+            self.chronograph,
+            tender_id,
+            'run',
+            lot_id=lot_id,
+            with_api_version=with_api_version
         )
-        params = [config['auction_worker'],
-                  "run", tender_id,
-                  get_auction_worker_configuration_path(self.chronograph, self.item)]
-
-        if lot_id:
-            params += ['--lot', lot_id]
-
-        if self.item['api_version']:
-            params += ['--with_api_version', self.item['api_version']]
-
-        if self.item['mode'] == 'test':
-            params += ['--auction_info_from_db', 'true']
         return params
 
 
@@ -201,22 +195,14 @@ class Planning(object):
     __str__ = __repr__
 
     def __call__(self, cmd, tender_id, with_api_version=None, lot_id=None):
-        config = self.bridge.config['main'].get(
-            self.item.get('procurementMethodType'),
-            self.bridge.config['main']
+        params = prepare_auction_worker_cmd(
+            self.bridge,
+            tender_id,
+            cmd,
+            self.item,
+            lot_id=lot_id,
+            with_api_version=with_api_version
         )
-        params = [
-            config.get('auction_worker'),
-            cmd, tender_id,
-            config.get(
-                'auction_worker_config',
-                self.bridge.config['main'].get('auction_worker_config')
-            )]
-        if lot_id:
-            params += ['--lot', lot_id]
-
-        if with_api_version:
-            params += ['--with_api_version', with_api_version]
 
         result = do_until_success(
             check_call,

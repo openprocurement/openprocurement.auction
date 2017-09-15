@@ -1,6 +1,10 @@
 from gevent import monkey
 monkey.patch_all()
 
+import os
+import signal
+from gevent import signal as gevent_signal
+
 try:
     import urllib3.contrib.pyopenssl
     urllib3.contrib.pyopenssl.inject_into_urllib3()
@@ -9,23 +13,28 @@ except ImportError:
 
 import logging
 import logging.config
-import os
 import argparse
-
 from yaml import load
 from zope.interface import implementer
 from pytz import timezone
 from gevent import sleep
 from gevent.pywsgi import WSGIServer
 from datetime import datetime, timedelta
+from urlparse import urlparse
 
 from openprocurement.auction.utils import FeedItem
 from openprocurement.auction.core import components
-from openprocurement.auction.interfaces import IAuctionsChronograph, IAuctionsManager
+from openprocurement.auction.interfaces import (
+    IAuctionsChronograph, IAuctionsManager
+)
 from openprocurement.auction.design import sync_design_chronograph
-from openprocurement.auction.helpers.chronograph import get_server_name, AuctionScheduler
+from openprocurement.auction.helpers.chronograph import (
+    get_server_name, AuctionScheduler
+)
 from openprocurement.auction.helpers.chronograph_http import chronograph_webapp
-from openprocurement.auction.helpers.couch import iterview, couchdb_dns_query_settings
+from openprocurement.auction.helpers.couch import (
+    iterview, couchdb_dns_query_settings
+)
 from openprocurement.auction.helpers.system import get_lisener
 
 
@@ -55,31 +64,67 @@ class AuctionsChronograph(object):
         ))
 
     def init_scheduler(self):
-        self.scheduler = AuctionScheduler(self.server_name, self.config, logger=LOGGER,
-                                          timezone=self.timezone)
+        self.scheduler = AuctionScheduler(
+            self.server_name, self.config, logger=LOGGER,
+            timezone=self.timezone
+        )
         self.scheduler.chronograph = self
         self.scheduler.start()
 
     def init_web_app(self):
         self.web_application = chronograph_webapp
         self.web_application.chronograph = self
-        self.server = WSGIServer(get_lisener(self.config['main'].get('web_app')), self.web_application, spawn=100)
+        location = self.config['main'].get('web_app')
+        if ':' in str(location):
+            if not location.startswith('//'):
+                location = "//{}".format(location)
+            o = urlparse(location)
+            self.server = WSGIServer(
+                get_lisener(o.port, o.hostname),
+                self.web_application,
+                spawn=100
+            )
+        else:
+            self.server = WSGIServer(
+                get_lisener(location),
+                self.web_application,
+                spawn=100
+            )
         self.server.start()
 
     def run(self):
 
         LOGGER.info('Starting node: {}'.format(self.server_name))
 
-        for auction_item in iterview(self.config['main']["couch_url"], self.config['main']['auctions_db'], 'chronograph/start_date'):
-            datestamp = (datetime.now(self.timezone) + timedelta(minutes=1)).isoformat()
-            # ADD FILTER BY VALUE {start: '2016-09-10T14:36:40.378777+03:00', test: false}
+        def sigterm():
+            LOGGER.info('Starting SIGTERM')
+            self.scheduler.shutdown(True)
+
+        gevent_signal(signal.SIGTERM, sigterm)
+
+        def sigusr1():
+            LOGGER.info('Starting SIGUSR1')
+            self.scheduler.shutdown()
+
+        gevent_signal(signal.SIGUSR1, sigusr1)
+
+        for auction_item in iterview(self.config['main']["couch_url"],
+                                     self.config['main']['auctions_db'],
+                                     'chronograph/start_date'):
+            datestamp = (
+                datetime.now(self.timezone) + timedelta(minutes=1)
+            ).isoformat()
+            # ADD FILTER BY VALUE
+            # {start: '2016-09-10T14:36:40.378777+03:00', test: false}
             if datestamp < auction_item['value']['start']:
-                worker_cmd_provider = self.mapper(FeedItem(auction_item['value']))
+                worker_cmd_provider = \
+                    self.mapper(FeedItem(auction_item['value']))
                 if not worker_cmd_provider:
                     continue
-                self.scheduler.schedule_auction(auction_item['id'],
-                                                auction_item['value'],
-                                                args=worker_cmd_provider(auction_item['id']))
+                self.scheduler.schedule_auction(
+                    auction_item['id'], auction_item['value'],
+                    args=worker_cmd_provider(auction_item['id'])
+                )
 
             if self.scheduler.exit:
                 break
@@ -90,7 +135,8 @@ class AuctionsChronograph(object):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='---- Auctions Chronograph ----')
+    parser = argparse.ArgumentParser(
+        description='---- Auctions Chronograph ----')
     parser.add_argument('config', type=str, help='Path to configuration file')
     params = parser.parse_args()
     if os.path.isfile(params.config):

@@ -395,15 +395,48 @@ def filter_amount(stage):
     return stage
 
 
-def get_auction_worker_configuration_path(chrono, view_value, key='api_version'):
+def get_auction_worker_configuration_path(_for, view_value, key='api_version'):
     value = view_value.get(key, '')
+    config = _for.config['main'].get(
+        view_value.get('procurementMethodType'),
+        _for.config['main']
+    )
     if value:
-        return chrono.config['main'].get(
+        path = config.get(
             'auction_worker_config_for_{}_{}'.format(key, value),
-            chrono.config['main']['auction_worker_config']
+            config.get('auction_worker_config', '')
+        )
+        if not path:
+            path = _for.config['main'].get(
+                'auction_worker_config_for_{}_{}'.format(key, value),
+                _for.config['main']['auction_worker_config']
+            )
+        return path
+    else:
+        return config.get(
+            'auction_worker_config',
+            _for.config['main']['auction_worker_config']
         )
 
-    return chrono.config['main']['auction_worker_config']
+
+def prepare_auction_worker_cmd(_for, tender_id, cmd, item,
+                               lot_id='', with_api_version=''):
+    config = _for.config['main'].get(
+        item.get('procurementMethodType'),
+        _for.config['main']
+    )
+    params = [
+        config.get(
+            'auction_worker', _for.config['main'].get('auction_worker')),
+        cmd, tender_id,
+        get_auction_worker_configuration_path(_for, item)
+    ]
+    if lot_id:
+        params += ['--lot', lot_id]
+
+    if with_api_version:
+        params += ['--with_api_version', with_api_version]
+    return params
 
 
 @implementer(IFeedItem)
