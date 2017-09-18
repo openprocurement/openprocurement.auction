@@ -44,7 +44,7 @@ entry_points = {
     'console_scripts': [
         'auctions_chronograph = openprocurement.auction.chronograph:main',
         'auctions_data_bridge = openprocurement.auction.databridge:main',
-        'auction_test = openprocurement.auction.tests.functional.main:main [test]'
+        'auction_test = openprocurement.auction.tests.main:main [test]'
     ],
     'paste.app_factory': [
         'auctions_server = openprocurement.auction.auctions_server:make_auctions_app',

@@ -97,9 +97,12 @@ class RunDispatcher(object):
             self.chronograph,
             tender_id,
             'run',
+            self.item,
             lot_id=lot_id,
             with_api_version=with_api_version
         )
+        if self.item['mode'] == 'test':
+            params += ['--auction_info_from_db', 'true']
         return params
 
 

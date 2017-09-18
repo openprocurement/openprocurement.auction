@@ -38,6 +38,4 @@ class TestChronoggraph(object):
 
     def test_shutdown(self):
         resp = self.client.get('/active_jobs')
-        assert resp.test= "Start shutdown"
-
-
+        assert resp.test == "Start shutdown"
