@@ -38,7 +38,7 @@ extras_require = {
         'robotframework-selenium2library',
         'robotframework-debuglibrary',
         'robotframework-selenium2screenshots',
-        'chromedriver==2.32.0',
+        'chromedriver',
         'webtest',
         'mock'
     ]
