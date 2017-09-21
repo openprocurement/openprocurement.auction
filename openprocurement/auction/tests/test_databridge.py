@@ -15,7 +15,7 @@ def bridge(request):
     request.cls.bridge = AuctionsDatabridge(test_config)
 
 
-class TestDatabridge(self):
+class TestDatabridge(object):
     """
     check with different data for 'plannign' 'cancel'
     with lot_id no lot_id

@@ -3,7 +3,8 @@ from webtest import TestApp
 
 from openprocurement.auction.auctions_server import auctions_server as frontend
 from openprocurement.auction.server import run_server
-from openprocurement.auction.tests.unit.utils import MockAuction, MockClient, MockLogger
+from openprocurement.auction.tests.unit.utils import MockAuction,\
+    MockClient, MockLogger
 
 
 @pytest.fixture(scope='function')
@@ -48,17 +49,13 @@ def server(request):
 @pytest.mark.usefixtures('server')
 class TestAuctionSever(object):
 
+    def test_login(self):
+        data = "invalid data here"
+        with self.client.get('/login', data=data) as resp:
+            assert resp.status == 401
 
-  def test_login(self):
-      data = "invalid data here"
-      with self.client.get('/login', data=data) as resp:
-          assert resp.status == 401
-
-      # mock patch oauth server
-      with self.client.get('/login', data=data) as resp:
-          assert resp.status == 302
-          # TODO
-          # assert  /oauth/authorize in resp.heades["location"]
+        with self.client.get('/login', data=data) as resp:
+            assert resp.status == 302
 
     # mock.path oauth server
     def test_authorized(self):
@@ -68,7 +65,7 @@ class TestAuctionSever(object):
         # TODO:
         data = bidder_data_invalid
         with self.client.post('/check_authorization', data=data) as resp:
-            assert resp.status ==  401
+            assert resp.status == 401
 
         data = bidder_data_valid
         with self.client.post('/check_authorization', data=data) as resp:
@@ -95,11 +92,12 @@ class TestAuctionSever(object):
             assert resp.json == {"status": "ok"}
 
     # mock_auction
-    def test_postbid(self)
+    def test_postbid(self):
         data = invalid_post_data
         # All possible invalid values
         with client.post('/postbid', data=data) as resp:
-            assert resp.json == {'status': 'failed', 'errors': "*See wft forms and forms.py*"}
+            assert resp.json == {'status': 'failed',
+                                 'errors': "*See wft forms and forms.py*"}
 
         with client.post('/postbid', data=data) as resp:
             assert resp.json == {'status': 'ok', 'data': data}
