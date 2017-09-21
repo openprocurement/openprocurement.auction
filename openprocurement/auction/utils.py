@@ -300,7 +300,7 @@ def calculate_hash(bidder_id, hash_secret):
 
 
 def get_database(config, master=True):
-    if config['sentinel']:
+    if config.get('sentinel', False):
         sentinal = Sentinel(config['sentinel'], socket_timeout=0.1,
                             password=config['redis_password'], db=config['redis_database'])
         if master:
