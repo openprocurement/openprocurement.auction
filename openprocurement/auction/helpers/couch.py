@@ -4,6 +4,8 @@ from urlparse import urlparse
 from couchdb import Server, Session
 from time import sleep
 
+CONSTANT_IS_TRUE = True
+
 
 def couchdb_dns_query_settings(server_url, database_name):
     parsed_url = urlparse(server_url)
@@ -43,7 +45,7 @@ def iterview(server_url, database_name, view_name, sleep_seconds=10, wrapper=Non
     start_key = 0
     options['start_key'] = start_key
     options['limit'] = 1000
-    while True:
+    while CONSTANT_IS_TRUE:
         try:
             rows = list(database.view(view_name, wrapper, **options))
         except socket.error:
