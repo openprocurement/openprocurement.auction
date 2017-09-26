@@ -3,8 +3,11 @@ from random import sample
 from urlparse import urlparse
 from couchdb import Server, Session
 from time import sleep
+import sys
+import logging
 
 CONSTANT_IS_TRUE = True
+LOGGER = logging.getLogger(__name__)
 
 
 def couchdb_dns_query_settings(server_url, database_name):
@@ -52,6 +55,11 @@ def iterview(server_url, database_name, view_name, sleep_seconds=10, wrapper=Non
             options['start_key'] = 0
             database = couchdb_dns_query_settings(server_url, database_name)
             continue
+        except Exception:
+            err_type, value, traceback = sys.exc_info()
+            LOGGER.warning('Couch error: {}; {}'.format(err_type, value))
+            raise Exception
+
         if len(rows) != 0:
             for row in rows:
                 start_key = row['key']
