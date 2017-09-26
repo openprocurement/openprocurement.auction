@@ -1,17 +1,17 @@
 import contextlib
 import json
-
 from requests import Session as Sess
-import signal, psutil
 import os
 from copy import deepcopy
 from openprocurement.auction.tests.utils import PWD
 import yaml
+from openprocurement.auction.helpers.couch import iterview
 
 
 ID = 'UA-11111'
 LOT_ID = '11111111111111111111111111111111'
-API_EXTRA = {'opt_fields': 'status,auctionPeriod,lots,procurementMethodType', 'mode': '_all_'}
+API_EXTRA = {'opt_fields': 'status,auctionPeriod,lots,procurementMethodType',
+             'mode': '_all_'}
 CONF_FILES_FOLDER = os.path.join(PWD, "unit", "data")
 
 
@@ -48,6 +48,7 @@ couch_url_parts = couch_url.split(':')[0:-1]
 couch_url_parts.append(error_port)
 test_bridge_config_error_port['main']['couch_url'] = ':'.join(couch_url_parts)
 
+
 @contextlib.contextmanager
 def put_test_doc(db, doc):
     id, rev = db.save(doc)
@@ -65,14 +66,20 @@ class TestClient(Sess):
             .get('/'.join([self.pref, url]), **kwargs)
 
 
-def kill_child_processes(parent_pid=os.getpid(), sig=signal.SIGTERM):
-    try:
-        parent = psutil.Process(parent_pid)
-    except psutil.NoSuchProcess:
-        return
-    children = parent.children(recursive=True)
-    for process in children:
-        process.send_signal(sig)
+class DummyTrue(object):
+    def __init__(self):
+        self.ind = True
+
+    def __nonzero__(self):
+        return self.ind
+
+
+def iterview_wrappper(server_url, database_name, view_name,
+                      sleep_seconds=0.4, wrapper=None, **options):
+    return iterview(server_url, database_name, view_name,
+                    sleep_seconds=sleep_seconds,
+                    wrapper=wrapper, **options)
+
 
 # Data for test with 'active.auction' status
 tender_data_templ = {'id': ID, 'status': 'active.auction'}

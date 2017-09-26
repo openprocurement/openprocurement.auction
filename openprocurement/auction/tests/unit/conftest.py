@@ -1,25 +1,27 @@
+# -*- coding: utf-8 -*-
 import json
 import logging
 import couchdb
 import datetime
-import gc
 import openprocurement.auction.databridge as databridge_module
 import pytest
-from gevent import spawn, killall, GreenletExit
-from greenlet import greenlet
+from gevent import spawn
 from openprocurement.auction import core as core_module
 from openprocurement.auction.chronograph import AuctionsChronograph
 from openprocurement.auction.databridge import AuctionsDataBridge
 from openprocurement.auction.helpers.chronograph import \
-    MAX_AUCTION_START_TIME_RESERV
+    MIN_AUCTION_START_TIME_RESERV
 from openprocurement.auction.tests.unit.utils import get_tenders_dummy
-from openprocurement.auction.tests.unit.utils import kill_child_processes
 from openprocurement.auction.worker.auction import Auction
 from openprocurement.auction.tests.utils import update_auctionPeriod, \
     AUCTION_DATA
 from openprocurement.auction.tests.unit.utils import worker_defaults, \
     test_chronograph_config, worker_defaults_file_path, test_bridge_config
 import yaml
+import openprocurement.auction.helpers.couch as couch_module
+import openprocurement.auction.chronograph as chrono_module
+from openprocurement.auction.tests.unit.utils import DummyTrue, \
+    iterview_wrappper
 
 
 LOGGER = logging.getLogger('Log For Tests')
@@ -34,10 +36,6 @@ test_log_config = {
      }
 
 logging.config.dictConfig(test_log_config)
-
-# def pytest_generate_tests(metafunc):
-#     for funcargs in getattr(metafunc.function, 'funcarglist', ()):
-#         metafunc.addcall(funcargs=funcargs)
 
 
 @pytest.fixture(scope='function')
@@ -65,41 +63,35 @@ def db(request):
 
 
 @pytest.fixture(scope='function')
-def chronograph(request):
+def chronograph(request, mocker):
     logging.config.dictConfig(test_chronograph_config)
+
+    # We use 'dummy_true' variable instead of real True and mock iterview
+    # with iterview_wrapper function to tear down the test gracefully.
+    # Without these steps iterview from previous test running continue working
+    # while next test have already been launched.
+    dummy_true = DummyTrue()
+    couch_module.CONSTANT_IS_TRUE = dummy_true
+    mocker.patch.object(chrono_module, 'iterview',
+                        side_effect=iterview_wrappper, autospec=True)
+
     chrono = AuctionsChronograph(test_chronograph_config)
-    spawn(chrono.run)
+    chrono_thread = spawn(chrono.run)
 
     def delete_chronograph():
-        chrono.server.stop()
-
-        kill_child_processes()
-
-        jobs = chrono.scheduler.get_jobs()
-        for job in jobs:
-             chrono.scheduler.remove_job(job.id)
-
-        # chrono.scheduler.shutdown()
-        # TODO: find out why the previous command causes the problems.
-        # But we can skip it as scheduler is turned off by the following block.
-
-        try:
-            killall(
-                [obj for obj in gc.get_objects() if isinstance(obj, greenlet)])
-        except GreenletExit:
-            print("Correct exception 'GreenletExit' raised.")
-        except Exception as e:
-            print("Gevent couldn't close gracefully.")
-            raise e
+        chrono.scheduler.execution_stopped = True
+        dummy_true.ind = False
+        chrono_thread.join(0.15)
+        chrono.scheduler.shutdown(True, True)
 
     request.addfinalizer(delete_chronograph)
 
-    return chrono
+    return chrono_thread
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def auction(request):
-    defaults = {'time': MAX_AUCTION_START_TIME_RESERV,
+    defaults = {'time': MIN_AUCTION_START_TIME_RESERV,
                 'delta_t': datetime.timedelta(seconds=10)}
 
     params = getattr(request, 'param', defaults)
@@ -117,9 +109,8 @@ def auction(request):
             worker_defaults=yaml.load(open(worker_defaults_file_path)),
             auction_data=json.load(auction_updated_data),
             lot_id=False)
-        yield auction_inst
 
-    auction_inst._end_auction_event.set()
+    return auction_inst
 
 
 @pytest.fixture(scope='function')
@@ -146,9 +137,11 @@ def bridge(request, mocker):
             'mock_do_until_success': mock_do_until_success}
 
 
-@pytest.fixture(scope="function")
+@pytest.yield_fixture(scope="function")
 def log_for_test(request):
     LOGGER.debug('-------- Test Start ---------')
     LOGGER.debug('Current module: {0}'.format(request.module.__name__))
     LOGGER.debug('Current test class: {0}'.format(request.cls.__name__))
     LOGGER.debug('Current test function: {0}'.format(request.function.__name__))
+    yield LOGGER
+    LOGGER.debug('-------- Test End ---------')
