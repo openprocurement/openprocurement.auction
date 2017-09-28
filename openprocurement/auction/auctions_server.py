@@ -3,7 +3,8 @@ from flask import Flask, request, abort, redirect, Response
 from json import dumps, loads
 from sse import Sse as PySse
 from systemd.journal import send
-from urlparse import urlparse, urlunparse
+from urllib import urlencode
+from urlparse import urlparse, urlunparse, parse_qs
 
 from openprocurement.auction.utils import get_mapping
 from openprocurement.auction.proxy import StreamProxy
@@ -83,7 +84,9 @@ def auctions_proxy(auction_doc_id, path):
     proxy_path = auctions_server.proxy_mappings.get(
         str(auction_doc_id),
         get_mapping,
-        (auctions_server.config['REDIS'], str(auction_doc_id), False), max_age=60
+        (auctions_server.config['REDIS'],
+         str(auction_doc_id), False),
+        max_age=60
     )
     auctions_server.logger.debug('Proxy path: {}'.format(proxy_path))
     if proxy_path:
@@ -99,9 +102,13 @@ def auctions_proxy(auction_doc_id, path):
         )
     elif path == 'login' and auction_doc_id in auctions_server.db:
         if 'X-Forwarded-For' in request.headers:
+            query_dict = parse_qs(urlparse(request.url).query)
+            query_dict['wait'] = [1]
+            new_query = urlencode(query_dict, doseq=True)
             url = urlunparse(
-                urlparse(request.url)._replace(netloc=request.headers['Host'])
+                urlparse(request.url)._replace(netloc=request.headers['Host'])._replace(query=new_query)
             ).replace('/login', '')
+            auctions_server.logger.debug('Set redirect url to {}'.format(url))
             return redirect(url)
     elif path == 'event_source':
         events_close = PySse()
