@@ -9,7 +9,7 @@ import iso8601
 from datetime import timedelta, datetime
 from apscheduler.schedulers.gevent import GeventScheduler
 from gevent.subprocess import Popen
-
+from apscheduler.schedulers import SchedulerNotRunningError
 from uuid import uuid4
 
 LOCK_RETRIES = 6
@@ -96,13 +96,20 @@ class AuctionScheduler(GeventScheduler):
     def convert_datetime(self, datetime_stamp):
         return iso8601.parse_date(datetime_stamp).astimezone(self.timezone)
 
-    def shutdown(self, SIGKILL=False):
+    def shutdown(self, SIGKILL=False, stop_chronograph=False):
         self.exit = True
         if SIGKILL:
+            if stop_chronograph:
+                self.chronograph.server.stop()
             for pid in self.processes:
                 self.logger.info("Killed {}".format(pid))
                 self.processes[pid].terminate()
-        response = super(AuctionScheduler, self).shutdown()
+        try:
+            response = super(AuctionScheduler, self).shutdown()
+        except SchedulerNotRunningError:
+            self.logger.debug('Scheduler is not running')
+            response = False
+
         self.execution_stopped = True
         return response
 
@@ -147,8 +154,7 @@ class AuctionScheduler(GeventScheduler):
         sleep(random())
         if self.use_consul:
             i = LOCK_RETRIES
-            session = self.consul.session.create(behavior='delete',
-                                                 ttl=WORKER_TIME_RUN)
+            session = self.consul.session.create(behavior='delete', ttl=ttl)
             while i > 0:
                 if self.consul.kv.put("auction_{}".format(document_id),
                                       self.server_name, acquire=session):

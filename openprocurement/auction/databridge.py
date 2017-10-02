@@ -64,15 +64,15 @@ class AuctionsDataBridge(object):
                            session=Session(retry_delays=range(10)))
         sync_design(self.db)
         self.feeder = ResourceFeeder(
-            host=self.config_get('tenders_api_server'),
+            host=self.config_get('resource_api_server'),
             resource=self.config_get('resource_name'),
-            version=self.config_get('tenders_api_version'), key='',
+            version=self.config_get('resource_api_version'), key='',
             extra_params=API_EXTRA,
             retrievers_params=DEFAULT_RETRIEVERS_PARAMS
         )
 
     def config_get(self, name):
-        return self.config.get('main').get(name)
+        return self.config['main'][name]
 
     def run(self):
         if self.re_planning:

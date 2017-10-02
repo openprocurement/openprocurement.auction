@@ -30,5 +30,5 @@ def get_active_jobs():
 @chronograph_webapp.route("/shutdown")
 def shutdown():
     if chronograph_webapp.chronograph.scheduler.running:
-        spawn(chronograph_webapp.chronograph.scheduler.shutdown, (True))
+        spawn(chronograph_webapp.chronograph.scheduler.shutdown, True)
     return dumps('Start shutdown')

@@ -1,4 +1,3 @@
-import logging
 import logging.config
 import iso8601
 
@@ -7,9 +6,6 @@ from time import mktime, time
 from gevent.subprocess import check_call
 from pkg_resources import iter_entry_points
 
-from openprocurement.auction.utils import (
-    prepare_auction_worker_cmd
-)
 from openprocurement.auction.systemd_msgs_ids import (
     DATA_BRIDGE_PLANNING_TENDER_SKIP,
     DATA_BRIDGE_PLANNING_TENDER_ALREADY_PLANNED,
@@ -20,7 +16,8 @@ from openprocurement.auction.systemd_msgs_ids import (
 )
 from openprocurement.auction.design import endDate_view, startDate_view,\
     PreAnnounce_view
-from openprocurement.auction.utils import do_until_success, prepare_auction_worker_cmd
+from openprocurement.auction.utils import do_until_success, \
+    prepare_auction_worker_cmd
 from openprocurement.auction.auctions_server import auctions_server
 from openprocurement.auction.components import AuctionComponents
 from openprocurement.auction.predicates import ProcurementMethodType
@@ -35,13 +32,14 @@ LOGGER = logging.getLogger('Openprocurement Auction')
 PKG_NAMESPACE = "openprocurement.auction.auctions"
 
 
+from openprocurement.auction.worker.auction import LOGGER
+
 components = AuctionComponents()
 components.add_predicate('procurementMethodType', ProcurementMethodType)
 components.registerUtility(auctions_server, IAuctionsServer)
 
 
 class AuctionManager(object):
-
     def __init__(self, for_):
         self.for_ = for_
         self.plugins = self.for_.config.get('main', {}).get('plugins') or []
@@ -119,7 +117,8 @@ class Planning(object):
         return self
 
     def __iter__(self):
-        if self.item['status'] == "active.auction":
+        status = self.item.get('status', None)
+        if status == "active.auction":
             if 'lots' not in self.item and 'auctionPeriod' in self.item and 'startDate' in self.item['auctionPeriod'] \
                     and 'endDate' not in self.item['auctionPeriod']:
 
@@ -133,12 +132,14 @@ class Planning(object):
                     LOGGER.info("Tender {} start date in past. Skip it for planning".format(self.item['id']),
                                 extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_TENDER_SKIP})
                     raise StopIteration
+                # TODO: Find out about the value of field tenders_ids_list
+                # TODO: It is not initialized but used.
                 if self.bridge.re_planning and self.item['id'] in self.tenders_ids_list:
                     LOGGER.info("Tender {} already planned while replanning".format(self.item['id']),
                                 extra={'MESSAGE_ID': DATA_BRIDGE_RE_PLANNING_TENDER_ALREADY_PLANNED})
                     raise StopIteration
-                elif not self.bridge.re_planning and [row.id for row in auctions_start_in_date.rows if row.id == self.item['id']]:
-                    LOGGER.info("Tender {} already planned on same date".format(self.item['id']),
+                if not self.bridge.re_planning and [row.id for row in auctions_start_in_date.rows if row.id == self.item['id']]:
+                    LOGGER.info("Tender {} already planned on the same date".format(self.item['id']),
                                 extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_TENDER_ALREADY_PLANNED})
                     raise StopIteration
                 yield ("planning", str(self.item['id']), "")
@@ -169,7 +170,7 @@ class Planning(object):
                                         extra={'MESSAGE_ID': DATA_BRIDGE_PLANNING_LOT_ALREADY_PLANNED})
                             raise StopIteration
                         yield ("planning", str(self.item["id"]), str(lot["id"]))
-        if self.item['status'] == "active.qualification" and 'lots' in self.item:
+        if status == "active.qualification" and 'lots' in self.item:
             for lot in self.item['lots']:
                 if lot["status"] == "active":
                     is_pre_announce = PreAnnounce_view(self.bridge.db)
@@ -177,7 +178,7 @@ class Planning(object):
                     if [row.id for row in is_pre_announce.rows if row.id == auction_id]:
                         yield ('announce', self.item['id'], lot['id'])
             raise StopIteration
-        if self.item['status'] == "cancelled":
+        if status == "cancelled":
             future_auctions = endDate_view(
                 self.bridge.db, startkey=time() * 1000
             )
