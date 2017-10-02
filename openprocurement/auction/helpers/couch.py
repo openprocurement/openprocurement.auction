@@ -6,7 +6,7 @@ from time import sleep
 import sys
 import logging
 
-CONSTANT_IS_TRUE = True
+TRUE = True
 LOGGER = logging.getLogger(__name__)
 
 
@@ -48,7 +48,7 @@ def iterview(server_url, database_name, view_name, sleep_seconds=10, wrapper=Non
     start_key = 0
     options['start_key'] = start_key
     options['limit'] = 1000
-    while CONSTANT_IS_TRUE:
+    while TRUE:
         try:
             rows = list(database.view(view_name, wrapper, **options))
         except socket.error:

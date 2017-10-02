@@ -1,4 +1,3 @@
-import logging
 import logging.config
 import iso8601
 
@@ -7,9 +6,6 @@ from time import mktime, time
 from gevent.subprocess import check_call
 from pkg_resources import iter_entry_points
 
-from openprocurement.auction.utils import (
-    prepare_auction_worker_cmd
-)
 from openprocurement.auction.systemd_msgs_ids import (
     DATA_BRIDGE_PLANNING_TENDER_SKIP,
     DATA_BRIDGE_PLANNING_TENDER_ALREADY_PLANNED,
@@ -20,11 +16,14 @@ from openprocurement.auction.systemd_msgs_ids import (
 )
 from openprocurement.auction.design import endDate_view, startDate_view,\
     PreAnnounce_view
-from openprocurement.auction.utils import do_until_success
+from openprocurement.auction.utils import do_until_success, \
+    prepare_auction_worker_cmd
+from openprocurement.auction.auctions_server import auctions_server
 from openprocurement.auction.components import AuctionComponents
 from openprocurement.auction.predicates import ProcurementMethodType
 from openprocurement.auction.interfaces import IAuctionsManager,\
-    IAuctionsChronograph, IAuctionDatabridge
+    IAuctionsChronograph, IAuctionDatabridge, IAuctionsServer
+
 
 SIMPLE_AUCTION_TYPE = 0
 SINGLE_LOT_AUCTION_TYPE = 1
@@ -33,12 +32,14 @@ LOGGER = logging.getLogger('Openprocurement Auction')
 PKG_NAMESPACE = "openprocurement.auction.auctions"
 
 
+from openprocurement.auction.worker.auction import LOGGER
+
 components = AuctionComponents()
 components.add_predicate('procurementMethodType', ProcurementMethodType)
+components.registerUtility(auctions_server, IAuctionsServer)
 
 
 class AuctionManager(object):
-
     def __init__(self, for_):
         self.for_ = for_
         self.plugins = self.for_.config.get('main', {}).get('plugins') or []
@@ -101,6 +102,8 @@ class RunDispatcher(object):
             lot_id=lot_id,
             with_api_version=with_api_version
         )
+        if self.item['mode'] == 'test':
+            params += ['--auction_info_from_db', 'true']
         return params
 
 

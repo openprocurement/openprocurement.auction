@@ -1,78 +1,78 @@
 {
   "data": {
-    "description": "Tender Description", 
-    "title": "Tender Title", 
+    "description": "Tender Description",
+    "title": "Tender Title",
     "minimalStep": {
-      "currency": "UAH", 
-      "amount": 35000.0, 
+      "currency": "UAH",
+      "amount": 35000.0,
       "valueAddedTaxIncluded": true
-    }, 
+    },
     "auctionPeriod": {
-      "startDate": "2017-06-28T10:32:19.233669+03:00", 
+      "startDate": "2017-06-28T10:32:19.233669+03:00",
       "endDate": null
-    }, 
+    },
     "bids": [
 	    {
-		    "date": "2014-11-19T08:22:21.726234+00:00", 
-		    "id": "d3ba84c66c9e4f34bfb33cc3c686f137", 
+		    "date": "2014-11-19T08:22:21.726234+00:00",
+		    "id": "d3ba84c66c9e4f34bfb33cc3c686f137",
 		    "value": {
-			    "currency": null, 
-			    "amount": 475000.0, 
+			    "currency": null,
+			    "amount": 475000.0,
 			    "valueAddedTaxIncluded": true
 		    }
-	    }, 
+	    },
 	    {
-		    "date": "2014-11-19T08:22:24.038426+00:00", 
-		    "id": "5675acc9232942e8940a034994ad883e", 
+		    "date": "2014-11-19T08:22:24.038426+00:00",
+		    "id": "5675acc9232942e8940a034994ad883e",
 		    "value": {
-			    "currency": null, 
-			    "amount": 480000.0, 
+			    "currency": null,
+			    "amount": 480000.0,
 			    "valueAddedTaxIncluded": true
 		    }
 	    }
-    ], 
+    ],
     "procurementMethodType": "belowThreshold",
     "value": {
-      "currency": "UAH", 
-      "amount": 500000.0, 
+      "currency": "UAH",
+      "amount": 500000.0,
       "valueAddedTaxIncluded": true
-    }, 
-    "tenderID": "UA-11111", 
+    },
+    "tenderID": "UA-11111",
     "items": [
       {
         "unit": {
           "name": "item"
-        }, 
+        },
         "additionalClassifications": [
           {
-            "scheme": "\u0414\u041a\u041f\u041f", 
-            "id": "55.51.10.300", 
+            "scheme": "\u0414\u041a\u041f\u041f",
+            "id": "55.51.10.300",
             "description": "\u041f\u043e\u0441\u043b\u0443\u0433\u0438 \u0448\u043a\u0456\u043b\u044c\u043d\u0438\u0445 \u0457\u0434\u0430\u043b\u0435\u043d\u044c"
           }
-        ], 
-        "description": "\u041f\u043e\u0441\u043b\u0443\u0433\u0438 \u0448\u043a\u0456\u043b\u044c\u043d\u0438\u0445 \u0457\u0434\u0430\u043b\u0435\u043d\u044c", 
+        ],
+        "description": "\u041f\u043e\u0441\u043b\u0443\u0433\u0438 \u0448\u043a\u0456\u043b\u044c\u043d\u0438\u0445 \u0457\u0434\u0430\u043b\u0435\u043d\u044c",
         "classification": {
-          "scheme": "CPV", 
-          "id": "55523100-3", 
+          "scheme": "CPV",
+          "id": "55523100-3",
           "description": "\u041f\u043e\u0441\u043b\u0443\u0433\u0438 \u0437 \u0445\u0430\u0440\u0447\u0443\u0432\u0430\u043d\u043d\u044f \u0443 \u0448\u043a\u043e\u043b\u0430\u0445"
-        }, 
+        },
         "quantity": 5
       }
-    ], 
-    "dateModified": "2014-11-19T08:22:24.866669+00:00", 
+    ],
+    "dateModified": "2014-11-19T08:22:24.866669+00:00",
     "procuringEntity": {
       "identifier": {
-        "scheme": "https://ns.openprocurement.org/ua/edrpou", 
-        "id": "21725150", 
-        "uri": "http://sch10.edu.vn.ua/", 
+        "scheme": "https://ns.openprocurement.org/ua/edrpou",
+        "id": "21725150",
+        "uri": "http://sch10.edu.vn.ua/",
         "legalName": "\u0417\u0430\u043a\u043b\u0430\u0434 \"\u0417\u0430\u0433\u0430\u043b\u044c\u043d\u043e\u043e\u0441\u0432\u0456\u0442\u043d\u044f \u0448\u043a\u043e\u043b\u0430 \u0406-\u0406\u0406\u0406 \u0441\u0442\u0443\u043f\u0435\u043d\u0456\u0432 \u2116 10 \u0412\u0456\u043d\u043d\u0438\u0446\u044c\u043a\u043e\u0457 \u043c\u0456\u0441\u044c\u043a\u043e\u0457 \u0440\u0430\u0434\u0438\""
-      }, 
-      "name": "\u0417\u041e\u0421\u0428 #10 \u043c.\u0412\u0456\u043d\u043d\u0438\u0446\u0456", 
+      },
+      "name": "\u0417\u041e\u0421\u0428 #10 \u043c.\u0412\u0456\u043d\u043d\u0438\u0446\u0456",
       "address": {
-        "postalCode": "21027", 
-        "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430", 
-        "streetAddress": "\u0432\u0443\u043b. \u0421\u0442\u0430\u0445\u0443\u0440\u0441\u044c\u043a\u043e\u0433\u043e. 22", 
-        "region": "\u043c. \u0412\u0456\u043d\u043d\u0438\u0446\u044f", 
+        "postalCode": "21027",
+        "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430",
+        "streetAddress": "\u0432\u0443\u043b. \u0421\u0442\u0430\u0445\u0443\u0440\u0441\u044c\u043a\u043e\u0433\u043e. 22",
+        "region": "\u043c. \u0412\u0456\u043d\u043d\u0438\u0446\u044f",
         "locality": "\u043c. \u0412\u0456\u043d\u043d\u0438\u0446\u044f"
       }
     }

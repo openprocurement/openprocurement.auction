@@ -3,7 +3,7 @@ main:
   tenders_api_version: "2.3"
   tenders_api_token: auction
   couch_url: http://admin:zaq1xsw2@0.0.0.0:9000/
-  auctions_db: auctions
+  auctions_db: database
   timezone: Europe/Kiev
   auction_worker: /path/to/bin/auction_worker
   auction_worker_config: /path/to/auction_worker_defaults.yaml

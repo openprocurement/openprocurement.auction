@@ -3,7 +3,7 @@ import json
 import logging
 import couchdb
 import datetime
-import openprocurement.auction.databridge as databridge_module
+from openprocurement.auction.databridge import ResourceFeeder
 import pytest
 from gevent import spawn
 from openprocurement.auction import core as core_module
@@ -11,17 +11,16 @@ from openprocurement.auction.chronograph import AuctionsChronograph
 from openprocurement.auction.databridge import AuctionsDataBridge
 from openprocurement.auction.helpers.chronograph import \
     MIN_AUCTION_START_TIME_RESERV
-from openprocurement.auction.tests.unit.utils import get_tenders_dummy
+from openprocurement.auction.tests.utils import get_tenders_dummy
 from openprocurement.auction.worker.auction import Auction
 from openprocurement.auction.tests.utils import update_auctionPeriod, \
     AUCTION_DATA
-from openprocurement.auction.tests.unit.utils import worker_defaults, \
+from openprocurement.auction.tests.utils import worker_defaults, \
     test_chronograph_config, worker_defaults_file_path, test_bridge_config
 import yaml
 import openprocurement.auction.helpers.couch as couch_module
 import openprocurement.auction.chronograph as chrono_module
-from openprocurement.auction.tests.unit.utils import DummyTrue, \
-    iterview_wrappper
+from openprocurement.auction.tests.utils import DummyTrue, iterview_wrappper
 
 
 LOGGER = logging.getLogger('Log For Tests')
@@ -71,7 +70,7 @@ def chronograph(request, mocker):
     # Without these steps iterview from previous test running continue working
     # while next test have already been launched.
     dummy_true = DummyTrue()
-    couch_module.CONSTANT_IS_TRUE = dummy_true
+    couch_module.TRUE = dummy_true
     mocker.patch.object(chrono_module, 'iterview',
                         side_effect=iterview_wrappper, autospec=True)
 
@@ -119,8 +118,8 @@ def bridge(request, mocker):
     tenders = params.get('tenders', [])
     bridge_config = params.get('bridge_config', test_bridge_config)
 
-    mock_get_tenders = \
-        mocker.patch.object(databridge_module, 'get_tenders',
+    mock_resource_items = \
+        mocker.patch.object(ResourceFeeder, 'get_resource_items',
                             side_effect=get_tenders_dummy(tenders),
                             autospec=True)
 
@@ -128,12 +127,13 @@ def bridge(request, mocker):
         mocker.patch.object(core_module, 'do_until_success', autospec=True)
 
     bridge_inst = AuctionsDataBridge(bridge_config)
-    spawn(bridge_inst.run)
+    thread = spawn(bridge_inst.run)
 
     return {'bridge': bridge_inst,
+            'bridge_thread': thread,
             'bridge_config': bridge_config,
             'tenders': tenders,
-            'mock_get_tenders': mock_get_tenders,
+            'mock_resource_items': mock_resource_items,
             'mock_do_until_success': mock_do_until_success}
 
 
@@ -142,6 +142,7 @@ def log_for_test(request):
     LOGGER.debug('-------- Test Start ---------')
     LOGGER.debug('Current module: {0}'.format(request.module.__name__))
     LOGGER.debug('Current test class: {0}'.format(request.cls.__name__))
-    LOGGER.debug('Current test function: {0}'.format(request.function.__name__))
+    LOGGER.debug('Current test function: {0}'
+                 .format(request.function.__name__))
     yield LOGGER
     LOGGER.debug('-------- Test End ---------')

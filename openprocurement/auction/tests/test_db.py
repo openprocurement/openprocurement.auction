@@ -3,7 +3,8 @@ import uuid
 from couchdb import Server 
 
 from openprocurement.auction.design import sync_design_chronograph, sync_design
-from openprocurement.auction.tests.unit.utils import test_public_document  , put_test_doc
+from openprocurement.auction.tests.utils import test_public_document, \
+    put_test_doc
 
 
 SERVER = Server('http://admin:zaq1xsw2@127.0.0.1:9000')
@@ -21,7 +22,7 @@ def db(request):
 
 
 @pytest.mark.usefixtures('db')
-class TestViews(object):
+class TemplateTestViews(object):
 
     def test_chronograph_view(self):
         with put_test_doc(self.db, test_public_document):

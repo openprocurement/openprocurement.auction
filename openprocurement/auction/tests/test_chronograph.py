@@ -2,7 +2,7 @@ import pytest
 from openprocurement.auction.helpers.chronograph \
     import MAX_AUCTION_START_TIME_RESERV
 import datetime
-from openprocurement.auction.tests.unit.utils import job_is_added, \
+from openprocurement.auction.tests.utils import job_is_added, \
     job_is_not_added, job_is_active, job_is_not_active
 from time import sleep as blocking_sleep
 

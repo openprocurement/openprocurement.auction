@@ -1,81 +1,81 @@
 {
   "data": {
-    "description": "Tender Description", 
-    "title": "Tender Title", 
+    "description": "Tender Description",
+    "title": "Tender Title",
     "minimalStep": {
-      "currency": "UAH", 
-      "amount": 64800, 
+      "currency": "UAH",
+      "amount": 64800,
       "valueAddedTaxIncluded": false
-    }, 
+    },
     "items": [
       {
-        "relatedLot": "aee0feec3eda4c85bad28eddd78dc3e6", 
-        "description": "\u041a\u0430\u043f\u0456\u0442\u0430\u043b\u044c\u043d\u043e \u0432\u0456\u0434\u0440\u0435\u043c\u043e\u043d\u0442\u043e\u0432\u0430\u043d\u0438\u0439 \u043a\u043e\u043c\u0431\u0430\u0439\u043d  \u041a\u04281\u041a\u0413\u0423 00.00.000-51\u0420/33 (\u043b\u0456\u0432\u0438\u0439) \u0437 \u0434\u043e\u0434\u0430\u0442\u043a\u043e\u0432\u0438\u043c \u043a\u043e\u043c\u043f\u043b\u0435\u043a\u0442\u043e\u043c \u0437\u0430\u043f\u0430\u0441\u043d\u0438\u0445 \u0447\u0430\u0441\u0442\u0438\u043d \u0443 \u0441\u043a\u043b\u0430\u0434\u0456: -  \u0433\u0456\u0434\u0440\u043e\u0431\u043b\u043e\u043a \u0434\u0438\u0441\u0442\u0430\u043d\u0446\u0456\u0439\u043d\u043e\u0433\u043e \u0443\u043f\u0440\u0430\u0432\u043b\u0456\u043d\u043d\u044f \u0413404.12.000\u0410-03 - 1\u0448\u0442.; -  \u0432\u0430\u043b-\u0448\u0435\u0441\u0442\u0435\u0440\u043d\u044f 1\u0413405.05.001 - 1 \u0448\u0442.; -  \u0432\u0442\u0443\u043b\u043a\u0430-\u0434\u0438\u0441\u0442\u0430\u043d\u0446\u0456\u0439\u043d\u0430 1\u0413405.05.011-1 \u0448\u0442.; - \u0433\u0456\u0434\u0440\u043e\u043c\u043e\u0442\u043e\u0440 \u0414\u041f 510.000 - 1 \u0448\u0442.; - \u043d\u0430\u0441\u043e\u0441 \u041d\u041f 120.000-1 \u0448\u0442.; - \u043d\u0430\u0441\u043e\u0441 210.12.06.05-1 \u0448\u0442.; - \u0432\u0430\u043b-\u0448\u0435\u0441\u0442\u0435\u0440\u043d\u044f \u042096\u041d.01.00.028 - 1 \u0448\u0442.; - \u0432\u0430\u043b-\u0448\u0435\u0441\u0442\u0435\u0440\u043d\u044f \u042096\u041c.01.00.017 - 1 \u0448\u0442.; - \u0433\u0456\u0434\u0440\u043e\u0431\u043b\u043e\u043a 1\u041a101\u0423.35.00.090 - 1 \u0448\u0442.; - \u0437\u2019\u0454\u0434\u043d\u0443\u0432\u0430\u0447  \u0421\u041d\u0412-250\u041c-\u0412\u0412-\u0425\u041b5,1140\u0412 - 1 \u0448\u0442.; - \u0432\u0456\u0441\u044c 2 \u0420\u041a\u042313.46.00.002 - 1 \u0448\u0442.; - \u043a\u043e\u043b\u0435\u0441\u043e \u0446\u0435\u0432\u043e\u0447\u043d\u0435 2 \u0420\u041a\u042313.46.01.001- 1 \u0448\u0442.", 
+        "relatedLot": "aee0feec3eda4c85bad28eddd78dc3e6",
+        "description": "\u041a\u0430\u043f\u0456\u0442\u0430\u043b\u044c\u043d\u043e \u0432\u0456\u0434\u0440\u0435\u043c\u043e\u043d\u0442\u043e\u0432\u0430\u043d\u0438\u0439 \u043a\u043e\u043c\u0431\u0430\u0439\u043d  \u041a\u04281\u041a\u0413\u0423 00.00.000-51\u0420/33 (\u043b\u0456\u0432\u0438\u0439) \u0437 \u0434\u043e\u0434\u0430\u0442\u043a\u043e\u0432\u0438\u043c \u043a\u043e\u043c\u043f\u043b\u0435\u043a\u0442\u043e\u043c \u0437\u0430\u043f\u0430\u0441\u043d\u0438\u0445 \u0447\u0430\u0441\u0442\u0438\u043d \u0443 \u0441\u043a\u043b\u0430\u0434\u0456: -  \u0433\u0456\u0434\u0440\u043e\u0431\u043b\u043e\u043a \u0434\u0438\u0441\u0442\u0430\u043d\u0446\u0456\u0439\u043d\u043e\u0433\u043e \u0443\u043f\u0440\u0430\u0432\u043b\u0456\u043d\u043d\u044f \u0413404.12.000\u0410-03 - 1\u0448\u0442.; -  \u0432\u0430\u043b-\u0448\u0435\u0441\u0442\u0435\u0440\u043d\u044f 1\u0413405.05.001 - 1 \u0448\u0442.; -  \u0432\u0442\u0443\u043b\u043a\u0430-\u0434\u0438\u0441\u0442\u0430\u043d\u0446\u0456\u0439\u043d\u0430 1\u0413405.05.011-1 \u0448\u0442.; - \u0433\u0456\u0434\u0440\u043e\u043c\u043e\u0442\u043e\u0440 \u0414\u041f 510.000 - 1 \u0448\u0442.; - \u043d\u0430\u0441\u043e\u0441 \u041d\u041f 120.000-1 \u0448\u0442.; - \u043d\u0430\u0441\u043e\u0441 210.12.06.05-1 \u0448\u0442.; - \u0432\u0430\u043b-\u0448\u0435\u0441\u0442\u0435\u0440\u043d\u044f \u042096\u041d.01.00.028 - 1 \u0448\u0442.; - \u0432\u0430\u043b-\u0448\u0435\u0441\u0442\u0435\u0440\u043d\u044f \u042096\u041c.01.00.017 - 1 \u0448\u0442.; - \u0433\u0456\u0434\u0440\u043e\u0431\u043b\u043e\u043a 1\u041a101\u0423.35.00.090 - 1 \u0448\u0442.; - \u0437\u2019\u0454\u0434\u043d\u0443\u0432\u0430\u0447  \u0421\u041d\u0412-250\u041c-\u0412\u0412-\u0425\u041b5,1140\u0412 - 1 \u0448\u0442.; - \u0432\u0456\u0441\u044c 2 \u0420\u041a\u042313.46.00.002 - 1 \u0448\u0442.; - \u043a\u043e\u043b\u0435\u0441\u043e \u0446\u0435\u0432\u043e\u0447\u043d\u0435 2 \u0420\u041a\u042313.46.01.001- 1 \u0448\u0442.",
         "classification": {
-          "scheme": "CPV", 
-          "description": "\u0412\u0440\u0443\u0431\u043e\u0432\u0456 \u0442\u0430 \u0442\u0443\u043d\u0435\u043b\u0435\u043f\u0440\u043e\u0445\u0456\u0434\u043d\u0456, \u0431\u0443\u0440\u0438\u043b\u044c\u043d\u0456 \u0447\u0438 \u043f\u0440\u043e\u0445\u0456\u0434\u043d\u0438\u0446\u044c\u043a\u0456 \u043c\u0430\u0448\u0438\u043d\u0438 \u0434\u043b\u044f \u0434\u043e\u0431\u0443\u0432\u0430\u043d\u043d\u044f \u0432\u0443\u0433\u0456\u043b\u043b\u044f \u0447\u0438 \u0433\u0456\u0440\u0441\u044c\u043a\u0438\u0445 \u043f\u043e\u0440\u0456\u0434", 
+          "scheme": "CPV",
+          "description": "\u0412\u0440\u0443\u0431\u043e\u0432\u0456 \u0442\u0430 \u0442\u0443\u043d\u0435\u043b\u0435\u043f\u0440\u043e\u0445\u0456\u0434\u043d\u0456, \u0431\u0443\u0440\u0438\u043b\u044c\u043d\u0456 \u0447\u0438 \u043f\u0440\u043e\u0445\u0456\u0434\u043d\u0438\u0446\u044c\u043a\u0456 \u043c\u0430\u0448\u0438\u043d\u0438 \u0434\u043b\u044f \u0434\u043e\u0431\u0443\u0432\u0430\u043d\u043d\u044f \u0432\u0443\u0433\u0456\u043b\u043b\u044f \u0447\u0438 \u0433\u0456\u0440\u0441\u044c\u043a\u0438\u0445 \u043f\u043e\u0440\u0456\u0434",
           "id": "43120000-0"
-        }, 
-        "description_en": "Capitally repaired combine KSH1KHU 00.00.000-51R / 33 (left) with an additional set of spare parts in stock: - Hydraulic remote control H404.12.000A-03 - 1pc .; - shaft gear 1H405.05.001 - 1 pc .; - plug-1H405.05.011-1 remote pcs .; - hydraulic SE 510.00", 
+        },
+        "description_en": "Capitally repaired combine KSH1KHU 00.00.000-51R / 33 (left) with an additional set of spare parts in stock: - Hydraulic remote control H404.12.000A-03 - 1pc .; - shaft gear 1H405.05.001 - 1 pc .; - plug-1H405.05.011-1 remote pcs .; - hydraulic SE 510.00",
         "deliveryAddress": {
-          "postalCode": "85323", 
-          "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430", 
-          "streetAddress": "\u0421\u043e\u0431\u043e\u0440\u043d\u0430,1", 
-          "region": "\u0414\u043e\u043d\u0435\u0446\u044c\u043a\u0430 \u043e\u0431\u043b.", 
+          "postalCode": "85323",
+          "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430",
+          "streetAddress": "\u0421\u043e\u0431\u043e\u0440\u043d\u0430,1",
+          "region": "\u0414\u043e\u043d\u0435\u0446\u044c\u043a\u0430 \u043e\u0431\u043b.",
           "locality": "\u041c\u0438\u0440\u043d\u043e\u0433\u0440\u0430\u0434 (\u0414\u0438\u043c\u0438\u0442\u0440\u0456\u0432)"
-        }, 
+        },
         "deliveryDate": {
           "endDate": "2018-06-30T00:00:00+03:00"
-        }, 
-        "id": "d6571085020c4421ac6e4ded3bec6424", 
+        },
+        "id": "d6571085020c4421ac6e4ded3bec6424",
         "unit": {
-          "code": "H87", 
+          "code": "H87",
           "name": "\u0448\u0442"
-        }, 
+        },
         "quantity": 1
-      }, 
+      },
       {
-        "relatedLot": "aee0feec3eda4c85bad28eddd78dc3e6", 
-        "description": "\u041a\u0430\u043f\u0456\u0442\u0430\u043b\u044c\u043d\u043e \u0432\u0456\u0434\u0440\u0435\u043c\u043e\u043d\u0442\u043e\u0432\u0430\u043d\u0438\u0439 \u041a\u0428 1 \u041a\u0413\u042300.00.000-50\u0420/34 (\u043f\u0440\u0430\u0432\u0438\u0439)", 
+        "relatedLot": "aee0feec3eda4c85bad28eddd78dc3e6",
+        "description": "\u041a\u0430\u043f\u0456\u0442\u0430\u043b\u044c\u043d\u043e \u0432\u0456\u0434\u0440\u0435\u043c\u043e\u043d\u0442\u043e\u0432\u0430\u043d\u0438\u0439 \u041a\u0428 1 \u041a\u0413\u042300.00.000-50\u0420/34 (\u043f\u0440\u0430\u0432\u0438\u0439)",
         "classification": {
-          "scheme": "CPV", 
-          "description": "\u0412\u0440\u0443\u0431\u043e\u0432\u0456 \u0442\u0430 \u0442\u0443\u043d\u0435\u043b\u0435\u043f\u0440\u043e\u0445\u0456\u0434\u043d\u0456, \u0431\u0443\u0440\u0438\u043b\u044c\u043d\u0456 \u0447\u0438 \u043f\u0440\u043e\u0445\u0456\u0434\u043d\u0438\u0446\u044c\u043a\u0456 \u043c\u0430\u0448\u0438\u043d\u0438 \u0434\u043b\u044f \u0434\u043e\u0431\u0443\u0432\u0430\u043d\u043d\u044f \u0432\u0443\u0433\u0456\u043b\u043b\u044f \u0447\u0438 \u0433\u0456\u0440\u0441\u044c\u043a\u0438\u0445 \u043f\u043e\u0440\u0456\u0434", 
+          "scheme": "CPV",
+          "description": "\u0412\u0440\u0443\u0431\u043e\u0432\u0456 \u0442\u0430 \u0442\u0443\u043d\u0435\u043b\u0435\u043f\u0440\u043e\u0445\u0456\u0434\u043d\u0456, \u0431\u0443\u0440\u0438\u043b\u044c\u043d\u0456 \u0447\u0438 \u043f\u0440\u043e\u0445\u0456\u0434\u043d\u0438\u0446\u044c\u043a\u0456 \u043c\u0430\u0448\u0438\u043d\u0438 \u0434\u043b\u044f \u0434\u043e\u0431\u0443\u0432\u0430\u043d\u043d\u044f \u0432\u0443\u0433\u0456\u043b\u043b\u044f \u0447\u0438 \u0433\u0456\u0440\u0441\u044c\u043a\u0438\u0445 \u043f\u043e\u0440\u0456\u0434",
           "id": "43120000-0"
-        }, 
-        "description_en": "Capitally repaired KHU00.00.000-50R SH 1/34 (right)", 
+        },
+        "description_en": "Capitally repaired KHU00.00.000-50R SH 1/34 (right)",
         "deliveryAddress": {
-          "postalCode": "85323", 
-          "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430", 
-          "streetAddress": "\u0421\u043e\u0431\u043e\u0440\u043d\u0430,1", 
-          "region": "\u0414\u043e\u043d\u0435\u0446\u044c\u043a\u0430 \u043e\u0431\u043b.", 
+          "postalCode": "85323",
+          "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430",
+          "streetAddress": "\u0421\u043e\u0431\u043e\u0440\u043d\u0430,1",
+          "region": "\u0414\u043e\u043d\u0435\u0446\u044c\u043a\u0430 \u043e\u0431\u043b.",
           "locality": "\u041c\u0438\u0440\u043d\u043e\u0433\u0440\u0430\u0434 (\u0414\u0438\u043c\u0438\u0442\u0440\u0456\u0432)"
-        }, 
+        },
         "deliveryDate": {
           "endDate": "2018-06-30T00:00:00+03:00"
-        }, 
-        "id": "367f97dbf9bb4ad8817a0d74fa094833", 
+        },
+        "id": "367f97dbf9bb4ad8817a0d74fa094833",
         "unit": {
-          "code": "H87", 
+          "code": "H87",
           "name": "\u0448\u0442"
-        }, 
+        },
         "quantity": 1
       }
-    ], 
+    ],
     "bids": [
       {
         "value": {
-          "currency": null, 
-          "amount": 475000.0, 
+          "currency": null,
+          "amount": 475000.0,
           "valueAddedTaxIncluded": true
-        }, 
-        "id": "d3ba84c66c9e4f34bfb33cc3c686f137", 
+        },
+        "id": "d3ba84c66c9e4f34bfb33cc3c686f137",
         "lotValues": [
           {
-            "date": "2015-11-01T12:43:12.482645+02:00", 
-            "relatedLot": "aee0feec3eda4c85bad28eddd78dc3e6", 
+            "date": "2015-11-01T12:43:12.482645+02:00",
+            "relatedLot": "aee0feec3eda4c85bad28eddd78dc3e6",
             "value": {
-              "currency": "UAH", 
-              "amount": 474000.0, 
+              "currency": "UAH",
+              "amount": 474000.0,
               "valueAddedTaxIncluded": true
             }
           }
@@ -83,80 +83,80 @@
       },
       {
         "value": {
-          "currency": null, 
-          "amount": 475000.0, 
+          "currency": null,
+          "amount": 475000.0,
           "valueAddedTaxIncluded": true
-        }, 
-        "id": "5675acc9232942e8940a034994ad883e", 
+        },
+        "id": "5675acc9232942e8940a034994ad883e",
         "lotValues": [
           {
-            "date": "2015-11-02T12:43:13.482645+02:00", 
-            "relatedLot": "aee0feec3eda4c85bad28eddd78dc3e6", 
+            "date": "2015-11-02T12:43:13.482645+02:00",
+            "relatedLot": "aee0feec3eda4c85bad28eddd78dc3e6",
             "value": {
-              "currency": "UAH", 
-              "amount": 473000.0, 
+              "currency": "UAH",
+              "amount": 473000.0,
               "valueAddedTaxIncluded": true
             }
           }
         ]
       }
-    ], 
+    ],
     "value": {
-      "currency": "UAH", 
-      "amount": 29145000, 
+      "currency": "UAH",
+      "amount": 29145000,
       "valueAddedTaxIncluded": false
-    }, 
+    },
     "lots": [
       {
-        "status": "active", 
-        "description": "", 
-        "title": "\u041a\u0430\u043f\u0456\u0442\u0430\u043b\u044c\u043d\u043e \u0432\u0456\u0434\u0440\u0435\u043c\u043e\u043d\u0442\u043e\u0432\u0430\u043d\u0438\u0439 \u043a\u043e\u043c\u0431\u0430\u0439\u043d  \u041a\u04281\u041a\u0413\u0423 00.00.000-51\u0420/33 (\u043b\u0456\u0432\u0438\u0439) \u0437 \u0434\u043e\u0434\u0430\u0442\u043a\u043e\u0432\u0438\u043c \u043a\u043e\u043c\u043f\u043b\u0435\u043a\u0442\u043e\u043c \u0437\u0430\u043f\u0430\u0441\u043d\u0438\u0445 \u0447\u0430\u0441\u0442\u0438\u043d", 
+        "status": "active",
+        "description": "",
+        "title": "\u041a\u0430\u043f\u0456\u0442\u0430\u043b\u044c\u043d\u043e \u0432\u0456\u0434\u0440\u0435\u043c\u043e\u043d\u0442\u043e\u0432\u0430\u043d\u0438\u0439 \u043a\u043e\u043c\u0431\u0430\u0439\u043d  \u041a\u04281\u041a\u0413\u0423 00.00.000-51\u0420/33 (\u043b\u0456\u0432\u0438\u0439) \u0437 \u0434\u043e\u0434\u0430\u0442\u043a\u043e\u0432\u0438\u043c \u043a\u043e\u043c\u043f\u043b\u0435\u043a\u0442\u043e\u043c \u0437\u0430\u043f\u0430\u0441\u043d\u0438\u0445 \u0447\u0430\u0441\u0442\u0438\u043d",
         "minimalStep": {
-          "currency": "UAH", 
-          "amount": 80800, 
+          "currency": "UAH",
+          "amount": 80800,
           "valueAddedTaxIncluded": false
-        }, 
+        },
         "auctionPeriod": {
-          "startDate": "2017-06-28T13:19:40.465234+03:00", 
+          "startDate": "2017-06-28T13:19:40.465234+03:00",
           "shouldStartAfter": "2017-06-25T00:00:00+03:00"
-        }, 
-        "title_en": "Capitally repaired combine KSH1KHU 00.00.000-51R / 33 (left) with an additional set of spare parts", 
-        "description_en": "", 
-        "auctionUrl": "http://localhost:9001/tenders/22222222222222222222222222222222_aee0feec3eda4c85bad28eddd78dc3e6", 
+        },
+        "title_en": "Capitally repaired combine KSH1KHU 00.00.000-51R / 33 (left) with an additional set of spare parts",
+        "description_en": "",
+        "auctionUrl": "http://localhost:9001/tenders/22222222222222222222222222222222_aee0feec3eda4c85bad28eddd78dc3e6",
         "value": {
-          "currency": "UAH", 
-          "amount": 16175000, 
+          "currency": "UAH",
+          "amount": 16175000,
           "valueAddedTaxIncluded": false
-        }, 
-        "date": "2017-05-16T15:45:03.247278+03:00", 
+        },
+        "date": "2017-05-16T15:45:03.247278+03:00",
         "id": "aee0feec3eda4c85bad28eddd78dc3e6"
       }
-    ], 
-    "tenderID": "UA-12345", 
-    "dateModified": "2017-06-26T11:27:21.478848+03:00", 
+    ],
+    "tenderID": "UA-12345",
+    "dateModified": "2017-06-26T11:27:21.478848+03:00",
     "procuringEntity": {
-      "kind": "general", 
-      "name": "\u0414\u0435\u0440\u0436\u0430\u0432\u043d\u0435 \u043f\u0456\u0434\u043f\u0440\u0438\u0454\u043c\u0441\u0442\u0432\u043e \"\u041a\u0440\u0430\u0441\u043d\u043e\u0430\u0440\u043c\u0456\u0439\u0441\u044c\u043a\u0432\u0443\u0433\u0456\u043b\u043b\u044f\"", 
+      "kind": "general",
+      "name": "\u0414\u0435\u0440\u0436\u0430\u0432\u043d\u0435 \u043f\u0456\u0434\u043f\u0440\u0438\u0454\u043c\u0441\u0442\u0432\u043e \"\u041a\u0440\u0430\u0441\u043d\u043e\u0430\u0440\u043c\u0456\u0439\u0441\u044c\u043a\u0432\u0443\u0433\u0456\u043b\u043b\u044f\"",
       "address": {
-        "postalCode": "85323", 
-        "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430", 
-        "streetAddress": "\u0414\u041e\u041d\u0415\u0426\u042c\u041a\u0410\u042f \u041e\u0411\u041b, \u0433.\u0414\u0438\u043c\u0438\u0442\u0440\u043e\u0432 ,\u0443\u043b.\u0412\u0430\u0442\u0443\u0442\u0438\u043d\u0430 1", 
-        "region": "\u0414\u043e\u043d\u0435\u0446\u044c\u043a\u0430 \u043e\u0431\u043b.", 
+        "postalCode": "85323",
+        "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430",
+        "streetAddress": "\u0414\u041e\u041d\u0415\u0426\u042c\u041a\u0410\u042f \u041e\u0411\u041b, \u0433.\u0414\u0438\u043c\u0438\u0442\u0440\u043e\u0432 ,\u0443\u043b.\u0412\u0430\u0442\u0443\u0442\u0438\u043d\u0430 1",
+        "region": "\u0414\u043e\u043d\u0435\u0446\u044c\u043a\u0430 \u043e\u0431\u043b.",
         "locality": "\u0414\u043e\u043d\u0435\u0446\u044c\u043a"
-      }, 
+      },
       "contactPoint": {
-        "email": "tender_dp_ku@ukr.net", 
-        "name_en": "\u0420\u0443\u0434\u0430 \u0422\u0435\u0442\u044f\u043d\u0430 ", 
-        "telephone": "+380623964065", 
-        "availableLanguage": "uk", 
+        "email": "tender_dp_ku@ukr.net",
+        "name_en": "\u0420\u0443\u0434\u0430 \u0422\u0435\u0442\u044f\u043d\u0430 ",
+        "telephone": "+380623964065",
+        "availableLanguage": "uk",
         "name": "\u0420\u0443\u0434\u0430 \u0422\u0435\u0442\u044f\u043d\u0430 "
-      }, 
+      },
       "identifier": {
-        "scheme": "UA-EDR", 
-        "legalName_en": "S\u041eE \"Krasnoarmeyskugol\"", 
-        "id": "32087941", 
+        "scheme": "UA-EDR",
+        "legalName_en": "S\u041eE \"Krasnoarmeyskugol\"",
+        "id": "32087941",
         "legalName": "\u0414\u0435\u0440\u0436\u0430\u0432\u043d\u0435 \u043f\u0456\u0434\u043f\u0440\u0438\u0454\u043c\u0441\u0442\u0432\u043e \"\u041a\u0440\u0430\u0441\u043d\u043e\u0430\u0440\u043c\u0456\u0439\u0441\u044c\u043a\u0432\u0443\u0433\u0456\u043b\u043b\u044f\""
-      }, 
+      },
       "name_en": "S\u041eE \"Krasnoarmeyskugol\""
     }
   }

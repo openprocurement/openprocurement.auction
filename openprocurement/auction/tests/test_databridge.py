@@ -4,18 +4,17 @@ from gevent import monkey
 monkey.patch_all()
 
 import logging
-from gevent import sleep
 from mock import MagicMock, call
 import pytest
 from openprocurement.auction.databridge import AuctionsDataBridge
 from openprocurement.auction.utils import FeedItem
-from openprocurement.auction.tests.unit.utils import test_bridge_config, \
+from openprocurement.auction.tests.utils import test_bridge_config, \
     test_bridge_config_error_port
 from urlparse import urljoin
 from pytest import raises
 from copy import deepcopy
 import openprocurement.auction.databridge as databridge_module
-from openprocurement.auction.tests.unit.utils import \
+from openprocurement.auction.tests.utils import \
     tender_data_templ, API_EXTRA, ID, tender_data_cancelled, LOT_ID, \
     tender_data_active_qualification, tender_data_active_auction
 from openprocurement.auction import core as core_module
@@ -29,9 +28,10 @@ LOGGER.setLevel(logging.DEBUG)
 class TestDatabridgeConfig(object):
     def test_config_init(self, db, bridge):
         bridge_inst = bridge['bridge']
-        assert 'tenders_api_server' in bridge_inst.config['main']
-        assert 'tenders_api_version' in bridge_inst.config['main']
-        assert 'tenders_api_token' in bridge_inst.config['main']
+        assert 'resource_api_server' in bridge_inst.config['main']
+        assert 'resource_api_version' in bridge_inst.config['main']
+        assert 'resource_api_token' in bridge_inst.config['main']
+        assert 'resource_name' in bridge_inst.config['main']
         assert 'couch_url' in bridge_inst.config['main']
         assert 'auctions_db' in bridge_inst.config['main']
         assert 'timezone' in bridge_inst.config['main']
@@ -70,10 +70,10 @@ class TestDataBridgeRunLogInformation(object):
         """
         Test check the log messages at bridge start
         """
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
         log_strings = self.log_capture_string.getvalue().split('\n')
-        assert (log_strings[0] == 'Start Auctions Bridge')
-        assert (log_strings[1] == 'Start data sync...')
+        assert (log_strings[3] == 'Start Auctions Bridge')
+        assert (log_strings[4] == 'Start data sync...')
 
 
 class TestDataBridgeGetTenders(object):
@@ -87,17 +87,14 @@ class TestDataBridgeGetTenders(object):
         2) 'get_tenders' yields the same number of tenders the database
            contains
         """
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
-        # check that 'get_tenders' function was called once
-        bridge['mock_get_tenders'].assert_called_once_with(
-            host=bridge['bridge_config']['main']['tenders_api_server'],
-            version=bridge['bridge_config']['main']['tenders_api_version'],
-            key='',
-            extra_params=API_EXTRA)
+        # check that 'get_resource_items' function was called once
+        bridge['mock_resource_items']\
+            .assert_called_once_with(bridge['bridge'].feeder)
 
-        # check that 'get_tenders' yielded the correct number of tenders
-        assert bridge['mock_get_tenders'].side_effect.ind == \
+        # check that 'get_resource_items' yielded the correct number of tenders
+        assert bridge['mock_resource_items'].side_effect.ind == \
                len(bridge['tenders'])
 
 
@@ -119,7 +116,7 @@ class TestDataBridgeFeedItem(object):
         mock_mapper = MagicMock()
         bridge['bridge'].mapper = mock_mapper
 
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
         assert mock_feed_item.call_count == len(bridge['tenders'])
         assert mock_mapper.call_count == len(bridge['tenders'])
@@ -146,7 +143,7 @@ class TestDataBridgeFeedItem(object):
         manager.attach_mock(mock_mapper, 'mock_mapper')
         manager.attach_mock(mock_feed_item, 'mock_feed_item')
 
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
         manager.assert_has_calls(
             [call.mock_feed_item(bridge['tenders'][0]),
@@ -164,7 +161,7 @@ class TestDataBridgePlanning(object):
         for running the process planning the auction is not called if tender's
         data are inappropriate.
         """
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
         # check that 'check_call' was not called as tender documents
         # doesn't contain appropriate data
@@ -185,7 +182,7 @@ class TestForDataBridgePositive(object):
         4) datetime.now(self.bridge.tz) < start_date
         """
 
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
@@ -207,7 +204,7 @@ class TestForDataBridgePositive(object):
         4) datetime.now(self.bridge.tz) > start_date
         """
 
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
@@ -226,7 +223,7 @@ class TestForDataBridgePositive(object):
         tender has 'lots'
         """
 
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
@@ -242,7 +239,7 @@ class TestForDataBridgePositive(object):
     def test_cancelled_with_lots(self, db, bridge):
         """Auction has been cancelled with lots"""
 
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
@@ -258,7 +255,7 @@ class TestForDataBridgePositive(object):
     def test_cancelled_with_lots_2(self, db, bridge):
         """Auction has been cancelled with lots"""
 
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
@@ -274,7 +271,7 @@ class TestForDataBridgePositive(object):
     def test_cancelled_no_lots(self, db, bridge):
         """Auction has been cancelled with no lots"""
 
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
@@ -290,7 +287,7 @@ class TestForDataBridgePositive(object):
     def test_cancelled_no_lots_2(self, db, bridge):
         """Auction has been cancelled with no lots"""
 
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
 
         bridge['mock_do_until_success'].assert_called_once_with(
             core_module.check_call,
@@ -315,7 +312,7 @@ class TestForDataBridgeNegative(object):
         ch = logging.StreamHandler(log_capture_string)
         ch.setLevel(logging.DEBUG)
         LOGGER.addHandler(ch)
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
         log_strings = log_capture_string.getvalue().split('\n')
         assert (log_strings[0] == 'Tender ' + ID + ' start date in past. Skip it for planning')
 
@@ -345,5 +342,5 @@ class TestForDataBridgeNegative(object):
         3) The status of the lot should not be 'active'
         """
 
-        sleep(0.1)
+        bridge['bridge_thread'].join(0.1)
         assert(bridge['tenders'][0]['lots'][0]['status'] != 'active')

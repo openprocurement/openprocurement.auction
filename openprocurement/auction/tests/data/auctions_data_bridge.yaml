@@ -1,0 +1,55 @@
+main:
+  resource_api_server: https://lb.api-sandbox.openprocurement.org/
+  resource_api_version: "2.3"
+  resource_api_token: bfb75ce545154da382fc2ccd924d667c
+  resource_name: auctions
+  couch_url: http://admin:zaq1xsw2@0.0.0.0:9000/
+  auctions_db: database
+  timezone: Europe/Kiev
+  auction_worker: /data/an.andrusyk/OP_PROJECTS/delete2/openprocurement.auction.buildout/bin/auction_worker
+  auction_worker_config: /data/an.andrusyk/OP_PROJECTS/delete2/openprocurement.auction.buildout/etc/auction_worker_defaults.yaml
+  plugins: [belowThreshold, aboveThresholdUA, aboveThresholdEU, competitiveDialogueEU.stage2, competitiveDialogueUA.stage2, aboveThresholdUA.defense, esco.EU]
+  esco.EU:
+      auction_worker_config: /data/an.andrusyk/OP_PROJECTS/delete2/openprocurement.auction.buildout/etc/auction_worker_esco.yaml
+      auction_worker: /data/an.andrusyk/OP_PROJECTS/delete2/openprocurement.auction.buildout/bin/auction_esco
+  retrievers_params:
+     down_requests_sleep: 0.1
+     up_requests_sleep: 0.1
+     up_wait_sleep: 30
+     up_wait_sleep_min: 5
+     queue_size: 501
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  simple:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: ERROR
+    formatter: simple
+    stream: ext://sys.stdout
+
+  journal:
+    class: ExtendedJournalHandler.ExtendedJournalHandler
+    level: INFO
+    SYSLOG_IDENTIFIER: AUCTIONS_DATA_BRIDGE
+    TENDERS_API_VERSION: "2.3"
+    TENDERS_API_URL: https://lb.api-sandbox.openprocurement.org/
+
+loggers:
+  openprocurement.auction.databridge:
+    handlers: [console, journal]
+    propagate: no
+    level: INFO
+
+  openprocurement_client.sync:
+    handlers: [console, journal]
+    propagate: no
+    level: INFO
+
+  "":
+    handlers: [console, journal]
+    level: INFO
