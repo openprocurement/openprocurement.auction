@@ -3,7 +3,7 @@ from webtest import TestApp
 
 from openprocurement.auction.auctions_server import auctions_server as frontend
 from openprocurement.auction.server import run_server 
-from openprocurement.auction.tests.unit.utils import MockAuction, MockClient, MockLogger
+from openprocurement.auction.tests.utils import MockAuction, MockClient, MockLogger
 
 
 @pytest.fixture(scope='function')
