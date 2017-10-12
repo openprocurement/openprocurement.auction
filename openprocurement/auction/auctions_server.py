@@ -26,7 +26,7 @@ def before_request():
 @auctions_server.after_request
 def after_request(response):
     auctions_server.logger.debug(
-        'End {1.status_code} : {0.method} : {0.url} '.format(request, response)
+        'End {1.status_code} : {0.method} : {0.url}'.format(request, response)
     )
     return response
 
