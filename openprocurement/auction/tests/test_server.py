@@ -1,41 +1,7 @@
 import pytest
-from webtest import TestApp
-
-from openprocurement.auction.auctions_server import auctions_server as frontend
-from openprocurement.auction.server import run_server 
-from openprocurement.auction.tests.utils import MockAuction, MockClient, MockLogger
-
-
-@pytest.fixture(scope='function')
-def auctions_server(request):
-    app = TestApp(frontend)
-    request.cls.server = app
-    return app
-
-
-@pytest.mark.usefixtures("auctions_server")
-class TestAuctionsServer(object):
-    
-    def test_request_log_hooks(self):
-        assert self.server
-
-    def test_log_post(self):
-        assert self.server
-
-    def test_health(self):
-        pass
-
-    # mock server.py
-    def test_proxy(self):
-        pass
-
-    def test_get_server_time(self):
-        pass
-
-    # optional
-    def test_config(self):
-        pass
-
+from openprocurement.auction.server import run_server
+from openprocurement.auction.tests.utils import MockAuction, MockClient, \
+    MockLogger
 
 def server(request):
     auction = MockAuction()
