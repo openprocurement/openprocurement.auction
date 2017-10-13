@@ -71,10 +71,9 @@ def health():
     )
 
     if not(output and limit_replications_func(
-            [True if (task['source_seq'] - task['checkpointed_source_seq']) <=
-             health_threshold else False
-             for task in data if 'type' in task and
-                task['type'] == 'replication']
+        [task['source_seq'] - task['checkpointed_source_seq'] <=
+             health_threshold
+         for task in data if 'type' in task and task['type'] == 'replication']
     )):
         response.status_code = 503
     return response
