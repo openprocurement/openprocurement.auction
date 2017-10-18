@@ -30,6 +30,7 @@ def auctions_server(request, mocker):
             frontend.config[key] = server_config[key]
 
     frontend.couch_server = MagicMock(spec=Server)
+    frontend.config['TIMEZONE'] = 'some_time_zone'
 
     if 'couch_tasks' in params:
         frontend.couch_server.tasks.return_value = params['couch_tasks']
@@ -105,8 +106,18 @@ class TestAuctionsServer(object):
     def test_proxy(self):
         pass
 
-    def test_get_server_time(self):
-        pass
+    def test_get_server_time(self, auctions_server, mocker):
+        server_time = 'some_server_time'
+
+        mock_datetime = mocker.patch.object(auctions_server_module, 'datetime')
+        mock_datetime.now.return_value.isoformat.return_value = server_time
+
+        resp = auctions_server['test_app'].get('/get_current_server_time')
+        mock_datetime.now.assert_called_once_with(auctions_server['app'].config['TIMEZONE'])
+        assert resp.status_int == 200
+        assert resp.body == server_time
+        assert resp.headers['Cache-Control'] == 'public, max-age=0'
+
 
     # optional
     def test_config(self):
