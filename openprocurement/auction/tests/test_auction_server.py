@@ -13,14 +13,14 @@ from openprocurement.auction.tests.data.couch_data import \
 
 
 @pytest.fixture(scope='function')
-def auctions_server(request, mocker):
+def auctions_server(request):
     params = getattr(request, 'param', {})
     server_config = params.get('server_config', {})
 
-    logger = MagicMock(spec=frontend.logger)
+    logger = MagicMock(spec_set=frontend.logger)
     logger.name = server_config.get('logger_name', 'some-logger')
     frontend.logger_name = logger.name
-    frontend._logger = logger    
+    frontend._logger = logger
 
     for key in ('limit_replications_func', 'limit_replications_progress'):
         frontend.config.pop(key, None)
@@ -29,7 +29,7 @@ def auctions_server(request, mocker):
         if key in server_config:
             frontend.config[key] = server_config[key]
 
-    frontend.couch_server = MagicMock(spec=Server)
+    frontend.couch_server = MagicMock(spec_set=Server)
     frontend.config['TIMEZONE'] = 'some_time_zone'
 
     if 'couch_tasks' in params:
