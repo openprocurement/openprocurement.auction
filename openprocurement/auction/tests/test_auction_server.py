@@ -15,6 +15,89 @@ from openprocurement.auction.tests.data.couch_data import \
 from memoize import Memoizer
 from openprocurement.auction.tests.utils import Any
 
+DEFAULT = sentinel.DEFAULT
+
+proxy_data_proxy_path = {'server_config_redis': sentinel.REDIS,
+                         'connection_limit': sentinel.connection_limit,
+                         'proxy_connection_pool': sentinel.proxy_pool,
+                         'get_mapping': sentinel.get_mapping,
+                         'proxy_path': sentinel.proxy_path,
+                         'stream_proxy': sentinel.stream_proxy,
+                         'event_sources_pool': sentinel.event_sources_pool,}
+
+
+@pytest.fixture(scope='function')
+def mock_auctions_server(request, mocker):
+    params = getattr(request, 'param', {})
+
+    server_config_redis = params.get('server_config_redis', DEFAULT)
+    connection_limit = params.get('connection_limit', DEFAULT)
+    get_mapping = params.get('get_mapping', DEFAULT)
+    proxy_path = params.get('proxy_path', DEFAULT)
+    event_sources_pool = params.get('event_sources_pool', DEFAULT)
+    proxy_connection_pool = params.get('proxy_connection_pool', DEFAULT)
+    stream_proxy = params.get('stream_proxy', DEFAULT)
+
+    class AuctionsServerAttributesContainer(object):
+        logger = NotImplemented
+        proxy_mappings = NotImplemented
+        config = NotImplemented
+        event_sources_pool = NotImplemented
+        proxy_connection_pool = NotImplemented
+        get_mapping = NotImplemented
+
+    attr = AuctionsServerAttributesContainer()
+
+    class Config(object):
+        __getitem__ = NotImplemented
+
+    attr_conf = Config()
+
+    def config_getitem(item):
+        if item == 'REDIS':
+            return server_config_redis
+        elif item == 'event_source_connection_limit':
+            return connection_limit
+        else:
+            raise KeyError
+
+    mock_path_info = MagicMock()
+
+    def environ_setitem(item, value):
+        if item == 'PATH_INFO':
+            mock_path_info(value)
+            return value
+        else:
+            raise KeyError
+
+    mocker.patch.object(auctions_server_module, 'get_mapping', get_mapping)
+
+    patch_request = mocker.patch.object(auctions_server_module, 'request')
+    patch_request.environ.__setitem__.side_effect = environ_setitem
+
+    patch_StreamProxy = \
+        mocker.patch.object(auctions_server_module, 'StreamProxy',
+                            return_value=stream_proxy)
+
+    auctions_server = NonCallableMock(spec_set=attr)
+
+    logger = MagicMock(spec_set=frontend.logger)
+    proxy_mappings = MagicMock(spec_set=Memoizer({}))
+    proxy_mappings.get.return_value = proxy_path
+    config = MagicMock(spec_set=attr_conf)
+    config.__getitem__.side_effect = config_getitem
+
+    auctions_server.logger = logger
+    auctions_server.proxy_mappings = proxy_mappings
+    auctions_server.config = config
+    auctions_server.event_sources_pool = event_sources_pool
+    auctions_server.proxy_connection_pool = proxy_connection_pool
+
+    return {'server': auctions_server,
+            'proxy_mappings': proxy_mappings,
+            'mock_path_info': mock_path_info,
+            'patch_StreamProxy': patch_StreamProxy}
+
 
 @pytest.fixture(scope='function')
 def auctions_server(request):
@@ -108,84 +191,35 @@ class TestAuctionsServer(object):
         assert resp.status_int == expected_response['status_int']
         assert resp.body == expected_response['body']
 
-    def test_proxy(self, mocker):
-        proxy_path = sentinel.proxy_path
-        path = 'some_path'
-
-        class AuctionsServerAttributesContainer(object):
-            logger = NotImplemented
-            proxy_mappings = NotImplemented
-            config = NotImplemented
-            event_sources_pool = NotImplemented
-            proxy_connection_pool = NotImplemented
-            get_mapping = NotImplemented
-
-        attr = AuctionsServerAttributesContainer()
-
-        class Config(object):
-            __getitem__ = NotImplemented
-
-        attr_conf = Config()
-
-        def config_getitem(item):
-            if item == 'REDIS':
-                return sentinel.REDIS
-            elif item == 'event_source_connection_limit':
-                return sentinel.event_source_connection_limit
-            else:
-                raise KeyError
-
-        mock_path_info = MagicMock()
-
-        def environ_setitem(item, value):
-            if item == 'PATH_INFO':
-                mock_path_info(value)
-                return value
-            else:
-                raise KeyError
-
-        auctions_server = NonCallableMock(spec_set=attr)
-
-        logger = MagicMock(spec_set=frontend.logger)
-        proxy_mappings = MagicMock(spec_set=Memoizer({}))
-        proxy_mappings.get.return_value = proxy_path
-        config = MagicMock(spec_set=attr_conf)
-        config.__getitem__.side_effect = config_getitem
-
-        auctions_server.logger = logger
-        auctions_server.proxy_mappings = proxy_mappings
-        auctions_server.config = config
-        auctions_server.event_sources_pool = sentinel.event_sources_pool
-        auctions_server.proxy_connection_pool = sentinel.proxy_connection_pool
-
+    @pytest.mark.parametrize(
+        'mock_auctions_server, path, expected_result',
+        [(proxy_data_proxy_path, 'some_path', proxy_data_proxy_path['stream_proxy']),
+         (proxy_data_proxy_path, 'login', proxy_data_proxy_path['stream_proxy']),
+         (proxy_data_proxy_path, 'event_source',  proxy_data_proxy_path['stream_proxy'])],
+        indirect=['mock_auctions_server'])
+    def test_proxy_with_proxy_path(self, mock_auctions_server, path, expected_result, mocker):
         mocker.patch.object(auctions_server_module, 'auctions_server',
-                            auctions_server)
-        mocker.patch.object(auctions_server_module, 'get_mapping',
-                            sentinel.get_mapping)
-        patch_request = mocker.patch.object(auctions_server_module, 'request')
-        patch_request.environ.__setitem__.side_effect = environ_setitem
-        patch_StreamProxy = mocker.patch.object(
-            auctions_server_module, 'StreamProxy',
-            return_value=sentinel.stream_proxy)
+                            mock_auctions_server['server'])
 
-        resp = auctions_proxy(self.auction_doc_id, path)
+        output = auctions_proxy(self.auction_doc_id, path)
 
         # assertion block
-        proxy_mappings.get.assert_called_once_with(
-            'some_id',
-            sentinel.get_mapping,
-            (sentinel.REDIS, 'some_id', False), max_age=Any(int)
+        mock_auctions_server['proxy_mappings'].get.assert_called_once_with(
+            self.auction_doc_id,
+            proxy_data_proxy_path['get_mapping'],
+            (proxy_data_proxy_path['server_config_redis'], self.auction_doc_id, False), max_age=Any(int)
         )
-        mock_path_info.assert_called_once_with('/' + 'some_path')
-        patch_StreamProxy.assert_called_once_with(
-            sentinel.proxy_path,
-            auction_doc_id='some_id',
-            event_sources_pool=sentinel.event_sources_pool,
-            event_source_connection_limit=sentinel.event_source_connection_limit,
-            pool=sentinel.proxy_connection_pool,
+        mock_auctions_server['mock_path_info']\
+            .assert_called_once_with('/' + path)
+        mock_auctions_server['patch_StreamProxy'].assert_called_once_with(
+            proxy_data_proxy_path['proxy_path'],
+            auction_doc_id=self.auction_doc_id,
+            event_sources_pool=proxy_data_proxy_path['event_sources_pool'],
+            event_source_connection_limit=proxy_data_proxy_path['connection_limit'],
+            pool=proxy_data_proxy_path['proxy_connection_pool'],
             backend='gevent'
         )
-        assert resp == sentinel.stream_proxy
+        assert output == expected_result
 
     def test_get_server_time(self, auctions_server, mocker):
         server_time = 'some_server_time'
