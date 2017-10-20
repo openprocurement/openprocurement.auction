@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '4.0.1b1.dev3+eauctions'
+version = '4.0.1b1.dev4+eauctions'
 install_requires = [
     'setuptools',
     'requests',
@@ -38,7 +38,6 @@ extras_require = {
         'robotframework-selenium2library',
         'robotframework-debuglibrary',
         'robotframework-selenium2screenshots',
-        'chromedriver',
         'webtest',
         'mock'
     ]
