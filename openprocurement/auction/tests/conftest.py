@@ -21,7 +21,17 @@ import yaml
 import openprocurement.auction.helpers.couch as couch_module
 import openprocurement.auction.chronograph as chrono_module
 from openprocurement.auction.tests.utils import DummyTrue, iterview_wrappper
+import pytest
+from webtest import TestApp
+from openprocurement.auction.auctions_server import auctions_server as frontend
+import openprocurement.auction.auctions_server as auctions_server_module
+from mock import MagicMock, NonCallableMock
+from couchdb import Server
+from memoize import Memoizer
+from mock import sentinel
 
+
+DEFAULT = sentinel.DEFAULT
 
 LOGGER = logging.getLogger('Log For Tests')
 
@@ -135,6 +145,119 @@ def bridge(request, mocker):
             'tenders': tenders,
             'mock_resource_items': mock_resource_items,
             'mock_do_until_success': mock_do_until_success}
+
+
+@pytest.fixture(scope='function')
+def send(mocker):
+    mock_send = mocker.patch.object(auctions_server_module, 'send')
+    return mock_send
+
+
+@pytest.fixture(scope='function')
+def response(mocker):
+    mock_response = mocker.patch.object(auctions_server_module, 'Response',
+                                        return_value='Response Message')
+    return mock_response
+
+
+@pytest.fixture(scope='function')
+def mock_auctions_server(request, mocker):
+    params = getattr(request, 'param', {})
+
+    server_config_redis = params.get('server_config_redis', DEFAULT)
+    connection_limit = params.get('connection_limit', DEFAULT)
+    get_mapping = params.get('get_mapping', DEFAULT)
+    proxy_path = params.get('proxy_path', DEFAULT)
+    event_sources_pool = params.get('event_sources_pool', DEFAULT)
+    proxy_connection_pool = params.get('proxy_connection_pool', DEFAULT)
+    stream_proxy = params.get('stream_proxy', DEFAULT)
+
+    class AuctionsServerAttributesContainer(object):
+        logger = NotImplemented
+        proxy_mappings = NotImplemented
+        config = NotImplemented
+        event_sources_pool = NotImplemented
+        proxy_connection_pool = NotImplemented
+        get_mapping = NotImplemented
+
+    attr = AuctionsServerAttributesContainer()
+
+    class Config(object):
+        __getitem__ = NotImplemented
+
+    attr_conf = Config()
+
+    def config_getitem(item):
+        if item == 'REDIS':
+            return server_config_redis
+        elif item == 'event_source_connection_limit':
+            return connection_limit
+        else:
+            raise KeyError
+
+    mock_path_info = MagicMock()
+
+    def environ_setitem(item, value):
+        if item == 'PATH_INFO':
+            mock_path_info(value)
+            return value
+        else:
+            raise KeyError
+
+    mocker.patch.object(auctions_server_module, 'get_mapping', get_mapping)
+
+    patch_request = mocker.patch.object(auctions_server_module, 'request')
+    patch_request.environ.__setitem__.side_effect = environ_setitem
+
+    patch_StreamProxy = \
+        mocker.patch.object(auctions_server_module, 'StreamProxy',
+                            return_value=stream_proxy)
+
+    auctions_server = NonCallableMock(spec_set=attr)
+
+    logger = MagicMock(spec_set=frontend.logger)
+    proxy_mappings = MagicMock(spec_set=Memoizer({}))
+    proxy_mappings.get.return_value = proxy_path
+    config = MagicMock(spec_set=attr_conf)
+    config.__getitem__.side_effect = config_getitem
+
+    auctions_server.logger = logger
+    auctions_server.proxy_mappings = proxy_mappings
+    auctions_server.config = config
+    auctions_server.event_sources_pool = event_sources_pool
+    auctions_server.proxy_connection_pool = proxy_connection_pool
+
+    return {'server': auctions_server,
+            'proxy_mappings': proxy_mappings,
+            'mock_path_info': mock_path_info,
+            'patch_StreamProxy': patch_StreamProxy}
+
+
+@pytest.fixture(scope='function')
+def auctions_server(request):
+    params = getattr(request, 'param', {})
+    server_config = params.get('server_config', {})
+
+    logger = MagicMock(spec_set=frontend.logger)
+    logger.name = server_config.get('logger_name', 'some-logger')
+    frontend.logger_name = logger.name
+    frontend._logger = logger
+
+    for key in ('limit_replications_func', 'limit_replications_progress'):
+        frontend.config.pop(key, None)
+
+    for key in ('limit_replications_func', 'limit_replications_progress'):
+        if key in server_config:
+            frontend.config[key] = server_config[key]
+
+    frontend.couch_server = MagicMock(spec_set=Server)
+    frontend.config['TIMEZONE'] = 'some_time_zone'
+
+    if 'couch_tasks' in params:
+        frontend.couch_server.tasks.return_value = params['couch_tasks']
+
+    test_app = TestApp(frontend)
+    return {'app': frontend, 'test_app': test_app}
 
 
 @pytest.yield_fixture(scope="function")
