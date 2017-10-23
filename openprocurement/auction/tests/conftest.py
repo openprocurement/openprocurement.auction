@@ -171,6 +171,10 @@ def mock_auctions_server(request, mocker):
     event_sources_pool = params.get('event_sources_pool', DEFAULT)
     proxy_connection_pool = params.get('proxy_connection_pool', DEFAULT)
     stream_proxy = params.get('stream_proxy', DEFAULT)
+    db = params.get('db', DEFAULT)
+    request_headers = params.get('request_headers', [])
+    request_url = params.get('request_url', DEFAULT)
+    redirect_url = params.get('redirect_url', DEFAULT)
 
     class AuctionsServerAttributesContainer(object):
         logger = NotImplemented
@@ -179,6 +183,8 @@ def mock_auctions_server(request, mocker):
         event_sources_pool = NotImplemented
         proxy_connection_pool = NotImplemented
         get_mapping = NotImplemented
+        db = NotImplemented
+        request_headers = NotImplemented
 
     attr = AuctionsServerAttributesContainer()
 
@@ -208,6 +214,11 @@ def mock_auctions_server(request, mocker):
 
     patch_request = mocker.patch.object(auctions_server_module, 'request')
     patch_request.environ.__setitem__.side_effect = environ_setitem
+    patch_request.headers = request_headers
+    patch_request.url = request_url
+
+    patch_redirect = mocker.patch.object(auctions_server_module, 'redirect',
+                                         return_value=redirect_url)
 
     patch_StreamProxy = \
         mocker.patch.object(auctions_server_module, 'StreamProxy',
@@ -226,11 +237,13 @@ def mock_auctions_server(request, mocker):
     auctions_server.config = config
     auctions_server.event_sources_pool = event_sources_pool
     auctions_server.proxy_connection_pool = proxy_connection_pool
+    auctions_server.db = db
 
     return {'server': auctions_server,
             'proxy_mappings': proxy_mappings,
             'mock_path_info': mock_path_info,
-            'patch_StreamProxy': patch_StreamProxy}
+            'patch_StreamProxy': patch_StreamProxy,
+            'patch_redirect': patch_redirect}
 
 
 @pytest.fixture(scope='function')
