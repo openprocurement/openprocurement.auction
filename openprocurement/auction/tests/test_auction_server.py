@@ -4,19 +4,20 @@
 
 
 import pytest
+from mock import MagicMock, call
 import openprocurement.auction.auctions_server as auctions_server_module
 from openprocurement.auction.auctions_server import auctions_proxy
 from openprocurement.auction.tests.data.couch_data import \
     l1a, l1b, l1c, l2a, l2b, l3
 from openprocurement.auction.tests.utils import Any
 from openprocurement.auction.tests.data.auctions_server_data import \
-    proxy_data_proxy_path, proxy_data_path_login_1, proxy_data_path_login_2, \
-    proxy_data_path_login_3, proxy_data_path_event_source, proxy_data_path_smth
+    proxy_data_proxy_path, proxy_data_no_proxy_path_forwarded_header_1, \
+    proxy_data_no_proxy_path_forwarded_header_2, proxy_data_no_proxy_path, \
+    proxy_data_no_proxy_path_no_forwarded_header
 from mock import call
 from openprocurement.auction.tests.conftest import RESPONSE
 
 
-@pytest.mark.usefixtures('auctions_server')
 class TestAuctionsServer(object):
     auction_doc_id = 'some_id'
 
@@ -103,20 +104,19 @@ class TestAuctionsServer(object):
         assert output == expected_result
 
     @pytest.mark.parametrize(
-        'mock_auctions_server, path, transformed_url, expected_result',
-        [(proxy_data_path_login_1, proxy_data_path_login_1['path'],
-          proxy_data_path_login_1['transformed_url'],
-          proxy_data_path_login_1['redirect_url']),
-         (proxy_data_path_login_2, proxy_data_path_login_2['path'],
-          proxy_data_path_login_2['transformed_url'],
-          proxy_data_path_login_2['redirect_url']),
+        'mock_auctions_server, transformed_url, expected_result',
+        [(proxy_data_no_proxy_path_forwarded_header_1,
+          proxy_data_no_proxy_path_forwarded_header_1['transformed_url'],
+          proxy_data_no_proxy_path_forwarded_header_1['redirect_url']),
+         (proxy_data_no_proxy_path_forwarded_header_2,
+          proxy_data_no_proxy_path_forwarded_header_2['transformed_url'],
+          proxy_data_no_proxy_path_forwarded_header_2['redirect_url']),
          ],
         indirect=['mock_auctions_server'])
-    def test_proxy_path_login_1(self, mock_auctions_server, path,
-                                transformed_url,
+    def test_proxy_path_login_1(self, mock_auctions_server, transformed_url,
                                 expected_result):
 
-        output = auctions_proxy(self.auction_doc_id, path)
+        output = auctions_proxy(self.auction_doc_id, 'login')
 
         # assertion block
         mock_auctions_server['proxy_mappings'].get.assert_called_once_with(
@@ -131,14 +131,13 @@ class TestAuctionsServer(object):
         assert output == expected_result
 
     @pytest.mark.parametrize(
-        'mock_auctions_server, path, expected_result',
-        [(proxy_data_path_login_3, proxy_data_path_login_3['path'],
-          proxy_data_path_login_3['abort'])],
+        'mock_auctions_server, expected_result',
+        [(proxy_data_no_proxy_path_no_forwarded_header, 
+          proxy_data_no_proxy_path_no_forwarded_header['abort'])],
         indirect=['mock_auctions_server'])
-    def test_proxy_path_login_2(self, mock_auctions_server, path,
-                                expected_result):
+    def test_proxy_path_login_2(self, mock_auctions_server, expected_result):
 
-        output = auctions_proxy(self.auction_doc_id, path)
+        output = auctions_proxy(self.auction_doc_id, 'login')
 
         # assertion block
         mock_auctions_server['proxy_mappings'].get.assert_called_once_with(
@@ -151,34 +150,39 @@ class TestAuctionsServer(object):
         assert output == expected_result
 
     @pytest.mark.parametrize(
-        'mock_auctions_server, path, patch_response',
-        [(proxy_data_path_event_source, proxy_data_path_event_source['path'],
-          {'response': RESPONSE})],
+        'mock_auctions_server, patch_response',
+        [(proxy_data_no_proxy_path, {'response': RESPONSE})],
         indirect=['mock_auctions_server', 'patch_response'])
-    def test_proxy_path_event_source(self, mock_auctions_server, path,
+    def test_proxy_path_event_source(self, mock_auctions_server,
                                      patch_response):
 
-        output = auctions_proxy(self.auction_doc_id, path)
+        manager = MagicMock()
+        manager.attach_mock(mock_auctions_server['patch_PySse'],
+                            'patch_PySse')
+        manager.attach_mock(mock_auctions_server['patch_add_message'],
+                            'patch_add_message')
+        manager.attach_mock(patch_response['patch_resp'], 'patch_resp')
+
+        output = auctions_proxy(self.auction_doc_id, 'event_source')
 
         # assertion block
-        # todo: check the order of called mock
-        mock_auctions_server['patch_add_message'].\
-            assert_called_once_with('Close', 'Disable')
-        patch_response['patch_resp'].assert_called_once_with(
-            mock_auctions_server['patch_PySse'].return_value,
-            mimetype='text/event-stream',
-            content_type='text/event-stream'
-        )
+        expected_calls = [call.patch_PySse(),
+                          call.patch_add_message('Close', 'Disable'),
+                          call.patch_resp(
+                              mock_auctions_server['patch_PySse'].return_value,
+                              mimetype='text/event-stream',
+                              content_type='text/event-stream'
+                          )]
+        assert manager.mock_calls == expected_calls
         assert output == patch_response['result']
 
     @pytest.mark.parametrize(
-        'mock_auctions_server, path, expected_result',
-        [(proxy_data_path_smth, proxy_data_path_smth['path'],
-          proxy_data_path_smth['abort'])],
+        'mock_auctions_server, expected_result',
+        [(proxy_data_no_proxy_path, proxy_data_no_proxy_path['abort'])],
         indirect=['mock_auctions_server'])
-    def test_proxy_path_smth(self, mock_auctions_server, path, expected_result):
+    def test_proxy_path_smth(self, mock_auctions_server, expected_result):
 
-        output = auctions_proxy(self.auction_doc_id, path)
+        output = auctions_proxy(self.auction_doc_id, 'smth_path')
 
         # assertion block
         mock_auctions_server['patch_abort'].assert_called_once_with(404)
