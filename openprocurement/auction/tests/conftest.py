@@ -175,6 +175,7 @@ def mock_auctions_server(request, mocker):
     request_headers = params.get('request_headers', [])
     request_url = params.get('request_url', DEFAULT)
     redirect_url = params.get('redirect_url', DEFAULT)
+    abort = params.get('abort', DEFAULT)
 
     class AuctionsServerAttributesContainer(object):
         logger = NotImplemented
@@ -219,6 +220,8 @@ def mock_auctions_server(request, mocker):
 
     patch_redirect = mocker.patch.object(auctions_server_module, 'redirect',
                                          return_value=redirect_url)
+    patch_abort = mocker.patch.object(auctions_server_module, 'abort',
+                                      return_value=abort)
 
     patch_StreamProxy = \
         mocker.patch.object(auctions_server_module, 'StreamProxy',
@@ -239,11 +242,15 @@ def mock_auctions_server(request, mocker):
     auctions_server.proxy_connection_pool = proxy_connection_pool
     auctions_server.db = db
 
+    mocker.patch.object(auctions_server_module, 'auctions_server',
+                        auctions_server)
+
     return {'server': auctions_server,
             'proxy_mappings': proxy_mappings,
             'mock_path_info': mock_path_info,
             'patch_StreamProxy': patch_StreamProxy,
-            'patch_redirect': patch_redirect}
+            'patch_redirect': patch_redirect,
+            'patch_abort': patch_abort}
 
 
 @pytest.fixture(scope='function')

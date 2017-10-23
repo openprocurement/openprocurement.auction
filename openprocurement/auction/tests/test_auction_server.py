@@ -10,7 +10,8 @@ from openprocurement.auction.tests.data.couch_data import \
     l1a, l1b, l1c, l2a, l2b, l3
 from openprocurement.auction.tests.utils import Any
 from openprocurement.auction.tests.data.auctions_server_data import \
-    proxy_data_proxy_path, proxy_data_path_login_1, proxy_data_path_login_2
+    proxy_data_proxy_path, proxy_data_path_login_1, proxy_data_path_login_2, \
+    proxy_data_path_login_3
 from mock import call
 
 
@@ -77,8 +78,6 @@ class TestAuctionsServer(object):
         indirect=['mock_auctions_server'])
     def test_proxy_with_proxy_path(self, mock_auctions_server, path,
                                    expected_result, mocker):
-        mocker.patch.object(auctions_server_module, 'auctions_server',
-                            mock_auctions_server['server'])
 
         output = auctions_proxy(self.auction_doc_id, path)
 
@@ -112,11 +111,9 @@ class TestAuctionsServer(object):
           proxy_data_path_login_2['redirect_url']),
          ],
         indirect=['mock_auctions_server'])
-    def test_proxy_path_login(self, mock_auctions_server, path,
-                              transformed_url,
-                              expected_result, mocker):
-        mocker.patch.object(auctions_server_module, 'auctions_server',
-                            mock_auctions_server['server'])
+    def test_proxy_path_login_1(self, mock_auctions_server, path,
+                                transformed_url,
+                                expected_result):
 
         output = auctions_proxy(self.auction_doc_id, path)
 
@@ -130,6 +127,26 @@ class TestAuctionsServer(object):
 
         mock_auctions_server['patch_redirect'].\
             assert_called_once_with(transformed_url)
+        assert output == expected_result
+
+    @pytest.mark.parametrize(
+        'mock_auctions_server, path, expected_result',
+        [(proxy_data_path_login_3, 'login',
+          proxy_data_path_login_3['abort'])],
+        indirect=['mock_auctions_server'])
+    def test_proxy_path_login_2(self, mock_auctions_server, path,
+                                expected_result):
+
+        output = auctions_proxy(self.auction_doc_id, path)
+
+        # assertion block
+        mock_auctions_server['proxy_mappings'].get.assert_called_once_with(
+            self.auction_doc_id,
+            proxy_data_proxy_path['get_mapping'],
+            (proxy_data_proxy_path['server_config_redis'],
+             self.auction_doc_id, False), max_age=Any(int)
+        )
+        mock_auctions_server['patch_abort'].assert_called_once_with(404)
         assert output == expected_result
 
     def test_get_server_time(self, auctions_server, mocker):

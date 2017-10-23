@@ -39,3 +39,13 @@ proxy_data_path_login_2 = {'server_config_redis': sentinel.REDIS,
                            'transformed_url': 'http://new_host/path;params?'
                                               'query=argument#fragment',
                            'redirect_url': sentinel.redirect_url}
+
+# there is no 'X-Forwarded-For' in headers
+proxy_data_path_login_3 = {'server_config_redis': sentinel.REDIS,
+                           'get_mapping': sentinel.get_mapping,
+                           'proxy_path': None,
+                           'db': ['some_id0', 'some_id', 'some_id1'],
+                           'request_headers': {'h0': 'h0',
+                                               'h1': 'h1',
+                                               'Host': 'new_host'},
+                           'abort': sentinel.abort}
