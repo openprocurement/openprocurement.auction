@@ -38,6 +38,7 @@ def Any(cls):
             return True
     return Any()
 
+
 ID = 'UA-11111'
 LOT_ID = '11111111111111111111111111111111'
 API_EXTRA = {'opt_fields': 'status,auctionPeriod,lots,procurementMethodType',

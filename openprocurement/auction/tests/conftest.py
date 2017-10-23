@@ -28,9 +28,12 @@ from mock import MagicMock, NonCallableMock
 from couchdb import Server
 from memoize import Memoizer
 from mock import sentinel
+from sse import Sse as PySse
+from flask import Response
 
 
 DEFAULT = sentinel.DEFAULT
+RESPONSE = sentinel.response
 
 LOGGER = logging.getLogger('Log For Tests')
 
@@ -160,6 +163,15 @@ def response(mocker):
 
 
 @pytest.fixture(scope='function')
+def patch_response(request, mocker):
+    params = getattr(request, 'param', {})
+    resp = params.get('response', DEFAULT)
+    mock_response = mocker.patch.object(auctions_server_module, 'Response',
+                                        return_value=resp)
+    return {'patch_resp': mock_response, 'result': resp} 
+
+
+@pytest.fixture(scope='function')
 def mock_auctions_server(request, mocker):
     params = getattr(request, 'param', {})
 
@@ -212,6 +224,9 @@ def mock_auctions_server(request, mocker):
             raise KeyError
 
     mocker.patch.object(auctions_server_module, 'get_mapping', get_mapping)
+    patch_pysse = mocker.patch.object(auctions_server_module, 'PySse',
+                                      spec_set=PySse)
+    patch_add_message = patch_pysse.return_value.add_message
 
     patch_request = mocker.patch.object(auctions_server_module, 'request',
                                         spec_set=Request)
@@ -252,7 +267,9 @@ def mock_auctions_server(request, mocker):
             'mock_path_info': mock_path_info,
             'patch_StreamProxy': patch_StreamProxy,
             'patch_redirect': patch_redirect,
-            'patch_abort': patch_abort}
+            'patch_abort': patch_abort,
+            'patch_PySse': patch_pysse,
+            'patch_add_message': patch_add_message}
 
 
 @pytest.fixture(scope='function')

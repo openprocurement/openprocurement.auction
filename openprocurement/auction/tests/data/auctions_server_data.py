@@ -12,6 +12,7 @@ proxy_data_proxy_path = {'server_config_redis': sentinel.REDIS,
 # there is 'X-Forwarded-For' in headers
 proxy_data_path_login_1 = {'server_config_redis': sentinel.REDIS,
                            'get_mapping': sentinel.get_mapping,
+                           'path': 'login',
                            'proxy_path': None,
                            'db': ['some_id0', 'some_id', 'some_id1'],
                            'request_headers': {'h0': 'h0',
@@ -28,6 +29,7 @@ proxy_data_path_login_1 = {'server_config_redis': sentinel.REDIS,
 # there is 'X-Forwarded-For' in headers
 proxy_data_path_login_2 = {'server_config_redis': sentinel.REDIS,
                            'get_mapping': sentinel.get_mapping,
+                           'path': 'login',
                            'proxy_path': None,
                            'db': ['some_id0', 'some_id', 'some_id1'],
                            'request_headers': {'h0': 'h0',
@@ -43,9 +45,22 @@ proxy_data_path_login_2 = {'server_config_redis': sentinel.REDIS,
 # there is no 'X-Forwarded-For' in headers
 proxy_data_path_login_3 = {'server_config_redis': sentinel.REDIS,
                            'get_mapping': sentinel.get_mapping,
+                           'path': 'login',
                            'proxy_path': None,
                            'db': ['some_id0', 'some_id', 'some_id1'],
                            'request_headers': {'h0': 'h0',
                                                'h1': 'h1',
                                                'Host': 'new_host'},
                            'abort': sentinel.abort}
+
+proxy_data_path_event_source = {'server_config_redis': sentinel.REDIS,
+                                'get_mapping': sentinel.get_mapping,
+                                'path': 'event_source',
+                                'proxy_path': None,
+                                'pysse': sentinel.pysse}
+
+proxy_data_path_smth = {'server_config_redis': sentinel.REDIS,
+                        'get_mapping': sentinel.get_mapping,
+                        'path': 'smth',
+                        'proxy_path': None,
+                        'abort': sentinel.abort}
