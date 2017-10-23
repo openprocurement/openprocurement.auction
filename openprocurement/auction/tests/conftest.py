@@ -4,7 +4,6 @@ import logging
 import couchdb
 import datetime
 from openprocurement.auction.databridge import ResourceFeeder
-import pytest
 from gevent import spawn
 from openprocurement.auction import core as core_module
 from openprocurement.auction.chronograph import AuctionsChronograph
@@ -187,12 +186,13 @@ def mock_auctions_server(request, mocker):
         db = NotImplemented
         request_headers = NotImplemented
 
-    attr = AuctionsServerAttributesContainer()
+    class Request(object):
+        headers = NotImplemented
+        environ = NotImplemented
+        url = NotImplemented
 
     class Config(object):
         __getitem__ = NotImplemented
-
-    attr_conf = Config()
 
     def config_getitem(item):
         if item == 'REDIS':
@@ -213,7 +213,8 @@ def mock_auctions_server(request, mocker):
 
     mocker.patch.object(auctions_server_module, 'get_mapping', get_mapping)
 
-    patch_request = mocker.patch.object(auctions_server_module, 'request')
+    patch_request = mocker.patch.object(auctions_server_module, 'request',
+                                        spec_set=Request)
     patch_request.environ.__setitem__.side_effect = environ_setitem
     patch_request.headers = request_headers
     patch_request.url = request_url
@@ -227,12 +228,13 @@ def mock_auctions_server(request, mocker):
         mocker.patch.object(auctions_server_module, 'StreamProxy',
                             return_value=stream_proxy)
 
-    auctions_server = NonCallableMock(spec_set=attr)
+    auctions_server = NonCallableMock(spec_set=
+                                      AuctionsServerAttributesContainer)
 
     logger = MagicMock(spec_set=frontend.logger)
     proxy_mappings = MagicMock(spec_set=Memoizer({}))
     proxy_mappings.get.return_value = proxy_path
-    config = MagicMock(spec_set=attr_conf)
+    config = MagicMock(spec_set=Config)
     config.__getitem__.side_effect = config_getitem
 
     auctions_server.logger = logger
