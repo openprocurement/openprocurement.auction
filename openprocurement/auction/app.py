@@ -19,7 +19,7 @@ from openprocurement.auction.proxy import couch_server_proxy,\
     auth_couch_server_proxy
 
 
-PKG_NAMESPACE = "openprocurement.auction.auctions"
+PKG_NAMESPACE = 'openprocurement.auction.auctions'
 LIMIT_REPLICATIONS_LIMIT_FUNCTIONS = {
     'any': any,
     'all': all
@@ -56,7 +56,7 @@ def make_auctions_app(global_conf,
     """
     auctions_server = components.queryUtility(IAuctionsServer)
     auctions_server.proxy_connection_pool = ConnectionPool(
-        factory=Connection, max_size=20, backend="gevent"
+        factory=Connection, max_size=20, backend='gevent'
     )
     auctions_server.proxy_mappings = Memoizer({})
     auctions_server.event_sources_pool = deque([])
@@ -115,7 +115,8 @@ def make_auctions_app(global_conf,
     if auctions_server.config['COUCH_DB'] not in auctions_server.couch_server:
         auctions_server.couch_server.create(auctions_server.config['COUCH_DB'])
 
-    auctions_server.db = auctions_server.couch_server[auctions_server.config['COUCH_DB']]
+    auctions_server.db = auctions_server.\
+        couch_server[auctions_server.config['COUCH_DB']]
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
     for entry_point in iter_entry_points(PKG_NAMESPACE):
