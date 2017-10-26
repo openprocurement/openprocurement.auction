@@ -19,6 +19,7 @@ install_requires = [
     'restkit',
     'PyMemoize',
     'barbecue',
+    'PasteDeploy',
     # ssl warning
     'pyopenssl',
     'ndg-httpsclient',
@@ -35,7 +36,6 @@ extras_require = {
         'robotframework-selenium2library',
         'robotframework-debuglibrary',
         'robotframework-selenium2screenshots',
-        'chromedriver',
         'webtest',
         'mock',
         'pytest-cov'
