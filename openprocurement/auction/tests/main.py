@@ -34,7 +34,7 @@ def main():
     auction_worker_defaults = test.get('auction_worker_defaults')
     cli_args = [
         '-L',
-        'DEBUG',
+        'TRACE',
         '--exitonfailure',
         '-v',
         'tender_file_path:{}'.format(tender_file_path),
