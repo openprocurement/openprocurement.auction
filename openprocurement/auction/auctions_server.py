@@ -117,7 +117,7 @@ def auctions_proxy(auction_doc_id, path):
 
 
 @auctions_server.route('/get_current_server_time')
-def auctions_get_server_time():
+def auctions_server_current_server_time():
     response = Response(datetime.now(auctions_server.config['TIMEZONE']).isoformat())
     response.headers['Cache-Control'] = 'public, max-age=0'
     return response
