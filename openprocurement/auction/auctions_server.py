@@ -26,7 +26,7 @@ def before_request():
 @auctions_server.after_request
 def after_request(response):
     auctions_server.logger.debug(
-        'End {1.status_code} : {0.method} : {0.url} '.format(request, response)
+        'End {1.status_code} : {0.method} : {0.url}'.format(request, response)
     )
     return response
 
@@ -36,19 +36,19 @@ def log():
 
     try:
         data = loads(request.data)
-        if "MESSAGE" in data:
-            msg = data.get("MESSAGE")
-            del data["MESSAGE"]
+        if 'MESSAGE' in data:
+            msg = data.get('MESSAGE')
+            del data['MESSAGE']
         else:
-            msg = ""
+            msg = ''
         data['REMOTE_ADDR'] = ','.join(
             [ip
              for ip in request.environ.get('HTTP_X_FORWARDED_FOR', '').split(',')
              if not ip.startswith('172.')]
         )
-        if request.environ.get('REMOTE_ADDR', '') and data['REMOTE_ADDR'] == "":
+        if request.environ.get('REMOTE_ADDR', '') and data['REMOTE_ADDR'] == '':
             data['REMOTE_ADDR'] += request.environ.get('REMOTE_ADDR', '')
-        data["SYSLOG_IDENTIFIER"] = "AUCTION_CLIENT"
+        data['SYSLOG_IDENTIFIER'] = 'AUCTION_CLIENT'
         send(msg, **data)
         return Response('ok')
     except:
@@ -71,10 +71,9 @@ def health():
     )
 
     if not(output and limit_replications_func(
-            [True if (task['source_seq'] - task['checkpointed_source_seq']) <=
-             health_threshold else False
-             for task in data if 'type' in task and
-                task['type'] == 'replication']
+        [task['source_seq'] - task['checkpointed_source_seq'] <=
+             health_threshold
+         for task in data if 'type' in task and task['type'] == 'replication']
     )):
         response.status_code = 503
     return response
@@ -97,7 +96,7 @@ def auctions_proxy(auction_doc_id, path):
             event_sources_pool=auctions_server.event_sources_pool,
             event_source_connection_limit=auctions_server.config['event_source_connection_limit'],
             pool=auctions_server.proxy_connection_pool,
-            backend="gevent"
+            backend='gevent'
         )
     elif path == 'login' and auction_doc_id in auctions_server.db:
         if 'X-Forwarded-For' in request.headers:
@@ -108,7 +107,7 @@ def auctions_proxy(auction_doc_id, path):
             return redirect(url)
     elif path == 'event_source':
         events_close = PySse()
-        events_close.add_message("Close", "Disable")
+        events_close.add_message('Close', 'Disable')
         return Response(
             events_close,
             mimetype='text/event-stream',

@@ -32,6 +32,13 @@ AUCTION_DATA = {
 }
 
 
+def Any(cls):
+    class Any(cls):
+        def __eq__(self, other):
+            return True
+    return Any()
+
+
 ID = 'UA-11111'
 LOT_ID = '11111111111111111111111111111111'
 API_EXTRA = {'opt_fields': 'status,auctionPeriod,lots,procurementMethodType',
