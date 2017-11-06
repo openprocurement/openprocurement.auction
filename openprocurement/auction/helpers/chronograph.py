@@ -187,8 +187,7 @@ class AuctionScheduler(GeventScheduler):
             return
         job = self.get_job(document_id)
         if job:
-            # job.kwargs[2] view_value
-            job_auction_start_date = job.kwargs[2]['start']
+            job_auction_start_date = job.kwargs['start']
             if job_auction_start_date == auction_start_date:
                 return
             self.logger.warning("Changed start date: {}".format(document_id))
