@@ -19,7 +19,7 @@ def main():
         suite = entry_point.load()
         suite(TESTS)
 
-    parser = argparse.ArgumentParser("Auction test runner")
+    parser = argparse.ArgumentParser('Auction test runner')
     parser.add_argument('suite',
                         choices=TESTS.keys(),
                         default='simple',
@@ -27,18 +27,16 @@ def main():
     args = parser.parse_args()
     test = TESTS.get(args.suite)
 
-    tender_file_path = os.path.join(
-        test['suite'], "data/tender_{}.json".format(args.suite))
-    test['runner'](tender_file_path)
+    test['runner'](test['tender_file_path'], test['auction_id'])
 
     auction_worker_defaults = test.get('auction_worker_defaults')
     cli_args = [
         '-L',
         'TRACE',
         '--exitonfailure',
-        '-v',
-        'tender_file_path:{}'.format(tender_file_path),
+        '-v', 'tender_file_path:{}'.format(test['tender_file_path']),
         '-v', auction_worker_defaults.format(CWD),
+        '-v', 'auction_id:{}'.format(test['auction_id']),
         '-l', '{0}/logs/log_{1}'.format(CWD, args.suite),
         '-r', '{0}/logs/report_{1}'.format(CWD, args.suite),
         '-P', test['suite'],
