@@ -114,6 +114,7 @@ class AuctionScheduler(GeventScheduler):
         return response
 
     def _auction_fucn(self, args):
+        process = None
         try:
             process = Popen(args)
             self.processes[process.pid] = process
