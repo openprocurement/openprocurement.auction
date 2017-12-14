@@ -1,11 +1,16 @@
+import logging
+
 from sse import Sse as PySse
-from flask import json, current_app, Blueprint, request, session, Response
+from flask import (
+    json, current_app, Blueprint,
+    request, session, Response)
 from flask import jsonify, abort
 from gevent.queue import Queue
 from gevent import spawn, sleep
-import logging
 from datetime import datetime
+
 from openprocurement.auction.utils import prepare_extra_journal_fields, get_bidder_id
+
 
 LOGGER = logging.getLogger(__name__)
 CHUNK = ' ' * 2048 + '\n'
@@ -136,8 +141,7 @@ def event_source():
                         current_app.auction_bidders[bidder]["clients"],
                         "ClientsList"
                     )
-
-                return Response(
+                response = Response(
                     SseStream(
                         current_app.auction_bidders[bidder]["channels"][client_hash],
                         bidder_id=bidder,
@@ -148,6 +152,9 @@ def event_source():
                     mimetype='text/event-stream',
                     content_type='text/event-stream'
                 )
+                response.headers['Cache-Control'] = 'no-cache'
+                response.headers['X-Accel-Buffering'] = 'no'
+                return response
             else:
                 current_app.logger.info(
                     'Not valid bidder: bidder_id {} with client_hash {}'.format(bidder, client_hash),
@@ -160,12 +167,15 @@ def event_source():
     )
     events_close = PySse()
     events_close.add_message("Close", "Disable")
-    return Response(
+    response = Response(
         iter([bytearray(''.join([x for x in events_close]), 'UTF-8')]),
         direct_passthrough=True,
         mimetype='text/event-stream',
         content_type='text/event-stream'
     )
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['X-Accel-Buffering'] = 'no'
+    return response
 
 
 def send_event_to_client(bidder, client, data, event=""):

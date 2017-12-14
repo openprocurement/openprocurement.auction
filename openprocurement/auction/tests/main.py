@@ -1,74 +1,51 @@
-# -*- coding: utf-8 -*-
+from gevent import monkey; monkey.patch_all()
 
-from gevent import monkey
-monkey.patch_all()
+import os
+import sys
+import argparse
 import os.path
 from robot import run_cli
-PWD = os.path.dirname(os.path.realpath(__file__ ))
+from pkg_resources import iter_entry_points
+from gevent.subprocess import sleep
+
+
+TESTS = {}
+PWD = os.path.dirname(os.path.realpath(__file__))
 CWD = os.getcwd()
-from gevent.subprocess import check_output, Popen, PIPE, STDOUT, sleep
-import datetime
-import json
-from dateutil.tz import tzlocal
-import sys
-
-
-def update_auctionPeriod(path):
-    with open(path) as file:
-        data = json.loads(file.read())
-    new_start_time = (datetime.datetime.now(tzlocal()) + datetime.timedelta(seconds=120)).isoformat()
-    if 'lots' in data['data'].keys():
-        for lot in data['data']['lots']:
-            lot['auctionPeriod']['startDate'] = new_start_time
-    else:
-        data['data']['auctionPeriod']['startDate'] = new_start_time
-    with open(path, "w") as file:
-        file.write(json.dumps(data, indent=2))
-
-
-def run_auction(tender_file_path, auction_id):
-    update_auctionPeriod(tender_file_path)
-
-    with open(tender_file_path) as file:
-        data = json.loads(file.read())
-
-    lot_id = data['data']['lots'][0]['id'] if 'lots' in data['data'].keys() else None
-    lot_cli_append = ' --lot {lot_id}'.format(lot_id=lot_id) if lot_id else ''
-    command_line = '{0}/bin/auction_worker planning {1} {0}/etc/auction_worker_defaults.yaml --planning_procerude partial_db --auction_info {2}' + lot_cli_append
-    check_output(command_line.format(CWD, auction_id, tender_file_path).split())
-    sleep(30)
 
 
 def main():
-    exit_code = 0
+    for entry_point in iter_entry_points('openprocurement.auction.robottests'):
+        suite = entry_point.load()
+        suite(TESTS)
 
-    tender_file_path = os.path.join(PWD, "data/tender_data.json")
-    run_auction(tender_file_path, auction_id="11111111111111111111111111111111")
+    parser = argparse.ArgumentParser('Auction test runner')
+    parser.add_argument('suite',
+                        choices=TESTS.keys(),
+                        default='simple',
+                        help='test_suite')
+    args = parser.parse_args()
+    test = TESTS.get(args.suite)
+
+    test['runner'](test['tender_file_path'], test['auction_id'])
+
+    auction_worker_defaults = test.get('auction_worker_defaults')
+    cli_args = [
+        '-L',
+        'TRACE',
+        '--exitonfailure',
+        '-v', 'tender_file_path:{}'.format(test['tender_file_path']),
+        '-v', auction_worker_defaults.format(CWD),
+        '-v', 'auction_id:{}'.format(test['auction_id']),
+        '-l', '{0}/logs/log_{1}'.format(CWD, args.suite),
+        '-r', '{0}/logs/report_{1}'.format(CWD, args.suite),
+        '-P', test['suite'],
+        '-d', os.path.join(CWD, "logs"),
+        test['suite']
+    ]
     sleep(4)
-    # with mock_patch('sys.exit') as exit_mock:
     try:
-        run_cli(['-L', 'DEBUG', '--exitonfailure',
-                 '-v', 'tender_file_path:{}'.format(tender_file_path),
-                 '-v', 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD),
-                 '-l', '{0}/logs/log_simple_auction'.format(CWD),
-                 '-r', '{0}/logs/report_simple_auction'.format(CWD),
-                 '-d', os.path.join(CWD, "logs"), PWD,])
+        run_cli(cli_args)
     except SystemExit, e:
         exit_code = e.code
-
-    tender_file_path = os.path.join(PWD, "data/tender_multilot_data.json")
-    run_auction(tender_file_path, auction_id="22222222222222222222222222222222")
-    sleep(4)
-    # with mock_patch('sys.exit') as exit_mock:
-    try:
-        run_cli(['-L', 'DEBUG', '--exitonfailure',
-                 '-v', 'tender_file_path:{}'.format(tender_file_path),
-                 '-v', 'auction_worker_defaults:{0}/etc/auction_worker_defaults.yaml'.format(CWD),
-                 '-l', '{0}/logs/log_multilot_auction'.format(CWD),
-                 '-r', '{0}/logs/report_multilot_auction'.format(CWD),
-                 '-d', os.path.join(CWD, "logs"), PWD,])
-    except SystemExit, e:
-        exit_code = e.code
-
-    sys.exit(exit_code)
-
+    sys.exit(exit_code or 0)

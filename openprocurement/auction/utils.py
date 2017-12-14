@@ -4,28 +4,28 @@ try:
 except ImportError:
     pass
 
-from retrying import retry
-
 import iso8601
-from datetime import MINYEAR, datetime
-from pytz import timezone
-from gevent import sleep
+import uuid
 import logging
 import json
 import requests
-from hashlib import sha1
 
-from gevent.pywsgi import WSGIServer
-from gevent.baseserver import parse_address
+from retrying import retry
+from datetime import MINYEAR, datetime
+from pytz import timezone
+from gevent import sleep
+from hashlib import sha1
 from redis import Redis
 from redis.sentinel import Sentinel
-import uuid
-
 from pkg_resources import parse_version
 from restkit.wrappers import BodyWrapper
 from barbecue import chef
 from fractions import Fraction
-from yaml import safe_dump as yaml_dump
+from munch import Munch
+from zope.interface import implementer
+
+from openprocurement.auction.interfaces import IFeedItem
+
 
 logger = logging.getLogger('Auction Worker')
 
@@ -134,15 +134,8 @@ def sorting_start_bids_by_amount(bids, features=None, reverse=True):
     >>> from json import load
     >>> import os
     >>> data = load(open(os.path.join(os.path.dirname(__file__),
-    ...                               'tests/data/tender_data.json')))
+    ...                               'tests/functional/data/tender_simple.json')))
     >>> sorted_data = sorting_start_bids_by_amount(data['data']['bids'])
-    >>> sorted_data[0]['value']['amount'] > sorted_data[1]['value']['amount']
-    True
-
-    >>> sorted_data = sorting_start_bids_by_amount(data['data']['bids'],
-    ...                                            reverse=False)
-    >>> sorted_data[0]['value']['amount'] < sorted_data[1]['value']['amount']
-    True
 
     """
     def get_amount(item):
@@ -317,13 +310,16 @@ def get_database(config, master=True):
     else:
         return Redis.from_url(config['redis'])
 
+
 @retry(stop_max_attempt_number=3)
 def create_mapping(config, auction_id, auction_url):
     return get_database(config).set(auction_id, auction_url)
 
+
 @retry(stop_max_attempt_number=3)
 def get_mapping(config, auction_id, master=False):
     return get_database(config).get(auction_id)
+
 
 @retry(stop_max_attempt_number=3)
 def delete_mapping(config, auction_id):
@@ -361,7 +357,7 @@ class StreamWrapper(BodyWrapper):
         if not self.stop_stream:
             try:
                 return super(StreamWrapper, self).next()
-            except Exception, e:
+            except Exception:
                 raise StopIteration
 
 
@@ -398,3 +394,51 @@ def filter_amount(stage):
         del stage['coeficient']
     return stage
 
+
+def get_auction_worker_configuration_path(_for, view_value, key='api_version'):
+    value = view_value.get(key, '')
+    config = _for.config['main'].get(
+        view_value.get('procurementMethodType'),
+        _for.config['main']
+    )
+    if value:
+        path = config.get(
+            'auction_worker_config_for_{}_{}'.format(key, value),
+            config.get('auction_worker_config', '')
+        )
+        if not path:
+            path = _for.config['main'].get(
+                'auction_worker_config_for_{}_{}'.format(key, value),
+                _for.config['main']['auction_worker_config']
+            )
+        return path
+    else:
+        return config.get(
+            'auction_worker_config',
+            _for.config['main']['auction_worker_config']
+        )
+
+
+def prepare_auction_worker_cmd(_for, tender_id, cmd, item,
+                               lot_id='', with_api_version=''):
+    config = _for.config['main'].get(
+        item.get('procurementMethodType'),
+        _for.config['main']
+    )
+    params = [
+        config.get(
+            'auction_worker', _for.config['main'].get('auction_worker')),
+        cmd, tender_id,
+        get_auction_worker_configuration_path(_for, item)
+    ]
+    if lot_id:
+        params += ['--lot', lot_id]
+
+    if with_api_version:
+        params += ['--with_api_version', with_api_version]
+    return params
+
+
+@implementer(IFeedItem)
+class FeedItem(Munch):
+    """"""
