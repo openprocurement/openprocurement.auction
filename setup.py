@@ -33,9 +33,8 @@ install_requires = [
 extras_require = {
     'test': [
         'robotframework',
-        'robotframework-selenium2library',
+        'robotframework-seleniumlibrary',
         'robotframework-debuglibrary',
-        'robotframework-selenium2screenshots',
         'webtest',
         'mock',
         'pytest-cov'
