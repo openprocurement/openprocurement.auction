@@ -49,7 +49,12 @@ def main():
                         choices=TESTS.keys(),
                         default='simple',
                         help='test_suite')
+    parser.add_argument('-f', '--fast-forward',
+                        help="run test fast forward",
+                        action="store_true")
     args = parser.parse_args()
+    if args.suite == 'insider' and args.fast_forward:
+        TESTS['insider']['worker_cmd'] += ' --fast-forward'
     test = TESTS.get(args.suite)
 
     tender_file_path = os.path.join(
