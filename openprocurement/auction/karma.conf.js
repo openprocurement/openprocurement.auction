@@ -18,7 +18,7 @@ module.exports = function(config) {
       'static/vendor/angular-translate-storage-cookie/angular-translate-storage-cookie.js',
       'static/vendor/angular-translate-storage-local/angular-translate-storage-local.js',
       'static/vendor/angular-growl-2/build/angular-growl.js',
-      'static/vendor/moment/locale/uk.js',
+      'static/vendor/moment/locale/ro.js',
       'static/vendor/moment/locale/ru.js',
       'static/static/js/*.js',
       {pattern: 'tests/js/*.js', included: true}

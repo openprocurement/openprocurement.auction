@@ -232,7 +232,7 @@ def announce_results_data(self, results=None):
     for section in ['initial_bids', 'stages', 'results']:
         for index, stage in enumerate(self.auction_document[section]):
             if 'bidder_id' in stage and stage['bidder_id'] in bidders_data:
-                self.auction_document[section][index]["label"]["uk"] = bidders_data[stage['bidder_id']]["name"]
+                self.auction_document[section][index]["label"]["ro"] = bidders_data[stage['bidder_id']]["name"]
                 self.auction_document[section][index]["label"]["ru"] = bidders_data[stage['bidder_id']]["name"]
                 self.auction_document[section][index]["label"]["en"] = bidders_data[stage['bidder_id']]["name"]
     self.auction_document["current_stage"] = (len(self.auction_document["stages"]) - 1)
