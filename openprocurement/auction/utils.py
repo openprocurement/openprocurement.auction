@@ -5,6 +5,7 @@ except ImportError:
     pass
 
 import iso8601
+import inspect
 import uuid
 import logging
 import json
@@ -395,40 +396,26 @@ def filter_amount(stage):
     return stage
 
 
-def get_auction_worker_configuration_path(_for, view_value, key='api_version'):
+def get_auction_worker_configuration_path(_for, view_value, config, key='api_version'):
     value = view_value.get(key, '')
-    config = _for.config['main'].get(
-        view_value.get('procurementMethodType'),
-        _for.config['main']
-    )
     if value:
         path = config.get(
             'auction_worker_config_for_{}_{}'.format(key, value),
-            config.get('auction_worker_config', '')
+            config['auction_worker_config']
         )
-        if not path:
-            path = _for.config['main'].get(
-                'auction_worker_config_for_{}_{}'.format(key, value),
-                _for.config['main']['auction_worker_config']
-            )
         return path
     else:
-        return config.get(
-            'auction_worker_config',
-            _for.config['main']['auction_worker_config']
-        )
+        return config['auction_worker_config']
 
 
 def prepare_auction_worker_cmd(_for, tender_id, cmd, item,
                                lot_id='', with_api_version=''):
-    config = _for.config['main'].get(
-        item.get('procurementMethodType'),
-        _for.config['main']
-    )
+    plugin = _for.mapper.pmt_configurator.get(item.get('procurementMethodType'))
+    config = _for.mapper.plugins.get(plugin)
     params = [
-        config.get('auction_worker', _for.config['main'].get('auction_worker')),
+        config['auction_worker'],
         cmd, tender_id,
-        get_auction_worker_configuration_path(_for, item)
+        get_auction_worker_configuration_path(_for, item, config)
     ]
     if lot_id:
         params += ['--lot', lot_id]
@@ -441,3 +428,9 @@ def prepare_auction_worker_cmd(_for, tender_id, cmd, item,
 @implementer(IFeedItem)
 class FeedItem(Munch):
     """"""
+
+
+def get_logger_for_calling_module():
+    frame = inspect.stack()[2]
+    module = inspect.getmodule(frame[0])
+    return logging.getLogger(module.__name__)
