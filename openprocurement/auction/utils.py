@@ -6,6 +6,7 @@ except ImportError:
 
 import iso8601
 import inspect
+import os
 import uuid
 import logging
 import json
@@ -34,6 +35,18 @@ EXTRA_LOGGING_VALUES = {
     'X-Request-ID': 'JOURNAL_REQUEST_ID',
     'X-Clint-Request-ID': 'JOURNAL_CLIENT_REQUEST_ID'
 }
+
+
+logging.addLevelName(25, 'CHECK')
+
+
+def check(self, msg, exc=None, *args, **kwargs):
+    self.log(25, msg)
+    if exc:
+        self.error(exc, exc_info=True)
+
+
+logging.Logger.check = check
 
 
 def generate_request_id(prefix=b'auction-req-'):
@@ -434,3 +447,21 @@ def get_logger_for_calling_module():
     frame = inspect.stack()[2]
     module = inspect.getmodule(frame[0])
     return logging.getLogger(module.__name__)
+
+
+def check_workers(plugins):
+    exceptions = []
+    logger = get_logger_for_calling_module()
+    for plugin in plugins:
+        try:
+            if not os.path.isfile(plugins[plugin].get('auction_worker_config')):
+                raise OSError('Worker config for {} auctions does not exists'.format(plugin))
+        except OSError as e:
+            exceptions.append(e)
+            result = ('failed', e)
+        else:
+            result = ('ok', None)
+        logger.check('{} auctions worker config - {}'.format(plugin, result[0]), result[1])
+
+    if exceptions:
+        raise exceptions[0]
