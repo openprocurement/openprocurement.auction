@@ -21,7 +21,7 @@ from gevent.pywsgi import WSGIServer
 from datetime import datetime, timedelta
 from urlparse import urlparse
 
-from openprocurement.auction.utils import FeedItem
+from openprocurement.auction.utils import FeedItem, check_workers
 from openprocurement.auction.core import components
 from openprocurement.auction.interfaces import (
     IAuctionsChronograph, IAuctionsManager
@@ -48,6 +48,7 @@ class AuctionsChronograph(object):
         self.config = config
         self.timezone = timezone(config['main']['timezone'])
         self.mapper = components.qA(self, IAuctionsManager)
+        check_workers(self.mapper.plugins)
         self.server_name = get_server_name()
         LOGGER.info('Init node: {}'.format(self.server_name))
         self.init_database()
@@ -137,12 +138,18 @@ def main():
     parser = argparse.ArgumentParser(
         description='---- Auctions Chronograph ----')
     parser.add_argument('config', type=str, help='Path to configuration file')
+    parser.add_argument('-t', dest='check', action='store_const',
+                        const=True, default=False,
+                        help='Workers check only')
     params = parser.parse_args()
     if os.path.isfile(params.config):
         with open(params.config) as config_file_obj:
             config = load(config_file_obj.read())
         logging.config.dictConfig(config)
-        AuctionsChronograph(config).run()
+        chronograph = AuctionsChronograph(config)
+        if params.check:
+            exit()
+        chronograph.run()
 
 
 if __name__ == '__main__':

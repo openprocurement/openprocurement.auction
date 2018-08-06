@@ -20,7 +20,7 @@ from openprocurement_client.sync import ResourceFeeder
 from openprocurement.auction.interfaces import\
     IAuctionDatabridge, IAuctionsManager
 from openprocurement.auction.core import components
-from openprocurement.auction.utils import FeedItem
+from openprocurement.auction.utils import FeedItem, check_workers
 
 
 LOGGER = logging.getLogger(__name__)
@@ -48,6 +48,7 @@ class AuctionsDataBridge(object):
         self.tz = tzlocal()
         self.debug = debug
         self.mapper = components.qA(self, IAuctionsManager)
+        check_workers(self.mapper.plugins)
         self.re_planning = re_planning
         DEFAULT_RETRIEVERS_PARAMS.update(
             self.config.get('main').get('retrievers_params', {}))
@@ -126,12 +127,17 @@ def main():
     parser.add_argument(
         '--re-planning', action='store_true', default=False,
         help='Not ignore auctions which already scheduled')
+    parser.add_argument('-t', dest='check', action='store_const',
+                        const=True, default=False,
+                        help='Workers check only')
     params = parser.parse_args()
     if os.path.isfile(params.config):
         with open(params.config) as config_file_obj:
             config = load(config_file_obj.read())
         logging.config.dictConfig(config)
         bridge = AuctionsDataBridge(config, re_planning=params.re_planning)
+        if params.check:
+            exit()
         bridge.run()
 
 
