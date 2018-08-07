@@ -1,6 +1,5 @@
 from pytz import timezone
 
-ROUNDS = 3
 TIMEZONE = timezone('Europe/Kiev')
 
 PLANNING_FULL = "full"
