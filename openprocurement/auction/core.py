@@ -30,7 +30,7 @@ SIMPLE_AUCTION_TYPE = 0
 SINGLE_LOT_AUCTION_TYPE = 1
 MULTILOT_AUCTION_ID = "{0[id]}_{1[id]}"  # {TENDER_ID}_{LOT_ID}
 LOGGER = logging.getLogger('Openprocurement Auction')
-PKG_NAMESPACE = "openprocurement.auction.auctions"
+PKG_NAMESPACE = "openprocurement.auction.components"
 
 
 components = AuctionComponents()
