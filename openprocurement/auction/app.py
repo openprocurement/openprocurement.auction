@@ -26,11 +26,6 @@ LIMIT_REPLICATIONS_LIMIT_FUNCTIONS = {
 }
 
 
-def load_ini_list(ls):
-    ls = ls.replace('[', '').replace(']', '').replace(' ', '').split(',')
-    return ls
-
-
 def make_auctions_app(global_conf,
                       redis_url='redis://localhost:9002/1',
                       redis_password='',
@@ -48,10 +43,7 @@ def make_auctions_app(global_conf,
                       auto_build=False,
                       event_source_connection_limit=1000,
                       limit_replications_progress=99,
-                      limit_replications_func='any',
-                      english='[]',
-                      dutch='[]',
-                      plugins=''
+                      limit_replications_func='any'
                       ):
     """
     [app:main]
@@ -62,14 +54,6 @@ def make_auctions_app(global_conf,
     auctions_db = auction
     timezone = Europe/Kiev
     """
-    english = load_ini_list(english)
-    dutch = load_ini_list(dutch)
-    pmts = {
-        'english': english,
-        'dutch': dutch
-    }
-    plugins = load_ini_list(plugins)
-
     auctions_server = components.queryUtility(IAuctionsServer)
     auctions_server.proxy_connection_pool = ConnectionPool(
         factory=Connection, max_size=20, backend="gevent"
@@ -133,12 +117,8 @@ def make_auctions_app(global_conf,
 
     auctions_server.db = auctions_server.couch_server[auctions_server.config['COUCH_DB']]
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
-
     sync_design(auctions_server.db)
     for entry_point in iter_entry_points(PKG_NAMESPACE):
         plugin = entry_point.load()
-        if entry_point.name in plugins:
-            plugin(components, pmts[entry_point.name])
-        else:
-            plugin(components, [])
+        plugin(components)
     return auctions_server
