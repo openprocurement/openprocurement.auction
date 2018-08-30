@@ -50,9 +50,6 @@ entry_points = {
     ],
     'paste.app_factory': [
         'auctions_server = openprocurement.auction.app:make_auctions_app',
-    ],
-    'openprocurement.auction.auctions': [
-        'default = openprocurement.auction.includeme:default'
     ]
 }
 

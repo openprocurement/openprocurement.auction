@@ -19,7 +19,7 @@ from openprocurement.auction.proxy import couch_server_proxy,\
     auth_couch_server_proxy
 
 
-PKG_NAMESPACE = "openprocurement.auction.auctions"
+PKG_NAMESPACE = "openprocurement.auction.routes"
 LIMIT_REPLICATIONS_LIMIT_FUNCTIONS = {
     'any': any,
     'all': all

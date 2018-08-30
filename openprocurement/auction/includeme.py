@@ -20,7 +20,3 @@ def _register(components, procurement_method_type):
 
     logger.info("Included %s plugin" % procurement_method_type,
                 extra={'MESSAGE_ID': 'included_plugin'})
-
-
-def default(components, _):
-    _register(components, 'default')
