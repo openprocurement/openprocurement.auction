@@ -77,8 +77,6 @@ def health():
     return response
 
 
-@auctions_server.route('/auctions/<auction_doc_id>/<path:path>',
-                       methods=['GET', 'POST'])
 def auctions_proxy(auction_doc_id, path):
     auctions_server.logger.debug('Auction_doc_id: {}'.format(auction_doc_id))
     proxy_path = auctions_server.proxy_mappings.get(
