@@ -78,6 +78,7 @@ def health():
 
 
 def auctions_proxy(auction_doc_id, path):
+    # Now openresty is used to proxy to auction workers
     auctions_server.logger.debug('Auction_doc_id: {}'.format(auction_doc_id))
     proxy_path = auctions_server.proxy_mappings.get(
         str(auction_doc_id),
