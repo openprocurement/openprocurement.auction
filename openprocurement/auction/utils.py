@@ -27,6 +27,7 @@ from munch import Munch
 from zope.interface import implementer
 
 from openprocurement.auction.interfaces import IFeedItem
+from openprocurement.auction.constants import DEFAULT_CONFIG
 
 
 logger = logging.getLogger('Auction Worker')
@@ -424,7 +425,7 @@ def get_auction_worker_configuration_path(_for, view_value, config, key='api_ver
 def prepare_auction_worker_cmd(_for, tender_id, cmd, item,
                                lot_id='', with_api_version=''):
     plugin = _for.mapper.pmt_configurator.get(item.get('procurementMethodType'))
-    config = _for.mapper.plugins.get(plugin)
+    config = _for.mapper.plugins.get(plugin, DEFAULT_CONFIG)
     params = [
         config['auction_worker'],
         cmd, tender_id,
