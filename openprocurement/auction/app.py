@@ -10,7 +10,6 @@ from memoize import Memoizer
 from pytz import timezone as tz
 from restkit.conn import Connection
 from socketpool import ConnectionPool
-from pkg_resources import iter_entry_points
 from urlparse import urljoin
 
 from openprocurement.auction.core import components
@@ -19,7 +18,6 @@ from openprocurement.auction.proxy import couch_server_proxy,\
     auth_couch_server_proxy
 
 
-PKG_NAMESPACE = "openprocurement.auction.routes"
 LIMIT_REPLICATIONS_LIMIT_FUNCTIONS = {
     'any': any,
     'all': all
@@ -118,7 +116,4 @@ def make_auctions_app(global_conf,
     auctions_server.db = auctions_server.couch_server[auctions_server.config['COUCH_DB']]
     auctions_server.config['HASH_SECRET_KEY'] = hash_secret_key
     sync_design(auctions_server.db)
-    for entry_point in iter_entry_points(PKG_NAMESPACE):
-        plugin = entry_point.load()
-        plugin(components)
     return auctions_server
