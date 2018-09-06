@@ -107,16 +107,17 @@ def get_time(item):
 
 def sorting_by_amount(bids, reverse=False):
     """
+    This function sort element by amount ascending.
+    If amount of bids is equal it will sort it by time in descending order
     >>> bids = [
-    ...     {'amount': 3955.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:30.723296+03:00'},
     ...     {'amount': 3966.0, 'bidder_id': 'df2', 'time': '2015-04-24T11:07:30.723296+03:00'},
-    ...     {'amount': 3955.0, 'bidder_id': 'df4', 'time': '2015-04-23T15:48:41.971644+03:00'},
+    ...     {'amount': 3955.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:30.723296+03:00'},
+    ...     {'amount': 3955.0, 'bidder_id': 'df4', 'time': '2015-04-24T15:48:41.971644+03:00'}
     ... ]
     >>> sorting_by_amount(bids)  # doctest: +NORMALIZE_WHITESPACE
-    [{'amount': 3966.0, 'bidder_id': 'df2', 'time': '2015-04-24T11:07:30.723296+03:00'},
+    [{'amount': 3955.0, 'bidder_id': 'df4', 'time': '2015-04-24T15:48:41.971644+03:00'},
      {'amount': 3955.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:30.723296+03:00'},
-     {'amount': 3955.0, 'bidder_id': 'df4', 'time': '2015-04-23T15:48:41.971644+03:00'}]
-
+     {'amount': 3966.0, 'bidder_id': 'df2', 'time': '2015-04-24T11:07:30.723296+03:00'}]
     >>> bids = [
     ...     {'amount': 3966.0, 'bidder_id': 'df1', 'time': '2015-04-24T11:07:20+03:00'},
     ...     {'amount': 3966.0, 'bidder_id': 'df2', 'time': '2015-04-24T11:07:30+03:00'},
@@ -146,12 +147,27 @@ def sorting_by_amount(bids, reverse=False):
 
 def sorting_start_bids_by_amount(bids, features=None, reverse=True):
     """
-    >>> from json import load
-    >>> import os
-    >>> data = load(open(os.path.join(os.path.dirname(__file__),
-    ...                               'tests/functional/data/tender_simple.json')))
-    >>> sorted_data = sorting_start_bids_by_amount(data['data']['bids'])
-
+    >>> bids = [
+    ...  {
+    ...    "date": "2014-11-19T08:22:21.726234+00:00",
+    ...    "id": "d3ba84c66c9e4f34bfb33cc3c686f137",
+    ...    "value": {
+    ...      "currency": None,
+    ...      "amount": 475000.0,
+    ...      "valueAddedTaxIncluded": True
+    ...    }
+    ...   },
+    ...  {
+    ...    "date": "2014-11-19T08:22:24.038426+00:00",
+    ...    "id": "5675acc9232942e8940a034994ad883e",
+    ...    "value": {
+    ...      "currency": None,
+    ...      "amount": 480000.0,
+    ...      "valueAddedTaxIncluded": True
+    ...    }
+    ...  }
+    ... ]
+    >>> sorted_data = sorting_start_bids_by_amount(bids)
     """
     def get_amount(item):
         return item['value']['amount']

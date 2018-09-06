@@ -1,8 +1,7 @@
 # See: openprocurement.auction.core.Planning
 import pytest
 
-from openprocurement.auction.databridge import AuctionsDatabridge
-from openprocurement.auction.tests.utils import MockFeedItem
+from openprocurement.auction.databridge import AuctionsDataBridge
 
 
 test_config = {}
@@ -12,7 +11,7 @@ test_config = {}
 def bridge(request):
     # TODO:
     # Mock supbrocess && get_tedners
-    request.cls.bridge = AuctionsDatabridge(test_config)
+    request.cls.bridge = AuctionsDataBridge(test_config)
 
 
 class TestDatabridge(object):
