@@ -6,7 +6,7 @@ class TestClient(object):
     """TODO: """
 
 
-with open('data/public_document.json') as _file:
+with open('openprocurement/auction/tests/data/public_document.json') as _file:
     test_public_document = json.load(_file)
 
 

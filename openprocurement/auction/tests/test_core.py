@@ -1,4 +1,4 @@
-from openprocurement.auction.core import compoenents
+from openprocurement.auction.core import components
 
 
 class TestDispatch(object):
