@@ -59,7 +59,7 @@ def main():
 
     tender_file_path = os.path.join(
         test['suite'], "data/tender_{}.json".format(args.suite))
-    test['runner'](tender_file_path)
+    auction_id = test['runner'](tender_file_path)
 
     auction_worker_defaults = test.get('auction_worker_defaults')
     cwd = test.get('cwd')
@@ -69,6 +69,7 @@ def main():
         '--exitonfailure',
         '-v',
         'tender_file_path:{}'.format(tender_file_path),
+        '-v', 'auction_id:{}'.format(auction_id),
         '-v', auction_worker_defaults.format(CWD),
         '-l', '{0}/logs/log_{1}'.format(CWD, args.suite),
         '-r', '{0}/logs/report_{1}'.format(CWD, args.suite),
