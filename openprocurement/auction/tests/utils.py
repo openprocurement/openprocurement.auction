@@ -1,3 +1,4 @@
+import os
 import json
 import contextlib
 
@@ -6,7 +7,9 @@ class TestClient(object):
     """TODO: """
 
 
-with open('openprocurement/auction/tests/data/public_document.json') as _file:
+module_dir_path = os.path.dirname(__file__)
+
+with open(module_dir_path + '/data/public_document.json') as _file:
     test_public_document = json.load(_file)
 
 
