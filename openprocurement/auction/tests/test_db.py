@@ -1,12 +1,24 @@
 import pytest
 import uuid
+import os
 from couchdb import Server
 
 from openprocurement.auction.design import sync_design_chronograph, sync_design
 from openprocurement.auction.tests.utils import test_public_document, put_test_doc
 
+COUCHDB_HTTP_HOST = os.environ.get('COUCHDB_HTTP_HOST', '127.0.0.1')
+COUCHDB_HTTP_PORT = os.environ.get('COUCHDB_HTTP_PORT', '9000')
+COUCHDB_USER = os.environ.get('COUCHDB_USER', 'admin')
+COUCHDB_PASSWORD = os.environ.get('COUCHDB_PASSWORD', 'zaq1xsw2')
 
-SERVER = Server('http://admin:zaq1xsw2@127.0.0.1:9000')
+SERVER = Server(
+    'http://{}:{}@{}:{}'.format(
+        COUCHDB_USER,
+        COUCHDB_PASSWORD,
+        COUCHDB_HTTP_HOST,
+        COUCHDB_HTTP_PORT
+    )
+)
 
 
 @pytest.fixture(scope='function')
