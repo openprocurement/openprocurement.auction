@@ -12,6 +12,7 @@ from dateutil.tz import tzlocal
 from robot import run_cli
 from pkg_resources import iter_entry_points
 from gevent.subprocess import sleep
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
 TESTS = {}
@@ -52,7 +53,40 @@ def main():
     parser.add_argument('-f', '--fast-forward',
                         help="run test fast forward",
                         action="store_true")
+
+    parser.add_argument('--browser',
+                        dest='browser',
+                        choices=['firefox', 'chrome', 'phantomjs'],
+                        default='chrome',
+                        nargs='?',
+                        help='supported browsers')
+
+    parser.add_argument('--ip',
+                        dest='ip',
+                        nargs='?',
+                        help='ip of the remote server where tests will be run')
+
+    parser.add_argument('--port',
+                        dest='port',
+                        nargs='?',
+                        help='port of the remote server where tests will be '
+                             'run')
+
     args = parser.parse_args()
+
+    if args.port and (not args.ip):
+        parser.error('The --port argument requires the --ip')
+
+    if args.ip and (args.browser != 'chrome'):
+        parser.error('Only chrome is allowed for remote test running')
+
+    port = getattr(args, 'port', '4444')
+    remote_url = 'None' if not args.ip else 'http://{}:{}/wd/hub'\
+        .format(args.ip, port)
+
+    desired_capabilities = DesiredCapabilities.CHROME if \
+        args.browser == 'chrome' else 'None'
+
     if args.suite == 'insider' and args.fast_forward:
         TESTS['insider']['worker_cmd'] += ' --fast-forward'
     test = TESTS.get(args.suite)
@@ -70,6 +104,9 @@ def main():
         '-v',
         'tender_file_path:{}'.format(tender_file_path),
         '-v', 'auction_id:{}'.format(auction_id),
+        '-v', 'BROWSER:{}'.format(args.browser),
+        '-v', 'remote_url:{}'.format(remote_url),
+        '-v', 'desired_capabilities:{}'.format(desired_capabilities),
         '-v', auction_worker_defaults.format(CWD),
         '-l', '{0}/logs/log_{1}'.format(CWD, args.suite),
         '-r', '{0}/logs/report_{1}'.format(CWD, args.suite),
