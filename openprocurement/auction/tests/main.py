@@ -54,6 +54,11 @@ def main():
                         help="run test fast forward",
                         action="store_true")
 
+    parser.add_argument('suite_name',
+                        default='auction_test',
+                        nargs='?',
+                        help='test_suite_name')
+
     parser.add_argument('--browser',
                         dest='browser',
                         choices=['firefox', 'chrome', 'phantomjs'],
@@ -110,6 +115,7 @@ def main():
         '-v', auction_worker_defaults.format(CWD),
         '-l', '{0}/logs/log_{1}'.format(CWD, args.suite),
         '-r', '{0}/logs/report_{1}'.format(CWD, args.suite),
+        '-s', args.suite_name,
         '-P', test['suite'],
         '-d', os.path.join(CWD, "logs"),
         test['suite']
